@@ -1,4 +1,4 @@
-package com.example.application.module.transcribe.common;
+package com.example.application.core.common;
 
 import lombok.SneakyThrows;
 

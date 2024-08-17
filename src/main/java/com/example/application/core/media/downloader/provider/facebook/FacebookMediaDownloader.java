@@ -1,10 +1,10 @@
-package com.example.application.module.transcribe.media.downloader.provider.facebook;
+package com.example.application.core.media.downloader.provider.facebook;
 
-import com.example.application.module.transcribe.media.downloader.MediaDownloadProgressCallback;
-import com.example.application.module.transcribe.media.downloader.MediaDownloader;
-import com.example.application.module.transcribe.media.downloader.MediaTempDirectory;
-import com.example.application.module.wrapper.youtube_dl.YouTubeDL;
-import com.example.application.module.wrapper.youtube_dl.YouTubeDLRequest;
+import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
+import com.example.application.core.media.downloader.MediaDownloader;
+import com.example.application.core.media.temp_file.MediaTempDirectory;
+import com.example.application.core.media.downloader.youtube_dl.YouTubeDL;
+import com.example.application.core.media.downloader.youtube_dl.YouTubeDLRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;

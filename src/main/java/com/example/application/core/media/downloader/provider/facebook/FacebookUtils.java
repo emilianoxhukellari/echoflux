@@ -1,4 +1,4 @@
-package com.example.application.module.transcribe.media.downloader.provider.facebook;
+package com.example.application.core.media.downloader.provider.facebook;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;

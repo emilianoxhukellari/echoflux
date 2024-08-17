@@ -1,8 +1,8 @@
-package com.example.application.module.transcribe.media.downloader.provider.youtube;
+package com.example.application.core.media.downloader.provider.youtube;
 
-import com.example.application.module.transcribe.media.downloader.MediaDownloadProgressCallback;
-import com.example.application.module.transcribe.media.downloader.MediaDownloader;
-import com.example.application.module.transcribe.media.downloader.MediaTempDirectory;
+import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
+import com.example.application.core.media.downloader.MediaDownloader;
+import com.example.application.core.media.temp_file.MediaTempDirectory;
 import com.github.kiulian.downloader.YoutubeDownloader;
 import com.github.kiulian.downloader.downloader.request.RequestVideoFileDownload;
 import com.github.kiulian.downloader.downloader.request.RequestVideoInfo;

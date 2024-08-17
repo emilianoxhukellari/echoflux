@@ -1,4 +1,4 @@
-package com.example.application.module.transcribe.common;
+package com.example.application.core.common;
 
 import org.apache.commons.lang3.Validate;
 

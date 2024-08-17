@@ -1,6 +1,7 @@
-package com.example.application.module.wrapper.youtube_dl;
+package com.example.application.core.media.downloader.youtube_dl;
 
-import com.example.application.module.transcribe.media.downloader.MediaDownloadProgressCallback;
+import com.example.application.core.common.RunnableUtils;
+import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -19,6 +20,7 @@ public final class YouTubeDL {
 
     private static final String EXECUTABLE_PATH = "youtube-dl";
     private static final Pattern PROGRESS_PATTERN = Pattern.compile("(\\d+\\.\\d+|\\d+)%");
+    private static final int CARRIAGE_RETURN = 13;
 
     @SneakyThrows
     public static YouTubeDLResponse execute(YouTubeDLRequest request, MediaDownloadProgressCallback callback) {
@@ -39,17 +41,17 @@ public final class YouTubeDL {
         @Cleanup
         var errBuffer = new StringBuilderWriter();
 
-        var stdOutProcessor = Thread.ofVirtual().start(() -> extract(outStream, outBuffer, callback));
-        var stdErrProcessor = Thread.ofVirtual().start(() -> copy(errStream, errBuffer));
+        var stdOutProcessor = RunnableUtils.runOnVirtual(() -> extract(outStream, outBuffer, callback));
+        var stdErrProcessor = RunnableUtils.runOnVirtual(() -> extract(errStream, errBuffer));
 
-        stdOutProcessor.join();
-        stdErrProcessor.join();
+        stdOutProcessor.get();
+        stdErrProcessor.get();
         var exitCode = process.waitFor();
 
         var out = outBuffer.toString();
         var err = errBuffer.toString();
         if (exitCode > 0) {
-            throw new RuntimeException(String.format("Error in YouTubeDL execution: %s", err));
+            throw new YouTubeDLException(String.format("Error in YouTubeDL execution: %s", err));
         } else {
             return YouTubeDLResponse.builder()
                     .exitCode(exitCode)
@@ -59,9 +61,9 @@ public final class YouTubeDL {
         }
     }
 
-    private static void copy(InputStream stream, StringBuilderWriter writer) {
+    private static void extract(InputStream stream, StringBuilderWriter writer) {
         try {
-            IOUtils.copy(stream, writer, Charset.defaultCharset());
+            IOUtils.copy(stream, writer, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Error copying stream", e);
         }
@@ -73,7 +75,7 @@ public final class YouTubeDL {
         int nextChar;
         while ((nextChar = stream.read()) != -1) {
             writer.write(nextChar);
-            if (nextChar == 13 && callback != null) {
+            if (nextChar == CARRIAGE_RETURN && callback != null) {
                 var matcher = PROGRESS_PATTERN.matcher(currentLine);
                 if (matcher.find()) {
                     callback.onDownloading((int) Float.parseFloat(matcher.group(1)));

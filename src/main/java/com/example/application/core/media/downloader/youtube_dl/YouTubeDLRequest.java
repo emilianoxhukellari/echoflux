@@ -1,4 +1,4 @@
-package com.example.application.module.wrapper.youtube_dl;
+package com.example.application.core.media.downloader.youtube_dl;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

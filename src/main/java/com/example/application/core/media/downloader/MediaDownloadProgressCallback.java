@@ -1,4 +1,4 @@
-package com.example.application.module.transcribe.media.downloader;
+package com.example.application.core.media.downloader;
 
 @FunctionalInterface
 public interface MediaDownloadProgressCallback {

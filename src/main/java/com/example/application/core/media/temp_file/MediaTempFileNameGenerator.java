@@ -1,4 +1,4 @@
-package com.example.application.module.transcribe.media.temp_file;
+package com.example.application.core.media.temp_file;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 

@@ -1,6 +1,6 @@
-package com.example.application.module.transcribe.media.downloader.provider.youtube;
+package com.example.application.core.media.downloader.provider.youtube;
 
-import com.example.application.module.transcribe.media.downloader.MediaDownloadProgressCallback;
+import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
 import com.github.kiulian.downloader.downloader.YoutubeProgressCallback;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -52,7 +52,7 @@ public final class YouTubeUtils {
     }
 
     static {
-        PATTERN = Pattern.compile("http(?:s)?:\\/\\/(?:m.)?(?:www\\.)?youtu(?:\\.be\\/|(?:be-nocookie|be)\\.com\\/(?:watch|[\\w]+\\?(?:feature=[\\w]+.[\\w]+\\&)?v=|v\\/|e\\/|embed\\/|live\\/|shorts\\/|user\\/(?:[\\w#]+\\/)+))([^&#?\\n]+)");
+        PATTERN = Pattern.compile("https?://(?:m.)?(?:www\\.)?youtu(?:\\.be/|(?:be-nocookie|be)\\.com/(?:watch|\\w+\\?(?:feature=\\w+.\\w+&)?v=|v/|e/|embed/|live/|shorts/|user/(?:[\\w#]+/)+))([^&#?\\n]+)");
     }
 
 }

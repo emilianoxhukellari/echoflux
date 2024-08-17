@@ -1,6 +1,6 @@
-package com.example.application.module.transcribe.media.downloader;
+package com.example.application.core.media.temp_file;
 
-import com.example.application.module.transcribe.common.FileUtils;
+import com.example.application.core.common.FileUtils;
 
 import java.io.File;
 import java.nio.file.Path;
