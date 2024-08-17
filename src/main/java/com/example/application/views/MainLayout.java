@@ -4,7 +4,6 @@ import com.example.application.data.User;
 import com.example.application.security.AuthenticatedUser;
 import com.example.application.views.chat.ChatView;
 import com.example.application.views.checkoutform.CheckoutFormView;
-import com.example.application.views.collaborativemasterdetail.CollaborativeMasterDetailView;
 import com.example.application.views.feed.FeedView;
 import com.example.application.views.gridwithfilters.GridwithFiltersView;
 import com.example.application.views.home.HomeView;
@@ -86,11 +85,6 @@ public class MainLayout extends AppLayout {
         }
         if (accessChecker.hasAccess(FeedView.class)) {
             nav.addItem(new SideNavItem("Feed", FeedView.class, LineAwesomeIcon.LIST_SOLID.create()));
-
-        }
-        if (accessChecker.hasAccess(CollaborativeMasterDetailView.class)) {
-            nav.addItem(new SideNavItem("Collaborative Master-Detail", CollaborativeMasterDetailView.class,
-                    LineAwesomeIcon.COLUMNS_SOLID.create()));
 
         }
         if (accessChecker.hasAccess(PersonFormView.class)) {
