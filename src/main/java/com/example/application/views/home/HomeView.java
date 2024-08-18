@@ -5,8 +5,8 @@ import com.example.application.core.common.utils.UriUtils;
 import com.example.application.core.media.downloader.MediaDownloader;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Composite;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -34,6 +34,26 @@ public class HomeView extends Composite<VerticalLayout> {
                     AudioTranscoder audioTranscoder) {
         HorizontalLayout layoutRow2 = new HorizontalLayout();
 
+        var image = new Image();
+        image.setWidth("400px");
+        var title = new NativeLabel("Title");
+
+        var findVideo = new TextField();
+        findVideo.setPlaceholder("Enter a Facebook or YouTube video URL");
+        var findVideoButton = new Button("Find Video");
+        findVideoButton.addClickListener(e -> {
+            mediaDownloaderList.stream().filter(d -> d.supports(UriUtils.newUri(findVideo.getValue())))
+                    .findFirst()
+                    .ifPresent(d -> {
+                        var result = d.find(UriUtils.newUri(findVideo.getValue()));
+                        result.ifPresent(r -> {
+                            image.setSrc(r.getThumbnailUri().toString());
+                            image.setAlt(r.getTitle());
+                            title.setText(r.getTitle());
+                        });
+                    });
+        });
+
         var textInput = new TextField();
         var button = new Button("Download");
 
@@ -48,45 +68,14 @@ public class HomeView extends Composite<VerticalLayout> {
         progressBarLabel.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         var progress = new VerticalLayout(progressBarLabel, progressBar);
 
-        var currentUI = UI.getCurrent();
-
-        button.addClickListener(event -> {
-            var url = textInput.getValue();
-            log.info("Downloading media from URL: {}", url);
-            Thread.ofVirtual().start(() -> {
-                 var result = mediaDownloaderList.stream()
-                        .filter(downloader -> downloader.supports(UriUtils.newUri(url)))
-                        .findFirst()
-                        .orElseThrow()
-                        .find(UriUtils.newUri(url));
-                        //.download(UriUtils.newUri(url), p -> currentUI.access(() -> {
-                        //    progressBar.setValue(p);
-                        //    progressBarLabelValue.setText(p + "%");
-                        //}));
-
-                if (result.isPresent()) {
-                    log.info("Found media title: {}", result.get().getTitle());
-                    log.info("Found media thumbnail: {}", result.get().getThumbnailUri());
-                } else {
-                    log.info("Media not found");
-                }
-
-               //var transcodeCommand = TranscodeCommand.builder()
-               //        .source(file)
-               //        .audioContainer(AudioContainer.MP3)
-               //        .build();
-               //var t = audioTranscoder.transcode(transcodeCommand);
-
-               //log.info("Downloaded file: {}", file);
-               //log.info("Transcoded file: {}", t);
-            });
-        });
-
-        layoutRow2.add(textInput, button, progress);
+        layoutRow2.add(findVideo, findVideoButton);
 
         HorizontalLayout layoutRow = new HorizontalLayout();
         VerticalLayout layoutColumn2 = new VerticalLayout();
         VerticalLayout layoutColumn3 = new VerticalLayout();
+
+        layoutColumn3.add(image, title);
+
         HorizontalLayout layoutRow3 = new HorizontalLayout();
         getContent().setWidth("100%");
         getContent().getStyle().set("flex-grow", "1");

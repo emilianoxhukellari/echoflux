@@ -1,5 +1,6 @@
 package com.example.application.core.media.downloader.provider.youtube;
 
+import com.example.application.core.common.utils.MoreLists;
 import com.example.application.core.common.utils.UriUtils;
 import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
 import com.example.application.core.media.downloader.MediaDownloader;
@@ -9,7 +10,6 @@ import com.github.kiulian.downloader.YoutubeDownloader;
 import com.github.kiulian.downloader.downloader.request.RequestVideoFileDownload;
 import com.github.kiulian.downloader.downloader.request.RequestVideoInfo;
 import com.github.kiulian.downloader.model.videos.formats.AudioFormat;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
 
@@ -47,13 +47,7 @@ public class YouTubeMediaDownloader implements MediaDownloader {
         return Optional.ofNullable(downloader.getVideoInfo(infoRequest).data())
                 .map(i -> MediaFindResult.builder()
                         .title(i.details().title())
-                        .thumbnailUri(
-                                ListUtils.emptyIfNull(i.details().thumbnails())
-                                        .reversed()
-                                        .stream()
-                                        .findFirst()
-                                        .map(UriUtils::newUri).orElse(null)
-                        )
+                        .thumbnailUri(UriUtils.newUri(MoreLists.getLast(i.details().thumbnails())))
                         .build());
     }
 
