@@ -1,4 +1,4 @@
-package com.example.application.core.common;
+package com.example.application.core.common.utils;
 
 import lombok.SneakyThrows;
 

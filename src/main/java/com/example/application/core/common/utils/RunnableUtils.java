@@ -1,4 +1,6 @@
-package com.example.application.core.common;
+package com.example.application.core.common.utils;
+
+import org.apache.commons.lang3.Validate;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -11,10 +13,14 @@ public class RunnableUtils {
     private static final ExecutorService VIRTUAL_THREAD_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     public static Future<?> runOnVirtual(Runnable runnable) {
+        Validate.notNull(runnable, "Runnable is required to run on a virtual thread");
+
         return VIRTUAL_THREAD_EXECUTOR.submit(runnable);
     }
 
     public static <T> Future<T> runOnVirtual(Callable<T> callable) {
+        Validate.notNull(callable, "Callable is required to run on a virtual thread");
+
         return VIRTUAL_THREAD_EXECUTOR.submit(callable);
     }
 

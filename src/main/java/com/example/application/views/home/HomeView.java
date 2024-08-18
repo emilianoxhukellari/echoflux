@@ -1,8 +1,7 @@
 package com.example.application.views.home;
 
-import com.example.application.core.common.UriUtils;
-import com.example.application.core.ffmpeg.FFmpegFactory;
-import com.example.application.core.ffmpeg.FFprobeFactory;
+import com.example.application.core.audio.transcoder.AudioTranscoder;
+import com.example.application.core.common.utils.UriUtils;
 import com.example.application.core.media.downloader.MediaDownloader;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Composite;
@@ -31,10 +30,9 @@ import java.util.List;
 @Slf4j
 public class HomeView extends Composite<VerticalLayout> {
 
-    public HomeView(List<MediaDownloader> mediaDownloaderList) {
+    public HomeView(List<MediaDownloader> mediaDownloaderList,
+                    AudioTranscoder audioTranscoder) {
         HorizontalLayout layoutRow2 = new HorizontalLayout();
-        var ffmpeg = FFmpegFactory.ffmpeg();
-        var ffprobe = FFprobeFactory.ffprobe();
 
         var textInput = new TextField();
         var button = new Button("Download");
@@ -54,17 +52,33 @@ public class HomeView extends Composite<VerticalLayout> {
 
         button.addClickListener(event -> {
             var url = textInput.getValue();
+            log.info("Downloading media from URL: {}", url);
             Thread.ofVirtual().start(() -> {
-                var file = mediaDownloaderList.stream()
+                 var result = mediaDownloaderList.stream()
                         .filter(downloader -> downloader.supports(UriUtils.newUri(url)))
                         .findFirst()
                         .orElseThrow()
-                        .download(UriUtils.newUri(url), p -> currentUI.access(() -> {
-                            progressBar.setValue(p);
-                            progressBarLabelValue.setText(p + "%");
-                        }));
+                        .find(UriUtils.newUri(url));
+                        //.download(UriUtils.newUri(url), p -> currentUI.access(() -> {
+                        //    progressBar.setValue(p);
+                        //    progressBarLabelValue.setText(p + "%");
+                        //}));
 
-                log.info("Downloaded file: {}", file);
+                if (result.isPresent()) {
+                    log.info("Found media title: {}", result.get().getTitle());
+                    log.info("Found media thumbnail: {}", result.get().getThumbnailUri());
+                } else {
+                    log.info("Media not found");
+                }
+
+               //var transcodeCommand = TranscodeCommand.builder()
+               //        .source(file)
+               //        .audioContainer(AudioContainer.MP3)
+               //        .build();
+               //var t = audioTranscoder.transcode(transcodeCommand);
+
+               //log.info("Downloaded file: {}", file);
+               //log.info("Transcoded file: {}", t);
             });
         });
 

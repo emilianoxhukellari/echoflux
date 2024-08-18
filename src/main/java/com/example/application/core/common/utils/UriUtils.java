@@ -1,13 +1,15 @@
-package com.example.application.core.common;
+package com.example.application.core.common.utils;
 
-import org.apache.commons.lang3.Validate;
+import jakarta.annotation.Nullable;
 
 import java.net.URI;
 
 public final class UriUtils {
 
-    public static URI newUri(String uri) {
-        Validate.notBlank(uri, "URI is required");
+    public static @Nullable URI newUri(@Nullable String uri) {
+        if (uri == null) {
+            return null;
+        }
 
         try {
             return URI.create(uri);

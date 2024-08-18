@@ -1,9 +1,9 @@
-package com.example.application.core.ffmpeg;
+package com.example.application.core.audio.ffmpeg;
 
 import lombok.SneakyThrows;
 import net.bramp.ffmpeg.FFprobe;
 
-public class FFprobeFactory {
+public final class FFprobeManager {
 
     private static final FFprobe FFPROBE = newFFprobe();
 

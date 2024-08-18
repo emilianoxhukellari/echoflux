@@ -1,6 +1,6 @@
 package com.example.application.core.media.downloader.youtube_dl;
 
-import com.example.application.core.common.RunnableUtils;
+import com.example.application.core.common.utils.RunnableUtils;
 import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
@@ -22,6 +22,18 @@ public final class YouTubeDL {
     private static final Pattern PROGRESS_PATTERN = Pattern.compile("(\\d+\\.\\d+|\\d+)%");
     private static final int CARRIAGE_RETURN = 13;
 
+    /**
+     * @throws YouTubeDLMediaNotFound if the media was not found
+     * @throws YouTubeDLException if an error occurred during the execution
+     * */
+    public static YouTubeDLResponse execute(YouTubeDLRequest request) {
+        return execute(request, null);
+    }
+
+    /**
+     * @throws YouTubeDLMediaNotFound if the media was not found
+     * @throws YouTubeDLException if an error occurred during the execution
+     * */
     @SneakyThrows
     public static YouTubeDLResponse execute(YouTubeDLRequest request, MediaDownloadProgressCallback callback) {
         var command = String.format("%s %s", EXECUTABLE_PATH, request.buildOptions());
@@ -51,7 +63,11 @@ public final class YouTubeDL {
         var out = outBuffer.toString();
         var err = errBuffer.toString();
         if (exitCode > 0) {
-            throw new YouTubeDLException(String.format("Error in YouTubeDL execution: %s", err));
+            if (StringUtils.containsAny(err, "404", "Unsupported URL")) {
+                throw new YouTubeDLMediaNotFound(err);
+            } else {
+                throw new YouTubeDLException(String.format("Error in YouTubeDL execution: %s", err));
+            }
         } else {
             return YouTubeDLResponse.builder()
                     .exitCode(exitCode)
