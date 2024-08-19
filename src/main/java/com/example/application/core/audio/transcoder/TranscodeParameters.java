@@ -8,16 +8,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.nio.file.Path;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TranscodeCommand {
-
-    @NotNull
-    private Path source;
+public class TranscodeParameters {
 
     @NotNull
     @Builder.Default

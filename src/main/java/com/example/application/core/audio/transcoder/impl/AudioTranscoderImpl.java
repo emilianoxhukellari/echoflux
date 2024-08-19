@@ -2,7 +2,7 @@ package com.example.application.core.audio.transcoder.impl;
 
 import com.example.application.core.audio.ffmpeg.FFmpegManager;
 import com.example.application.core.audio.transcoder.AudioTranscoder;
-import com.example.application.core.audio.transcoder.TranscodeCommand;
+import com.example.application.core.audio.transcoder.TranscodeParameters;
 import com.example.application.core.audio.transcoder.temp_file.TranscoderTempDirectory;
 import lombok.SneakyThrows;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
@@ -15,18 +15,18 @@ import java.nio.file.Path;
 public class AudioTranscoderImpl implements AudioTranscoder {
 
     @SneakyThrows
-    public Path transcode(TranscodeCommand command) {
-        var fileName = String.format("%s.%s", newFileName(), command.getAudioContainer().getContainer());
+    public Path transcode(Path source, TranscodeParameters parameters) {
+        var fileName = String.format("%s.%s", newFileName(), parameters.getAudioContainer().getContainer());
         var outputPath = TranscoderTempDirectory.INSTANCE.locationPath().resolve(fileName).toAbsolutePath();
 
         var outputBuilder = new FFmpegOutputBuilder()
                 .setFilename(outputPath.toString())
-                .setAudioCodec(command.getAudioContainer().getCodec())
-                .setAudioChannels(command.getChannels())
-                .setFormat(command.getAudioContainer().getContainer());
+                .setAudioCodec(parameters.getAudioContainer().getCodec())
+                .setAudioChannels(parameters.getChannels())
+                .setFormat(parameters.getAudioContainer().getContainer());
 
         var builder = new FFmpegBuilder()
-                .setInput(command.getSource().toAbsolutePath().toString())
+                .setInput(source.toAbsolutePath().toString())
                 .addOutput(outputBuilder);
 
         FFmpegManager.ffmpeg().run(builder.build());

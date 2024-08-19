@@ -10,6 +10,6 @@ import java.nio.file.Path;
 @Validated
 public interface AudioTranscoder extends TempFileNameGenerator {
 
-    Path transcode(@Valid @NotNull TranscodeCommand command);
+    Path transcode(@NotNull Path source, @Valid @NotNull TranscodeParameters command);
 
 }

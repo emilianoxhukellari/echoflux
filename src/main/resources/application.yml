@@ -1,0 +1,35 @@
+server:
+  port: ${PORT:8080}
+
+logging:
+  level:
+    org:
+      atmosphere: warn
+
+vaadin:
+  launch-browser: true
+  allowed-packages: com.vaadin,org.vaadin,com.example.application
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vaadinstart
+    username: vaadinstart
+    password: vaadinstart
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+  servlet:
+    multipart:
+      max-file-size: 5000MB
+      max-request-size: 5000MB
+  sql:
+    init:
+      mode: always
+
+gcloud:
+  project-id: ${TRANSCRIBE_GCLOUD_PROJECT_ID}
+  private-key: ${TRANSCRIBE_GCLOUD_KEY}
+  bucket-name: ${TRANSCRIBE_GCLOUD_BUCKET_NAME}
+  speech-endpoint: 'europe-west4-speech.googleapis.com:443'
+  location: 'europe-west4'

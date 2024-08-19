@@ -2,8 +2,10 @@ package com.example.application.core.common.utils;
 
 import jakarta.annotation.Nullable;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 
 import java.util.List;
+import java.util.function.Function;
 
 public final class MoreLists {
 
@@ -23,6 +25,12 @@ public final class MoreLists {
         }
 
         return list.getFirst();
+    }
+
+    public static <T, R> List<R> collect(@Nullable List<T> list, Function<T, R> mapper) {
+        return ListUtils.emptyIfNull(list).stream()
+                .map(mapper)
+                .toList();
     }
 
 }
