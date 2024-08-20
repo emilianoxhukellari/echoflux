@@ -4,10 +4,11 @@ import com.example.application.core.common.utils.UriUtils;
 import com.example.application.core.media.downloader.MediaDownloadProgressCallback;
 import com.example.application.core.media.downloader.MediaDownloader;
 import com.example.application.core.media.downloader.MediaFindResult;
+import com.example.application.core.media.downloader.youtube_dl.YouTubeDL;
 import com.example.application.core.media.downloader.youtube_dl.YouTubeDLMediaNotFound;
 import com.example.application.core.media.temp_file.MediaTempDirectory;
-import com.example.application.core.media.downloader.youtube_dl.YouTubeDL;
 import com.example.application.core.media.downloader.youtube_dl.YouTubeDLRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -21,7 +22,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class FacebookMediaDownloader implements MediaDownloader {
+
+    private final YouTubeDL youTubeDL;
 
     @Override
     @SneakyThrows
@@ -32,7 +36,7 @@ public class FacebookMediaDownloader implements MediaDownloader {
                 .directory(MediaTempDirectory.INSTANCE.locationString())
                 .options(List.of("format bestaudio", "output " + fileName + ".%(ext)s"))
                 .build();
-        YouTubeDL.execute(request, callback);
+        youTubeDL.execute(request, callback);
 
         var fileFilter = WildcardFileFilter.builder()
                 .setWildcards(new String[]{fileName + ".*"})
@@ -53,7 +57,7 @@ public class FacebookMediaDownloader implements MediaDownloader {
 
         String out;
         try {
-            out = YouTubeDL.execute(request).getOutput();
+            out = youTubeDL.execute(request).getOutput();
         } catch (YouTubeDLMediaNotFound e) {
             return Optional.empty();
         }

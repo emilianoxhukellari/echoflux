@@ -1,9 +1,10 @@
 package com.example.application.core.audio.transcoder.impl;
 
-import com.example.application.core.audio.ffmpeg.FFmpegManager;
+import com.example.application.core.audio.ffmpeg.FFmpegWrapper;
 import com.example.application.core.audio.transcoder.AudioTranscoder;
 import com.example.application.core.audio.transcoder.TranscodeParameters;
 import com.example.application.core.audio.transcoder.temp_file.TranscoderTempDirectory;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
@@ -12,7 +13,10 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Path;
 
 @Component
+@RequiredArgsConstructor
 public class AudioTranscoderImpl implements AudioTranscoder {
+
+    private final FFmpegWrapper fFmpegWrapper;
 
     @SneakyThrows
     public Path transcode(Path source, TranscodeParameters parameters) {
@@ -29,7 +33,7 @@ public class AudioTranscoderImpl implements AudioTranscoder {
                 .setInput(source.toAbsolutePath().toString())
                 .addOutput(outputBuilder);
 
-        FFmpegManager.ffmpeg().run(builder.build());
+        fFmpegWrapper.ffmpeg().run(builder.build());
 
         return outputPath;
     }

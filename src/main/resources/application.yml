@@ -33,3 +33,10 @@ gcloud:
   bucket-name: ${TRANSCRIBE_GCLOUD_BUCKET_NAME}
   speech-endpoint: 'europe-west4-speech.googleapis.com:443'
   location: 'europe-west4'
+
+youtube-dl:
+  execution-path: ${YOUTUBE_DL_EXECUTION_PATH}
+
+ffmpeg:
+  ffmpeg-execution-path: ${FFMPEG_EXECUTION_PATH}
+  ffprobe-execution-path: ${FFPROBE_EXECUTION_PATH}

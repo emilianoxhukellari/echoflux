@@ -1,5 +1,6 @@
 package com.example.application.views.home;
 
+import com.example.application.core.audio.common.AudioContainer;
 import com.example.application.core.audio.transcoder.AudioTranscoder;
 import com.example.application.core.audio.transcoder.TranscodeParameters;
 import com.example.application.core.cloud_storage.CloudStorage;
@@ -72,7 +73,7 @@ public class HomeView extends Composite<VerticalLayout> {
                     .download(UriUtils.newUri(textInput.getValue()));
 
             log.info("Downloaded file: {}", downloadedFile);
-            var convertedFile = audioTranscoder.transcode(downloadedFile, TranscodeParameters.builder().build());
+            var convertedFile = audioTranscoder.transcode(downloadedFile, TranscodeParameters.builder().audioContainer(AudioContainer.WAV).build());
             log.info("Converted file: {}", convertedFile);
             var resourceInfo = cloudStorage.upload(convertedFile);
             log.info("Uploaded file: {}", resourceInfo);
