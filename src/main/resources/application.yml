@@ -8,7 +8,7 @@ logging:
 
 vaadin:
   launch-browser: true
-  allowed-packages: com.vaadin,org.vaadin,com.example.application
+  allowed-packages: com.vaadin,org.vaadin,transcribe
 
 spring:
   datasource:
@@ -39,4 +39,4 @@ youtube-dl:
 
 ffmpeg:
   ffmpeg-execution-path: ${FFMPEG_EXECUTION_PATH}
-  ffprobe-execution-path: ${FFPROBE_EXECUTION_PATH}
+  ffprobe-execution-path: '${FFPROBE_EXECUTION_PATH}'
