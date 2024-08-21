@@ -1,7 +1,7 @@
 package transcribe.core.media.downloader;
 
 
-import transcribe.common.log.LogMethodExecution;
+import transcribe.common.log.LoggedMethodExecution;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 import transcribe.core.common.temp_file.TempFileNameGenerator;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +17,7 @@ import java.util.Optional;
 @Validated
 public interface MediaDownloader extends TempFileNameGenerator {
 
-    @LogMethodExecution
+    @LoggedMethodExecution
     default Path download(@NotNull(message = "Video uri is required") URI uri) {
         return download(uri, p -> {});
     }

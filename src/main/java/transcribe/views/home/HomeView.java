@@ -4,9 +4,12 @@ import transcribe.core.audio.common.AudioContainer;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
 import transcribe.core.cloud_storage.CloudStorage;
+import transcribe.core.common.utils.RunnableUtils;
 import transcribe.core.common.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.transcribe.SpeechToText;
+import transcribe.core.transcribe.common.Language;
+import transcribe.core.transcribe.common.Word;
 import transcribe.views.MainLayout;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.button.Button;
@@ -65,29 +68,28 @@ public class HomeView extends Composite<VerticalLayout> {
         var textInput = new TextField();
         var button = new Button("Download");
 
-        button.addClickListener(e -> {
-            var downloadedFile = mediaDownloaderList.stream().filter(d -> d.supports(UriUtils.newUri(textInput.getValue())))
-                    .findFirst()
-                    .orElseThrow()
-                    .download(UriUtils.newUri(textInput.getValue()));
+        button.addClickListener(e -> RunnableUtils.runOnVirtual(
+                () -> {
+                    var downloadedFile = mediaDownloaderList.stream().filter(d -> d.supports(UriUtils.newUri(textInput.getValue())))
+                            .findFirst()
+                            .orElseThrow()
+                            .download(UriUtils.newUri(textInput.getValue()));
 
-            log.info("Downloaded file: {}", downloadedFile);
-            var convertedFile = audioTranscoder.transcode(downloadedFile, TranscodeParameters.builder().audioContainer(AudioContainer.WAV).build());
-            log.info("Converted file: {}", convertedFile);
-            var resourceInfo = cloudStorage.upload(convertedFile);
-            log.info("Uploaded file: {}", resourceInfo);
+                    log.info("Downloaded file: {}", downloadedFile);
+                    var convertedFile = audioTranscoder.transcode(downloadedFile, TranscodeParameters.builder().audioContainer(AudioContainer.OGG).build());
+                    log.info("Converted file: {}", convertedFile);
+                    var resourceInfo = cloudStorage.upload(convertedFile);
+                    log.info("Uploaded file: {}", resourceInfo);
 
-
-            //var transcription = speechToText.transcribe(resourceInfo.getUri(), Language.ENGLISH_US);
-            //log.info("Transcription: {}", transcription.getTranscript());
-            //log.info("Words: {}", transcription.getWords());
-            //var transcriptionFromWords = transcription.getWords()
-            //        .stream()
-            //        .map(Word::getText)
-            //        .reduce((a, b) -> a + " " + b)
-            //        .orElse("");
-            //log.info("Transcription from words: {}", transcriptionFromWords);
-        });
+                    var transcription = speechToText.transcribe(resourceInfo.getUri(), Language.ENGLISH_US);
+                    var transcriptionFromWords = transcription.getWords()
+                            .stream()
+                            .map(Word::getText)
+                            .reduce((a, b) -> a + " " + b)
+                            .orElse("");
+                    log.info("Transcription from words: {}", transcriptionFromWords);
+                }
+        ));
 
         var progressBar = new ProgressBar(0, 100);
         var progressBarLabelText = new NativeLabel(

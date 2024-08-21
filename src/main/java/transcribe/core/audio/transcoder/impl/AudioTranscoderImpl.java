@@ -1,6 +1,6 @@
 package transcribe.core.audio.transcoder.impl;
 
-import transcribe.common.log.LogMethodExecution;
+import transcribe.common.log.LoggedMethodExecution;
 import transcribe.core.audio.ffmpeg.FFmpegWrapper;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
@@ -20,7 +20,7 @@ public class AudioTranscoderImpl implements AudioTranscoder {
     private final FFmpegWrapper fFmpegWrapper;
 
     @SneakyThrows
-    @LogMethodExecution
+    @LoggedMethodExecution
     public Path transcode(Path source, TranscodeParameters parameters) {
         var fileName = String.format("%s.%s", newFileName(), parameters.getAudioContainer().getContainer());
         var outputPath = TranscoderTempDirectory.INSTANCE.locationPath().resolve(fileName).toAbsolutePath();

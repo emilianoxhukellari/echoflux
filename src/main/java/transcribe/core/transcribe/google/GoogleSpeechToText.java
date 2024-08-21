@@ -1,5 +1,6 @@
 package transcribe.core.transcribe.google;
 
+import transcribe.common.log.LoggedMethodExecution;
 import transcribe.config.properties.GoogleCloudProperties;
 import transcribe.core.common.utils.MoreLists;
 import transcribe.core.transcribe.SpeechToText;
@@ -32,6 +33,7 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
     }
 
     @SneakyThrows
+    @LoggedMethodExecution(logReturn = false)
     public TranscribeResult transcribe(URI cloudUri, List<Language> languages) {
         var recognitionConfig = newRecognitionConfig(languages);
         var uri = cloudUri.toString();

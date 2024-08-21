@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface LogMethodExecution {
+public @interface LoggedMethodExecution {
 
     boolean logArgs() default true;
     boolean logReturn() default true;

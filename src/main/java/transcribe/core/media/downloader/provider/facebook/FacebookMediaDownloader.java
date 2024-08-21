@@ -1,6 +1,6 @@
 package transcribe.core.media.downloader.provider.facebook;
 
-import transcribe.common.log.LogMethodExecution;
+import transcribe.common.log.LoggedMethodExecution;
 import transcribe.core.common.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.MediaDownloader;
@@ -30,7 +30,7 @@ public class FacebookMediaDownloader implements MediaDownloader {
 
     @Override
     @SneakyThrows
-    @LogMethodExecution
+    @LoggedMethodExecution
     public Path download(URI uri, MediaDownloadProgressCallback callback) {
         var fileName = newFileName();
         var request = YouTubeDLRequest.builder()
@@ -51,7 +51,7 @@ public class FacebookMediaDownloader implements MediaDownloader {
     }
 
     @Override
-    @LogMethodExecution
+    @LoggedMethodExecution
     public Optional<MediaFindResult> find(URI uri) {
         var request = YouTubeDLRequest.builder()
                 .uri(uri.toString())

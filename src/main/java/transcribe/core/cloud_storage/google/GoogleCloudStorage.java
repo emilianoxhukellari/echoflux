@@ -1,6 +1,6 @@
 package transcribe.core.cloud_storage.google;
 
-import transcribe.common.log.LogMethodExecution;
+import transcribe.common.log.LoggedMethodExecution;
 import transcribe.config.properties.GoogleCloudProperties;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.cloud_storage.ResourceInfo;
@@ -38,7 +38,7 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
 
     @Override
     @SneakyThrows
-    @LogMethodExecution
+    @LoggedMethodExecution
     public ResourceInfo upload(Path path) {
         var blobId = BlobId.of(googleCloudProperties.getBucketName(), UlidCreator.getUlid().toString());
         var blobInfo = BlobInfo.newBuilder(blobId).build();
@@ -55,13 +55,12 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
     }
 
     @Override
-    @LogMethodExecution
+    @LoggedMethodExecution
     public boolean delete(String resourceName) {
         return googleStorage.delete(BlobId.of(googleCloudProperties.getBucketName(), resourceName));
     }
 
     @Override
-    @LogMethodExecution
     public void destroy() throws Exception {
         googleStorage.close();
     }

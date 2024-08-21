@@ -1,6 +1,6 @@
 package transcribe.core.media.downloader.provider.youtube;
 
-import transcribe.common.log.LogMethodExecution;
+import transcribe.common.log.LoggedMethodExecution;
 import transcribe.core.common.utils.MoreLists;
 import transcribe.core.common.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
@@ -22,7 +22,7 @@ import java.util.Optional;
 public class YouTubeMediaDownloader implements MediaDownloader {
 
     @Override
-    @LogMethodExecution
+    @LoggedMethodExecution
     public Path download(URI uri, MediaDownloadProgressCallback callback) {
         var downloader = new YoutubeDownloader();
         var videoId = YouTubeUtils.uriToVideoId(uri);
@@ -41,7 +41,7 @@ public class YouTubeMediaDownloader implements MediaDownloader {
     }
 
     @Override
-    @LogMethodExecution
+    @LoggedMethodExecution
     public Optional<MediaFindResult> find(URI uri) {
         var downloader = new YoutubeDownloader();
         var videoId = YouTubeUtils.uriToVideoId(uri);

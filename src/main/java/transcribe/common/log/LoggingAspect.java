@@ -17,11 +17,11 @@ public class LoggingAspect {
     private static final String OBSERVED_EXECUTION_TIME = "[OBSERVED EXECUTION TIME]";
     private static final String OBSERVED_EXIT = "[OBSERVED EXIT]";
 
-    @Around("@annotation(transcribe.common.log.LogMethodExecution)")
+    @Around("@annotation(transcribe.common.log.LoggedMethodExecution)")
     public Object logMethodExecution(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         var methodSignature = (MethodSignature) proceedingJoinPoint.getSignature();
         var method = methodSignature.getMethod();
-        var logMethodExecution = method.getAnnotation(LogMethodExecution.class);
+        var logMethodExecution = method.getAnnotation(LoggedMethodExecution.class);
 
         var methodName = methodSignature.toShortString();
         var args = proceedingJoinPoint.getArgs();
