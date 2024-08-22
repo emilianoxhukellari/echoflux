@@ -8,7 +8,7 @@ import transcribe.core.transcribe.common.Word;
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface CommonMapper {
+public interface CoreMapper {
 
     @Mapping(target = "text", source = "word")
     @Mapping(target = "startOffset", qualifiedByName = "durationToSeconds")

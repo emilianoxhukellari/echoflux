@@ -23,9 +23,6 @@ spring:
     multipart:
       max-file-size: 5000MB
       max-request-size: 5000MB
-  sql:
-    init:
-      mode: always
 
 gcloud:
   project-id: ${TRANSCRIBE_GCLOUD_PROJECT_ID}
