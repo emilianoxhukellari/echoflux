@@ -16,9 +16,9 @@ spring:
     username: vaadinstart
     password: vaadinstart
   jpa:
-    hibernate:
-      ddl-auto: update
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
   servlet:
     multipart:
       max-file-size: 5000MB

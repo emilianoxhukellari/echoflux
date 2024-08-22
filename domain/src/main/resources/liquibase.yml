@@ -1,0 +1,5 @@
+url: jdbc:postgresql://localhost:5432/vaadinstart
+username: vaadinstart
+password: vaadinstart
+driver: org.postgresql.Driver
+changeLogFile: /db/changelog/db.changelog-master.xml

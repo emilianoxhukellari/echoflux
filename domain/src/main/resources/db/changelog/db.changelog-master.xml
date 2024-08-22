@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="create_application_user_and_role_tables" author="emiliano">
+        <sql>
+            create table application_user
+            (
+                id         bigserial primary key,
+                username   varchar(255) not null,
+                name       varchar(255) not null,
+                password   varchar(255) not null,
+                created_at timestamp,
+                created_by varchar(255),
+                updated_at timestamp,
+                updated_by varchar(255)
+            );
+
+            create table application_user_role
+            (
+                id                  bigserial primary key,
+                application_user_id bigint       not null references application_user (id),
+                role                varchar(255) not null,
+                created_at          timestamp,
+                created_by          varchar(255),
+                updated_at          timestamp,
+                updated_by          varchar(255)
+            );
+
+
+        </sql>
+    </changeSet>
+
+    <changeSet id="create_admin_user" author="emiliano">
+        <sql>
+            insert into application_user (username, name, password, created_at, created_by)
+            values ('admin', 'Emiliano Xhukellari', '$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.',
+                    now(),
+                    'system');
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_roles_to_admin_user" author="emiliano">
+        <sql>
+            insert into application_user_role (application_user_id, role, created_at, created_by)
+            values ((select id from application_user where username = 'admin'), 'ADMIN', now(), 'system');
+
+            insert into application_user_role (application_user_id, role, created_at, created_by)
+            values ((select id from application_user where username = 'admin'), 'USER', now(), 'system');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

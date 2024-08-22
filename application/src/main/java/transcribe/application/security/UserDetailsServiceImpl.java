@@ -1,42 +1,41 @@
 package transcribe.application.security;
 
-import org.springframework.security.core.GrantedAuthority;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import transcribe.application.data.User;
-import transcribe.application.data.UserRepository;
+import transcribe.domain.application_user.data.ApplicationUserEntity;
+import transcribe.domain.application_user.data.ApplicationUserRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
-
-    public UserDetailsServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final ApplicationUserRepository applicationUserRepository;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("No user present with username: " + username);
-        } else {
-            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getHashedPassword(),
-                    getAuthorities(user));
-        }
+        return applicationUserRepository.findByUsername(username)
+                .map(u -> User.builder()
+                        .username(u.getUsername())
+                        .password(u.getPassword())
+                        .authorities(getAuthorities(u))
+                        .build())
+                .orElseThrow(() -> new UsernameNotFoundException("No user present with username: " + username));
     }
 
-    private static List<GrantedAuthority> getAuthorities(User user) {
-        return user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
+    private static List<SimpleGrantedAuthority> getAuthorities(ApplicationUserEntity user) {
+        return user.getRoles()
+                .stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .toList();
 
     }
 

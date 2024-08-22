@@ -2,7 +2,6 @@ package transcribe.application.views;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
@@ -11,22 +10,18 @@ import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import transcribe.application.data.User;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.views.chat.ChatView;
 import transcribe.application.views.checkoutform.CheckoutFormView;
 import transcribe.application.views.feed.FeedView;
-import transcribe.application.views.gridwithfilters.GridwithFiltersView;
 import transcribe.application.views.home.HomeView;
 import transcribe.application.views.imagegallery.ImageGalleryView;
-import transcribe.application.views.items.ItemsView;
 import transcribe.application.views.personform.PersonFormView;
+import transcribe.domain.application_user.data.ApplicationUserEntity;
 
-import java.io.ByteArrayInputStream;
 import java.util.Optional;
 
 /**
@@ -75,10 +70,6 @@ public class MainLayout extends AppLayout {
             nav.addItem(new SideNavItem("Home", HomeView.class, LineAwesomeIcon.HOME_SOLID.create()));
 
         }
-        if (accessChecker.hasAccess(ItemsView.class)) {
-            nav.addItem(new SideNavItem("Items", ItemsView.class, LineAwesomeIcon.COLUMNS_SOLID.create()));
-
-        }
         if (accessChecker.hasAccess(FeedView.class)) {
             nav.addItem(new SideNavItem("Feed", FeedView.class, LineAwesomeIcon.LIST_SOLID.create()));
 
@@ -100,11 +91,6 @@ public class MainLayout extends AppLayout {
             nav.addItem(new SideNavItem("Checkout Form", CheckoutFormView.class, LineAwesomeIcon.CREDIT_CARD.create()));
 
         }
-        if (accessChecker.hasAccess(GridwithFiltersView.class)) {
-            nav.addItem(new SideNavItem("Grid with Filters", GridwithFiltersView.class,
-                    LineAwesomeIcon.FILTER_SOLID.create()));
-
-        }
 
         return nav;
     }
@@ -112,23 +98,13 @@ public class MainLayout extends AppLayout {
     private Footer createFooter() {
         Footer layout = new Footer();
 
-        Optional<User> maybeUser = authenticatedUser.get();
+        Optional<ApplicationUserEntity> maybeUser = authenticatedUser.get();
         if (maybeUser.isPresent()) {
-            User user = maybeUser.get();
-
-            Avatar avatar = new Avatar(user.getName());
-            StreamResource resource = new StreamResource("profile-pic",
-                    () -> new ByteArrayInputStream(user.getProfilePicture()));
-            avatar.setImageResource(resource);
-            avatar.setThemeName("xsmall");
-            avatar.getElement().setAttribute("tabindex", "-1");
-
+            var user = maybeUser.get();
             MenuBar userMenu = new MenuBar();
             userMenu.setThemeName("tertiary-inline contrast");
-
             MenuItem userName = userMenu.addItem("");
             Div div = new Div();
-            div.add(avatar);
             div.add(user.getName());
             div.add(new Icon("lumo", "dropdown"));
             div.getElement().getStyle().set("display", "flex");
