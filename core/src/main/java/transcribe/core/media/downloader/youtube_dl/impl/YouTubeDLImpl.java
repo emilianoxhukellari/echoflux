@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import transcribe.core.common.utils.RunnableUtils;
+import transcribe.core.common.executor.CommonExecutor;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.youtube_dl.*;
 import transcribe.core.properties.YouTubeDLProperties;
@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -27,9 +28,11 @@ public class YouTubeDLImpl implements YouTubeDL {
     private static final int CARRIAGE_RETURN = 13;
 
     private final YouTubeDLProperties youTubeDLProperties;
+    private final CommonExecutor commonExecutor;
 
-    public YouTubeDLImpl(YouTubeDLProperties youTubeDLProperties) {
+    public YouTubeDLImpl(YouTubeDLProperties youTubeDLProperties, CommonExecutor commonExecutor) {
         this.youTubeDLProperties = youTubeDLProperties;
+        this.commonExecutor = commonExecutor;
     }
 
     /**
@@ -65,8 +68,8 @@ public class YouTubeDLImpl implements YouTubeDL {
         @Cleanup
         var errBuffer = new StringBuilderWriter();
 
-        var stdOutProcessor = RunnableUtils.runOnVirtual(() -> extract(outStream, outBuffer, callback));
-        var stdErrProcessor = RunnableUtils.runOnVirtual(() -> extract(errStream, errBuffer));
+        var stdOutProcessor = CompletableFuture.runAsync(() -> extract(outStream, outBuffer, callback), commonExecutor);
+        var stdErrProcessor = CompletableFuture.runAsync(() -> extract(errStream, errBuffer), commonExecutor);
 
         stdOutProcessor.get();
         stdErrProcessor.get();

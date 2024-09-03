@@ -7,7 +7,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.factory.Mappers;
-import transcribe.core.common.mapper.CoreMapper;
+import transcribe.core.transcribe.common.SpeechToTextMapper;
 import transcribe.core.transcribe.common.TranscribeResult;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public final class GoogleSpeechToTextUtils {
 
-    private static final CoreMapper CORE_MAPPER = Mappers.getMapper(CoreMapper.class);
+    private static final SpeechToTextMapper speechToTextMapper = Mappers.getMapper(SpeechToTextMapper.class);
 
     public static TranscribeResult toTranscribeResult(@Nullable List<SpeechRecognitionResult> resultList) {
 
@@ -31,7 +31,7 @@ public final class GoogleSpeechToTextUtils {
                         ),
                         Collectors.flatMapping(
                                 alternative -> alternative.getWordsList().stream(),
-                                Collectors.mapping(CORE_MAPPER::toWord, Collectors.toList())
+                                Collectors.mapping(speechToTextMapper::toWord, Collectors.toList())
                         ),
                         TranscribeResult::new
                 ));

@@ -1,6 +1,8 @@
 package transcribe.core.transcribe.google;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v2.*;
 import lombok.Cleanup;
@@ -18,6 +20,7 @@ import transcribe.core.transcribe.common.TranscribeResult;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -52,7 +55,7 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
                 .setRecognizer(implicitRecognizer)
                 .build();
 
-        var response = speechClient.batchRecognizeAsync(batchRecognizeRequest).get();
+        var response = speechClient.batchRecognizeOperationCallable().call(batchRecognizeRequest);
         var singleResponse = response.getResultsMap().get(uri);
         var resultsList = singleResponse.getInlineResult().getTranscript().getResultsList();
 
@@ -84,12 +87,21 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
         var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);
         var credentials = GoogleCredentials.fromStream(privateKeyStream).createScoped(SpeechSettings.getDefaultServiceScopes());
 
-        var speechSettings = SpeechSettings.newBuilder()
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
-                .setEndpoint(properties.getSpeechEndpoint())
+        var retrySettings = RetrySettings.newBuilder()
+                .setInitialRetryDelayDuration(Duration.ofSeconds(5))
+                .setRetryDelayMultiplier(1.5)
+                .setMaxRetryDelayDuration(Duration.ofMinutes(1))
+                .setTotalTimeoutDuration(Duration.ofMinutes(30))
                 .build();
 
-        return SpeechClient.create(speechSettings);
+        var settingsBuilder = SpeechSettings.newBuilder()
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                .setEndpoint(properties.getSpeechEndpoint());
+
+        settingsBuilder.batchRecognizeOperationSettings()
+                .setPollingAlgorithm(OperationTimedPollAlgorithm.create(retrySettings));
+
+        return SpeechClient.create(settingsBuilder.build());
     }
 
     private static String newImplicitRecognizer(GoogleCloudProperties properties) {

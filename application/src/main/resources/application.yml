@@ -11,6 +11,9 @@ vaadin:
   allowed-packages: com.vaadin,org.vaadin,transcribe
 
 spring:
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: jdbc:postgresql://localhost:5432/vaadinstart
     username: vaadinstart
@@ -36,4 +39,4 @@ youtube-dl:
 
 ffmpeg:
   ffmpeg-execution-path: ${FFMPEG_EXECUTION_PATH}
-  ffprobe-execution-path: '${FFPROBE_EXECUTION_PATH}'
+  ffprobe-execution-path: ${FFPROBE_EXECUTION_PATH}

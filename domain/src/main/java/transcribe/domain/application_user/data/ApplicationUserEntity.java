@@ -12,6 +12,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,22 +38,31 @@ public class ApplicationUserEntity extends AuditEntity {
     private Long id;
 
     @Column(name = "username")
+    @NotBlank
     private String username;
 
     @Column(name = "name")
+    @NotBlank
     private String name;
 
     @JsonIgnore
     @Column(name = "password")
+    @NotBlank
     private String password;
+
+    @Column(name = "enabled")
+    @NotNull
+    @Builder.Default
+    private Boolean enabled = Boolean.TRUE;
 
     @CollectionTable(
             name = "application_user_role",
             joinColumns = @jakarta.persistence.JoinColumn(name = "application_user_id")
     )
-    @Enumerated(EnumType.STRING)
     @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
     @Column(name = "role")
+    @NotNull
     private Set<Role> roles;
 
 }

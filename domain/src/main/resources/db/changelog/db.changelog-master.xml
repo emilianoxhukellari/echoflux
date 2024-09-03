@@ -10,9 +10,10 @@
             create table application_user
             (
                 id         bigserial primary key,
-                username   varchar(255) not null,
+                username   varchar(255) not null unique,
                 name       varchar(255) not null,
                 password   varchar(255) not null,
+                enabled    boolean      not null default true,
                 created_at timestamp,
                 created_by varchar(255),
                 updated_at timestamp,
@@ -36,8 +37,9 @@
 
     <changeSet id="create_admin_user" author="emiliano">
         <sql>
-            insert into application_user (username, name, password, created_at, created_by)
-            values ('admin', 'Emiliano Xhukellari', '$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.',
+            insert into application_user (username, name, enabled, password, created_at, created_by)
+            values ('admin', 'Emiliano Xhukellari', true,
+                    '$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.',
                     now(),
                     'system');
         </sql>
@@ -50,6 +52,26 @@
 
             insert into application_user_role (application_user_id, role, created_at, created_by)
             values ((select id from application_user where username = 'admin'), 'USER', now(), 'system');
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_operation_table" author="emiliano">
+        <sql>
+            create table operation
+            (
+                id          bigserial primary key,
+                name        varchar(255) not null,
+                type        varchar(255) not null,
+                status      varchar(255) not null,
+                error       varchar(255),
+                started_at  timestamp    not null,
+                ended_at    timestamp,
+                description text,
+                created_at  timestamp,
+                created_by  varchar(255),
+                updated_at  timestamp,
+                updated_by  varchar(255)
+            );
         </sql>
     </changeSet>
 

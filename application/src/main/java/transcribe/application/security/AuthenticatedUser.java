@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import transcribe.core.common.utils.MoreSets;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.ApplicationUserRepository;
+import transcribe.domain.application_user.data.Role;
 
 import java.util.Optional;
 
@@ -25,6 +27,17 @@ public class AuthenticatedUser {
 
     public void logout() {
         authenticationContext.logout();
+    }
+
+    @Transactional
+    public boolean hasRole(Role role) {
+        return get().map(u -> MoreSets.contains(u.getRoles(), role))
+                .orElse(false);
+    }
+
+    @Transactional
+    public boolean isAdmin() {
+        return hasRole(Role.ADMIN);
     }
 
 }
