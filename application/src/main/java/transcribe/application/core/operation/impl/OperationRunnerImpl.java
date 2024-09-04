@@ -3,7 +3,6 @@ package transcribe.application.core.operation.impl;
 import com.vaadin.flow.component.UI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
 import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
@@ -24,10 +23,6 @@ public final class OperationRunnerImpl implements OperationRunner {
 
     @Override
     public <T> void run(Operation<T> operation) {
-        Validate.notNull(operation, "Operation is required to run");
-        Validate.notNull(operation.getType(), "Operation type is required to run");
-        Validate.notNull(operation.getCallable(), "Operation callable is required to run");
-
         var notifier = new OperationNotifier(operation.getName(), operation.getType());
         notifier.open();
 
@@ -43,9 +38,7 @@ public final class OperationRunnerImpl implements OperationRunner {
                 .thenAccept(result -> {
                     ui.access(() -> {
                         notifier.close();
-                        if (operation.getOnSuccess() != null) {
-                            operation.getOnSuccess().accept(result);
-                        }
+                        operation.getOnSuccess().accept(result);
                     });
 
                     operationService.updateSuccess(operationEntity.getId());
@@ -53,9 +46,7 @@ public final class OperationRunnerImpl implements OperationRunner {
                 }).exceptionally(e -> {
                     ui.access(() -> {
                         notifier.close();
-                        if (operation.getOnError() != null) {
-                            operation.getOnError().accept(e);
-                        }
+                        operation.getOnError().accept(e);
                         Notifications.showError(e);
                     });
 
@@ -64,10 +55,7 @@ public final class OperationRunnerImpl implements OperationRunner {
                     return null;
                 }).whenComplete((_, _) -> ui.access(() -> {
                     notifier.close();
-                    if (operation.getOnFinally() != null) {
-                        operation.getOnFinally().run();
-                    }
-
+                    operation.getOnFinally().run();
                     log.info("Operation [{}] complete", operation.getName());
                 }));
 

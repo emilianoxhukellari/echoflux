@@ -19,11 +19,7 @@ public class EnumJpaFilter<T> extends JpaFilter<T> {
         comboBox.setPlaceholder("Filter");
         comboBox.setWidth("10.6rem");
         comboBox.setClearButtonVisible(true);
-        comboBox.addValueChangeListener(_ -> {
-            if (listener != null) {
-                listener.run();
-            }
-        });
+        comboBox.addValueChangeListener(_ -> listener.run());
     }
 
     @Override
