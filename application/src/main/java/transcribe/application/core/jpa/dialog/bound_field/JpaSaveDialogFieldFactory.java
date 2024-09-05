@@ -11,7 +11,7 @@ import transcribe.domain.bean.BeanUtils;
 import java.util.Collection;
 
 @Slf4j
-public final class JpaCrudDialogFieldFactory {
+public final class JpaSaveDialogFieldFactory {
 
     private static final Collection<BoundFieldCreator> fieldCreators = SpringContext.get().getBeansOfType(BoundFieldCreator.class).values();
 

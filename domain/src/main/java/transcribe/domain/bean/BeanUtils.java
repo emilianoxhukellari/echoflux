@@ -68,7 +68,7 @@ public final class BeanUtils {
         return getFieldValue(bean, idField.getName());
     }
 
-    public static <T> String toPrettyName(Class<T> beanType) {
+    public static <T> String getPrettyName(Class<T> beanType) {
         return beanType.getSimpleName().replaceAll("([a-z])([A-Z])", "$1 $2");
     }
 

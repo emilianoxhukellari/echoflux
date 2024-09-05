@@ -88,10 +88,10 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
         var credentials = GoogleCredentials.fromStream(privateKeyStream).createScoped(SpeechSettings.getDefaultServiceScopes());
 
         var retrySettings = RetrySettings.newBuilder()
-                .setInitialRetryDelayDuration(Duration.ofSeconds(5))
+                .setInitialRetryDelayDuration(Duration.ofSeconds(30))
                 .setRetryDelayMultiplier(1.5)
                 .setMaxRetryDelayDuration(Duration.ofMinutes(1))
-                .setTotalTimeoutDuration(Duration.ofMinutes(30))
+                .setTotalTimeoutDuration(Duration.ofMinutes(60))
                 .build();
 
         var settingsBuilder = SpeechSettings.newBuilder()

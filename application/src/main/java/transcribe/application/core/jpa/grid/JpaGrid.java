@@ -4,8 +4,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.icon.AbstractIcon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -17,11 +17,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.jpa.core.CoreAttributePropertySet;
-import transcribe.application.core.jpa.dialog.crud.JpaCrudCorePropertiesDialog;
+import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
 import transcribe.application.core.jpa.filter.CombinedFilter;
 import transcribe.application.core.jpa.filter.FilterFactory;
 import transcribe.application.core.jpa.filter.JpaFilter;
+import transcribe.application.core.operation.Operation;
+import transcribe.application.core.operation.OperationCallable;
+import transcribe.application.core.operation.OperationRunner;
+import transcribe.application.spring.SpringContext;
 import transcribe.core.common.utils.MoreArrays;
 import transcribe.core.common.utils.MoreLists;
 import transcribe.domain.bean.BeanUtils;
@@ -44,6 +49,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     private final ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> filterDataProvider;
 
     private HeaderRow filterRow;
+    private GridContextMenu<T> contextMenu;
 
     public JpaGrid(Class<T> beanType, R repository) {
         super(DEFAULT_PAGE_SIZE);
@@ -55,6 +61,10 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         configureBeanType(beanType, false);
         setDataProvider(this.filterDataProvider);
         addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
+    }
+
+    public void refreshAll() {
+        getDataProvider().refreshAll();
     }
 
     public void addCoreAttributeColumns() {
@@ -143,6 +153,13 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         ensureFilterRow().getCell(getColumnByKey(filter.getProperty())).setComponent(filter.getComponent());
     }
 
+    public void addContextMenuItem(String text, Consumer<T> onClick) {
+        Validate.notBlank(text, "Text cannot be blank");
+        Validate.notNull(onClick, "OnClick consumer cannot be null");
+
+        ensureContextMenu().addItem(text, e -> e.getItem().ifPresent(onClick));
+    }
+
     private HeaderRow ensureFilterRow() {
         if (filterRow == null) {
             filterRow = appendHeaderRow();
@@ -151,14 +168,43 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         return filterRow;
     }
 
+    private GridContextMenu<T> ensureContextMenu() {
+        if (contextMenu == null) {
+            contextMenu = addContextMenu();
+        }
+
+        return contextMenu;
+    }
+
     public void addCrudActions() {
         addCrudActionsExcluding();
     }
 
     public void addCrudActionsExcluding(String... excludedProperties) {
         var excludedPropertiesList = MoreArrays.toList(excludedProperties);
+        addContextMenuItem(
+                "Edit",
+                v -> new JpaSaveCorePropertiesDialog<>(v, beanType, repository, excludedPropertiesList)
+                        .setSaveListener(this::refreshAll)
+                        .open()
+        );
+        addContextMenuItem("Delete", e -> Dialogs.confirm(
+                "Are you sure you want to delete this entity?",
+                () -> {
+                    var operation = Operation.builder()
+                            .name("Deleting entity")
+                            .description(String.format(
+                                    "Entity of type [%s] with ID [%s]",
+                                    BeanUtils.getPrettyName(beanType),
+                                    BeanUtils.getIdFieldValue(e, beanType)
+                            ))
+                            .callable(OperationCallable.ofRunnable(() -> repository.delete(e)))
+                            .onSuccess(_ -> refreshAll())
+                            .build();
 
-        addIconActionColumn(VaadinIcon.EDIT::create, v -> new JpaCrudCorePropertiesDialog<>(v, beanType, repository, excludedPropertiesList).open());
+                    SpringContext.getBean(OperationRunner.class).run(operation);
+                }
+        ));
     }
 
     public <I extends AbstractIcon<I>> Column<T> addIconActionColumn(Supplier<AbstractIcon<I>> iconSupplier, Consumer<T> onClick) {

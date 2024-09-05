@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public final class OperationRunnerImpl implements OperationRunner {
+public class OperationRunnerImpl implements OperationRunner {
 
     private final OperationService operationService;
     private final CommonExecutor commonExecutor;

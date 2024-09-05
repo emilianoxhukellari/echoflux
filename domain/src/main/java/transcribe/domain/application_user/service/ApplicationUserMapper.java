@@ -4,6 +4,7 @@ import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
@@ -15,6 +16,15 @@ import transcribe.domain.application_user.data.ApplicationUserEntity;
 public interface ApplicationUserMapper {
 
     @Mapping(target = "password", source = "hashedPassword")
-    ApplicationUserEntity map(CreateApplicationUserCommand command, String hashedPassword);
+    ApplicationUserEntity toEntity(CreateApplicationUserCommand command, String hashedPassword);
+
+    @Mapping(target = "id", ignore = true)
+    ApplicationUserEntity asEntity(@MappingTarget ApplicationUserEntity entity, UpdateApplicationUserCommand command);
+
+    @Mapping(target = "password", source = "hashedPassword")
+    @Mapping(target = "id", ignore = true)
+    ApplicationUserEntity asEntity(@MappingTarget ApplicationUserEntity entity, String hashedPassword);
+
+    UpdateApplicationUserCommand toUpdateCommand(ApplicationUserEntity entity);
 
 }

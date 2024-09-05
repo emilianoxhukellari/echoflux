@@ -5,18 +5,19 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import transcribe.domain.application_user.data.Role;
-import transcribe.domain.application_user.service.impl.HasPassword;
-import transcribe.domain.core.password.Password;
 
 import java.util.Set;
 
-@Builder
 @Data
+@Builder
 @AllArgsConstructor
-@RequiredArgsConstructor
-public class CreateApplicationUserCommand implements HasPassword {
+@NoArgsConstructor
+public class UpdateApplicationUserCommand {
+
+    @NotNull
+    private Long id;
 
     @NotBlank
     private String username;
@@ -24,17 +25,8 @@ public class CreateApplicationUserCommand implements HasPassword {
     @NotBlank
     private String name;
 
-    @NotBlank
-    @Password
-    private String password;
-
-    @NotBlank
-    @Password
-    private String passwordConfirmation;
-
     @NotNull
-    @Builder.Default
-    private Boolean enabled = true;
+    private Boolean enabled;
 
     @NotNull
     private Set<Role> roles;

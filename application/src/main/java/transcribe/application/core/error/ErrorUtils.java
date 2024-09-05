@@ -1,7 +1,7 @@
 package transcribe.application.core.error;
 
 import transcribe.core.common.error.PropagatedCoreException;
-import transcribe.domain.common.error.PropagatedDomainException;
+import transcribe.domain.core.error.PropagatedDomainException;
 
 public final class ErrorUtils {
 

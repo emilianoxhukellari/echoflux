@@ -10,8 +10,11 @@ import java.lang.annotation.Target;
 public @interface LoggedMethodExecution {
 
     boolean logArgs() default true;
+
     boolean logReturn() default true;
+
     boolean logExecutionTime() default true;
+
     boolean logException() default true;
 
 }

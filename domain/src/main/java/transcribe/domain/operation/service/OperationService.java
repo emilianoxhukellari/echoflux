@@ -11,8 +11,8 @@ public interface OperationService {
 
     OperationEntity createRunning(@NotBlank String name, String description, @NotNull OperationType type);
 
-    void updateSuccess(@NotNull Long id);
+    OperationEntity updateSuccess(@NotNull Long id);
 
-    void updateFailure(@NotNull Long id, @NotNull Throwable error);
+    OperationEntity updateFailure(@NotNull Long id, @NotNull Throwable error);
 
 }

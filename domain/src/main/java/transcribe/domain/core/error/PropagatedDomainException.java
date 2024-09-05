@@ -1,4 +1,4 @@
-package transcribe.domain.common.error;
+package transcribe.domain.core.error;
 
 public class PropagatedDomainException extends RuntimeException {
 

@@ -34,20 +34,19 @@ public class OperationServiceImpl implements OperationService {
     }
 
     @Override
-    public void updateSuccess(Long id) {
-        repository.findById(id)
-                .map(e -> mapper.asEntity(e, LocalDateTime.now(), OperationStatus.SUCCESS))
-                .map(repository::saveAndFlush)
-                .orElseThrow();
+    public OperationEntity updateSuccess(Long id) {
+        var operation = repository.getReferenceById(id);
+        var updated = mapper.asEntity(operation, LocalDateTime.now(), OperationStatus.SUCCESS);
+
+        return repository.saveAndFlush(updated);
     }
 
     @Override
-    public void updateFailure(Long id, Throwable error) {
-        repository.findById(id)
-                .map(e -> mapper.asEntity(e, LocalDateTime.now(), OperationStatus.FAILURE, error.getMessage()))
-                .map(repository::saveAndFlush)
-                .orElseThrow();
-    }
+    public OperationEntity updateFailure(Long id, Throwable error) {
+        var operation = repository.getReferenceById(id);
+        var updated = mapper.asEntity(operation, LocalDateTime.now(), OperationStatus.FAILURE, error.getMessage());
 
+        return repository.saveAndFlush(updated);
+    }
 
 }

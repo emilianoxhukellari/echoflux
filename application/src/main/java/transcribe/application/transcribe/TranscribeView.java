@@ -17,9 +17,11 @@ import transcribe.core.audio.transcoder.TranscodeParameters;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.common.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloader;
+import transcribe.core.transcribe.SpeechToText;
+import transcribe.core.transcribe.common.Language;
+import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.operation.data.OperationType;
 
-import java.net.URI;
 import java.util.List;
 
 
@@ -32,12 +34,13 @@ public class TranscribeView extends Composite<VerticalLayout> {
     public TranscribeView(CloudStorage cloudStorage,
                           List<MediaDownloader> mediaDownloaderList,
                           AudioTranscoder audioTranscoder,
-                          OperationRunner operationRunner) {
+                          OperationRunner operationRunner,
+                          SpeechToText speechToText) {
 
         var videoUrl = new TextField();
         videoUrl.setPlaceholder("Video URL");
 
-        var operation = Operation.<URI>builder()
+        var operation = Operation.<TranscribeResult>builder()
                 .name("Transcribe")
                 .callable(
                         () -> {
@@ -51,10 +54,10 @@ public class TranscribeView extends Composite<VerticalLayout> {
                             var transcodeResult = audioTranscoder.transcode(downloadResult, TranscodeParameters.builder().build());
                             var uploadResult = cloudStorage.upload(transcodeResult);
 
-                            return uploadResult.getUri();
+                            return speechToText.transcribe(uploadResult.getUri(), Language.ALBANIAN);
                         }
                 )
-                .onSuccess(uri -> log.info("TT audio uploaded to {}", uri))
+                .onSuccess(transcribeResult -> log.info("Transcription result: {}", transcribeResult.getTranscript()))
                 .onError(e -> log.error("Error", e))
                 .onFinally(() -> log.info("Finally"))
                 .type(OperationType.NON_BLOCKING)
@@ -67,6 +70,5 @@ public class TranscribeView extends Composite<VerticalLayout> {
         verticalLayout.add(videoUrl, button);
 
         getContent().add(verticalLayout);
-
     }
 }

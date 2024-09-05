@@ -58,8 +58,8 @@ public class OperationEntity extends AuditEntity {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
-    @Formula("extract(epoch from (ended_at - started_at)) * 1000")
-    private Double durationInMillis;
+    @Formula("extract(epoch from (ended_at - started_at))")
+    private Double durationInSeconds;
 
     @Column(name = "description")
     private String description;
