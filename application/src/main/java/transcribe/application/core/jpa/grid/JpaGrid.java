@@ -12,6 +12,7 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+import lombok.Getter;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -43,11 +44,15 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
 
     private static final int DEFAULT_PAGE_SIZE = 30;
 
+    @Getter
     private final R repository;
+    @Getter
     private final Class<T> beanType;
     private final List<JpaFilter<T>> filters = new ArrayList<>();
     private final ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> filterDataProvider;
 
+    @Getter
+    private JpaGridCrudActionsData crudActionsData = JpaGridCrudActionsData.empty();
     private HeaderRow filterRow;
     private GridContextMenu<T> contextMenu;
 
@@ -205,6 +210,11 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                     SpringContext.getBean(OperationRunner.class).run(operation);
                 }
         ));
+
+        crudActionsData = JpaGridCrudActionsData.builder()
+                .withCrudActions(true)
+                .excludedPropertiesList(excludedPropertiesList)
+                .build();
     }
 
     public <I extends AbstractIcon<I>> Column<T> addIconActionColumn(Supplier<AbstractIcon<I>> iconSupplier, Consumer<T> onClick) {

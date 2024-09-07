@@ -6,6 +6,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
+import transcribe.application.core.jpa.grid.JpaGridContainer;
 import transcribe.application.main.MainLayout;
 import transcribe.domain.operation.data.OperationEntity;
 import transcribe.domain.operation.data.OperationRepository;
@@ -17,7 +18,6 @@ public class OperationsView extends Composite<VerticalLayout> {
 
     public OperationsView(OperationRepository repository) {
         var grid = new JpaGrid<>(OperationEntity.class, repository);
-        grid.addCrudActionsExcluding("duration");
 
         grid.addCoreAttributeColumns();
         grid.addAuditColumns();
@@ -26,7 +26,9 @@ public class OperationsView extends Composite<VerticalLayout> {
         grid.addCoreAttributeFilters();
         grid.addAuditFilters();
 
-        getContent().addAndExpand(grid);
+        grid.addCrudActionsExcluding("durationInSeconds");
+
+        getContent().addAndExpand(new JpaGridContainer<>(grid));
     }
 
 }

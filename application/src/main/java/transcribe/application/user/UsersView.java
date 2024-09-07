@@ -6,6 +6,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.dialog.Dialogs;
+import transcribe.application.core.jpa.grid.JpaGridContainer;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
@@ -48,7 +49,14 @@ public class UsersView extends Composite<VerticalLayout> {
         ));
         grid.addContextMenuItem("Change password", e -> new ChangePasswordDialog(e).open());
 
-        getContent().addAndExpand(grid);
+        var gridContainer = new JpaGridContainer<>(grid);
+        gridContainer.addCreateEntityButton(
+                () -> new CreateUserDialog()
+                        .setSaveListener(grid::refreshAll)
+                        .open()
+        );
+
+        getContent().addAndExpand(gridContainer);
     }
 
 }

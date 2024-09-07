@@ -15,4 +15,13 @@ public final class Dialogs {
         dialog.open();
     }
 
+    public static void show(String message) {
+        var dialog = new ConfirmDialog();
+        dialog.setHeader("Information");
+        dialog.setText(message);
+        dialog.setConfirmButton("OK", _ -> dialog.close());
+        dialog.setConfirmButtonTheme("primary");
+        dialog.open();
+    }
+
 }
