@@ -18,9 +18,9 @@ import com.vaadin.flow.theme.lumo.LumoIcon;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
+import transcribe.application.home.HomeView;
 import transcribe.application.operation.OperationsView;
 import transcribe.application.security.AuthenticatedUser;
-import transcribe.application.home.HomeView;
 import transcribe.application.transcribe.TranscribeView;
 import transcribe.application.user.UsersView;
 
@@ -64,7 +64,7 @@ public class MainLayout extends AppLayout {
 
         addIfHasAccess(nav, HomeView.class, "Home", LineAwesomeIcon.HOME_SOLID.create());
         addIfHasAccess(nav, TranscribeView.class, "Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
-        addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_COG_SOLID.create());
+        addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
         addIfHasAccess(nav, OperationsView.class, "Operations", LineAwesomeIcon.COGS_SOLID.create());
 
         return nav;
@@ -102,7 +102,10 @@ public class MainLayout extends AppLayout {
         return StringUtils.stripToEmpty(getContent().getClass().getAnnotation(PageTitle.class).value());
     }
 
-    private <T extends AbstractIcon<T>> void addIfHasAccess(SideNav nav, Class<? extends Component> viewClass, String caption, AbstractIcon<T> icon) {
+    private <T extends AbstractIcon<T>> void addIfHasAccess(SideNav nav,
+                                                            Class<? extends Component> viewClass,
+                                                            String caption,
+                                                            AbstractIcon<T> icon) {
         if (accessChecker.hasAccess(viewClass)) {
             nav.addItem(new SideNavItem(caption, viewClass, icon));
         }

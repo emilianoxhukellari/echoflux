@@ -1,39 +1,49 @@
 package transcribe.application.core.jpa.core;
 
+import com.vaadin.flow.data.binder.PropertyDefinition;
+import com.vaadin.flow.data.renderer.Renderer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import transcribe.application.core.jpa.grid.JpaGridRendererFactory;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.function.Function;
 
 @RequiredArgsConstructor
-@Getter
 public enum JpaSupportedType {
 
-    STRING(String.class),
-    BOOLEAN(Boolean.class),
-    ENUM(Enum.class),
-    LOCAL_DATE_TIME(LocalDateTime.class),
-    LOCAL_DATE(LocalDateTime.class),
-    DOUBLE(Double.class),
-    LONG(Long.class),
-    FLOAT(Float.class),
-    INTEGER(Integer.class),
-    COLLECTION(Collection.class);
+    STRING(String.class,null),
+    BOOLEAN(Boolean.class, JpaGridRendererFactory::newBooleanRenderer),
+    ENUM(Enum.class, null),
+    LOCAL_DATE_TIME(LocalDateTime.class, JpaGridRendererFactory::newLocalDateTimeRenderer),
+    LOCAL_DATE(LocalDateTime.class, null),
+    DOUBLE(Double.class, null),
+    LONG(Long.class, null),
+    FLOAT(Float.class, null),
+    INTEGER(Integer.class, null),
+    COLLECTION(Collection.class, JpaGridRendererFactory::newCollectionRenderer);
 
+    @Getter
     private final Class<?> type;
+    private final Function<PropertyDefinition<?, ?>, Renderer<?>> customRendererFactory;
 
     /**
      * @throws NoSuchElementException if the given type is not supported
-     * */
+     */
     public static JpaSupportedType ofBeanType(Class<?> beanType) {
         return Arrays.stream(values())
                 .filter(t -> t.getType().isAssignableFrom(beanType))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Unsupported jpa type: " + beanType));
 
+    }
+
+    public Optional<Function<PropertyDefinition<?, ?>, Renderer<?>>> findCustomRendererFactory() {
+        return Optional.ofNullable(customRendererFactory);
     }
 
 }

@@ -1,4 +1,4 @@
-package transcribe.application.spring;
+package transcribe.application.core.spring;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

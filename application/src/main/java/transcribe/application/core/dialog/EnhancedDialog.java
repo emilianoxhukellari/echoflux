@@ -51,8 +51,8 @@ public class EnhancedDialog extends Dialog {
     }
 
     private Button newCloseButton() {
-        var closeButton = new Button(VaadinIcon.CLOSE.create(), _ -> close());
-        closeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+        var closeButton = new Button(VaadinIcon.CLOSE_BIG.create(), _ -> close());
+        closeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
 
         return closeButton;
     }

@@ -1,6 +1,5 @@
 package transcribe.application.core.jpa.grid;
 
-import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.icon.AbstractIcon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -40,11 +39,11 @@ public class JpaGridRendererFactory {
                 item -> {
                     var value = (Boolean) propertyDefinition.getGetter().apply(item);
                     if (value == null) {
-                        return IconFactory.newIcon(VaadinIcon.MINUS::create, "gray", 1.5f, Unit.REM, "Unknown");
+                        return IconFactory.newIcon(VaadinIcon.MINUS::create, "gray", "1.5rem", "Unknown");
                     } else if (value) {
-                        return IconFactory.newIcon(VaadinIcon.CHECK::create, "green", 1.5f, Unit.REM, "Yes");
+                        return IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Yes");
                     } else {
-                        return IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", 1.5f, Unit.REM, "No");
+                        return IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem",  "No");
                     }
                 }
         );

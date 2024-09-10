@@ -27,6 +27,10 @@ public class Operation<T> {
 
     @NotNull
     @Builder.Default
+    private Runnable beforeCall = NoOp.runnable();
+
+    @NotNull
+    @Builder.Default
     private Consumer<T> onSuccess = NoOp.consumer();
 
     @NotNull

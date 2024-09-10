@@ -4,7 +4,6 @@ import com.vaadin.flow.spring.security.AuthenticationContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import transcribe.core.common.utils.MoreSets;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.ApplicationUserRepository;
@@ -19,7 +18,6 @@ public class AuthenticatedUser {
     private final ApplicationUserRepository applicationUserRepository;
     private final AuthenticationContext authenticationContext;
 
-    @Transactional
     public Optional<ApplicationUserEntity> get() {
         return authenticationContext.getAuthenticatedUser(UserDetails.class)
                 .flatMap(ud -> applicationUserRepository.findByUsername(ud.getUsername()));
@@ -29,13 +27,11 @@ public class AuthenticatedUser {
         authenticationContext.logout();
     }
 
-    @Transactional
     public boolean hasRole(Role role) {
         return get().map(u -> MoreSets.contains(u.getRoles(), role))
                 .orElse(false);
     }
 
-    @Transactional
     public boolean isAdmin() {
         return hasRole(Role.ADMIN);
     }

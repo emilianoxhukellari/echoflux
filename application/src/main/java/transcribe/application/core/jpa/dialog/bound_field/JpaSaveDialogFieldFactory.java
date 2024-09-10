@@ -5,7 +5,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import lombok.extern.slf4j.Slf4j;
 import transcribe.application.core.jpa.core.JpaSupportedType;
-import transcribe.application.spring.SpringContext;
+import transcribe.application.core.spring.SpringContext;
 import transcribe.domain.bean.BeanUtils;
 
 import java.util.Collection;

@@ -20,7 +20,6 @@ public class BooleanJpaFilter<T> extends JpaFilter<T> {
         comboBox.setPlaceholder("Filter");
         comboBox.setWidth("10.6rem");
         comboBox.setClearButtonVisible(true);
-        comboBox.addValueChangeListener(_ -> listener.run());
     }
 
     @Override
@@ -37,6 +36,16 @@ public class BooleanJpaFilter<T> extends JpaFilter<T> {
     @Override
     public Component getComponent() {
         return comboBox;
+    }
+
+    @Override
+    public void addValueChangeListener(Runnable listener) {
+        comboBox.addValueChangeListener(_ -> listener.run());
+    }
+
+    @Override
+    public void clear() {
+        comboBox.clear();
     }
 
     @Getter

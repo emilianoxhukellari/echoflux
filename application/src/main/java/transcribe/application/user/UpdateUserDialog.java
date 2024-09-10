@@ -6,7 +6,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
-import transcribe.application.spring.SpringContext;
+import transcribe.application.core.spring.SpringContext;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.Role;
 import transcribe.domain.application_user.service.ApplicationUserMapper;
@@ -37,7 +37,6 @@ public class UpdateUserDialog extends JpaSaveDialog<ApplicationUserEntity> {
 
         var enabledField = new Checkbox("Enabled");
         binder.forField(enabledField)
-                .asRequired()
                 .bind(UpdateApplicationUserCommand::getEnabled, UpdateApplicationUserCommand::setEnabled);
 
         var rolesField = new MultiSelectComboBox<Role>("Roles");

@@ -6,7 +6,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
-import transcribe.application.core.jpa.grid.JpaGridContainer;
+import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.main.MainLayout;
 import transcribe.domain.operation.data.OperationEntity;
 import transcribe.domain.operation.data.OperationRepository;
@@ -21,14 +21,17 @@ public class OperationsView extends Composite<VerticalLayout> {
 
         grid.addCoreAttributeColumns();
         grid.addAuditColumns();
+        grid.addIdColumn();
+
         grid.setAllColumnsResizable();
 
         grid.addCoreAttributeFilters();
         grid.addAuditFilters();
+        grid.addIdFilter();
 
-        grid.addCrudActionsExcluding("durationInSeconds");
+        grid.addCrudActionsExcluding("durationSeconds");
 
-        getContent().addAndExpand(new JpaGridContainer<>(grid));
+        getContent().addAndExpand(new JpaGridControls<>(grid));
     }
 
 }

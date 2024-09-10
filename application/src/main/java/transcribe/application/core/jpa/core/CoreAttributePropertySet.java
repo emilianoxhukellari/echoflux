@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 public class CoreAttributePropertySet<T> implements PropertySet<T> {
 
-    private final static PropertySet<AuditEntity> AUDIT_ENTITY_PROPERTY_SET = BeanPropertySet.get(AuditEntity.class);
+    private final static List<String> AUDIT_ENTITY_FIELD_NAMES = BeanUtils.getFieldNames(AuditEntity.class);
 
     private final List<String> excludedProperties;
     private final PropertySet<T> internalPropertySet;
@@ -42,7 +42,7 @@ public class CoreAttributePropertySet<T> implements PropertySet<T> {
     @Override
     public Stream<PropertyDefinition<T, ?>> getProperties() {
         return internalPropertySet.getProperties()
-                .filter(this::filter)
+                .filter(p -> notIdOrAuditPropertyName(p.getName()))
                 .sorted((p1, p2) -> Integer.compare(
                         sortedFieldNames.indexOf(p1.getName()),
                         sortedFieldNames.indexOf(p2.getName())
@@ -52,7 +52,7 @@ public class CoreAttributePropertySet<T> implements PropertySet<T> {
     @Override
     public Optional<PropertyDefinition<T, ?>> getProperty(String name) {
         return internalPropertySet.getProperty(name)
-                .filter(this::filter);
+                .filter(p -> notIdOrAuditPropertyName(p.getName()));
     }
 
     public List<PropertyDefinition<T, ?>> getPropertiesAsList() {
@@ -63,11 +63,11 @@ public class CoreAttributePropertySet<T> implements PropertySet<T> {
         return getProperties().map(PropertyDefinition::getName).toArray(String[]::new);
     }
 
-    private boolean filter(PropertyDefinition<T, ?> property) {
-        var isNotIdField = idField == null || !idField.getName().equals(property.getName());
-        var isNotAuditField = AUDIT_ENTITY_PROPERTY_SET.getProperties().noneMatch(a -> a.getName().equals(property.getName()));
+    private boolean notIdOrAuditPropertyName(String propertyName) {
+        var isNotIdField = idField == null || !idField.getName().equals(propertyName);
+        var isNotAuditField = !AUDIT_ENTITY_FIELD_NAMES.contains(propertyName);
 
-        return isNotIdField && isNotAuditField && !excludedProperties.contains(property.getName());
+        return isNotIdField && isNotAuditField && !excludedProperties.contains(propertyName);
     }
 
 }

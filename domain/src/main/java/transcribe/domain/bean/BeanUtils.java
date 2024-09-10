@@ -51,6 +51,14 @@ public final class BeanUtils {
         return fields.stream().findFirst();
     }
 
+    public static <T> List<String> getFieldNames(Class<T> beanType) {
+        Validate.notNull(beanType, "Bean type must not be null");
+
+        return FieldUtils.getAllFieldsList(beanType).stream()
+                .map(Field::getName)
+                .toList();
+    }
+
     @SneakyThrows
     public static <T> Object getFieldValue(T bean, String fieldName) {
         Validate.notNull(bean, "Bean must not be null");

@@ -1,5 +1,6 @@
 package transcribe.application.core.jpa.grid;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -20,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.jpa.core.CoreAttributePropertySet;
+import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
 import transcribe.application.core.jpa.filter.CombinedFilter;
 import transcribe.application.core.jpa.filter.FilterFactory;
@@ -27,10 +29,12 @@ import transcribe.application.core.jpa.filter.JpaFilter;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.spring.SpringContext;
+import transcribe.application.core.spring.SpringContext;
 import transcribe.core.common.utils.MoreArrays;
 import transcribe.core.common.utils.MoreLists;
+import transcribe.domain.audit.data.AuditEntity;
 import transcribe.domain.bean.BeanUtils;
+import transcribe.domain.operation.data.OperationType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +47,7 @@ import java.util.stream.Stream;
 public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor<T>> extends Grid<T> {
 
     private static final int DEFAULT_PAGE_SIZE = 30;
+    private static final String COLUMN_WIDTH = "13rem";
 
     @Getter
     private final R repository;
@@ -51,6 +56,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     private final List<JpaFilter<T>> filters = new ArrayList<>();
     private final ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> filterDataProvider;
 
+    private boolean clearingFilters;
     @Getter
     private JpaGridCrudActionsData crudActionsData = JpaGridCrudActionsData.empty();
     private HeaderRow filterRow;
@@ -81,22 +87,30 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addAuditColumns() {
-        addColumns("createdAt", "createdBy", "updatedAt", "updatedBy", "id");
+        addColumns(BeanUtils.getFieldNames(AuditEntity.class).toArray(String[]::new));
+    }
+
+    public void addIdColumn() {
+        addColumn(BeanUtils.findIdField(beanType).orElseThrow().getName())
+                .setWidth(COLUMN_WIDTH);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Column<T> addColumn(String propertyName) {
         var propertyDefinition = getPropertyDefinitionRequired(propertyName);
 
-        return CustomRenderedType.ofAssignableType(propertyDefinition.getType())
-                .map(crt -> addColumn(propertyName, crt::getRenderer))
+        return JpaSupportedType.ofBeanType(propertyDefinition.getType())
+                .findCustomRendererFactory()
+                .map(f -> addColumn(propertyName, (Function<PropertyDefinition<T, ?>, Renderer<T>>) (Function<?, ?>) f))
                 .orElseGet(() -> super.addColumn(propertyName));
     }
 
     @Override
     public void addColumns(String... propertyNames) {
         Objects.requireNonNull(propertyNames, "Property names cannot be null");
-        Stream.of(propertyNames).forEach(name -> addColumn(name).setWidth("13rem"));
+        Stream.of(propertyNames).forEach(name -> addColumn(name)
+                .setWidth(COLUMN_WIDTH));
     }
 
     public Column<T> addColumn(String propertyName, Function<PropertyDefinition<T, ?>, Renderer<T>> rendererFactory) {
@@ -119,7 +133,11 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addAuditFilters() {
-        addFilters("createdAt", "createdBy", "updatedAt", "updatedBy", "id");
+        addFilters(BeanUtils.getFieldNames(AuditEntity.class).toArray(String[]::new));
+    }
+
+    public void addIdFilter() {
+        addFilter(BeanUtils.findIdField(beanType).orElseThrow().getName());
     }
 
     public void addFilters(String... propertyNames) {
@@ -147,11 +165,21 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         filters.add(filter);
         addFilterListener(filter);
         addFilterComponent(filter);
+    }
+
+    public void clearFilters() {
+        clearingFilters = true;
+        filters.forEach(JpaFilter::clear);
+        clearingFilters = false;
         setDataProviderFilter();
     }
 
     private void addFilterListener(JpaFilter<T> filter) {
-        filter.setListener(this::setDataProviderFilter);
+        filter.addValueChangeListener(() -> {
+            if (!clearingFilters) {
+                setDataProviderFilter();
+            }
+        });
     }
 
     private void addFilterComponent(JpaFilter<T> filter) {
@@ -205,9 +233,10 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                             ))
                             .callable(OperationCallable.ofRunnable(() -> repository.delete(e)))
                             .onSuccess(_ -> refreshAll())
+                            .type(OperationType.NON_BLOCKING)
                             .build();
 
-                    SpringContext.getBean(OperationRunner.class).run(operation);
+                    SpringContext.getBean(OperationRunner.class).run(operation, UI.getCurrent());
                 }
         ));
 

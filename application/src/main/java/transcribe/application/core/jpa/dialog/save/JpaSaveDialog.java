@@ -1,5 +1,6 @@
 package transcribe.application.core.jpa.dialog.save;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -11,9 +12,10 @@ import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.spring.SpringContext;
+import transcribe.application.core.spring.SpringContext;
 import transcribe.core.common.no_op.NoOp;
 import transcribe.domain.bean.BeanUtils;
+import transcribe.domain.operation.data.OperationType;
 
 public abstract class JpaSaveDialog<T> extends EnhancedDialog {
 
@@ -52,14 +54,15 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
         var button = new Button("Save", _ -> {
             if (validate()) {
                 var operation = Operation.builder()
-                        .name("Save entity")
+                        .name("Saving entity")
                         .description(String.format("Entity of type [%s]", BeanUtils.getPrettyName(entityBeanType)))
+                        .beforeCall(this::close)
                         .callable(OperationCallable.ofRunnable(this::save))
-                        .onFinally(this::close)
                         .onSuccess(_ -> saveListener.run())
+                        .type(OperationType.NON_BLOCKING)
                         .build();
 
-                operationRunner.run(operation);
+                operationRunner.run(operation, UI.getCurrent());
             }
         });
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

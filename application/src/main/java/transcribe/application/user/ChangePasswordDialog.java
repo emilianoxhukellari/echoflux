@@ -4,7 +4,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.data.binder.Binder;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
-import transcribe.application.spring.SpringContext;
+import transcribe.application.core.spring.SpringContext;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.application_user.service.ChangePasswordCommand;

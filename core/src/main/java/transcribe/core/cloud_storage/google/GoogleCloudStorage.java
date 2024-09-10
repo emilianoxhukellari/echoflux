@@ -10,8 +10,8 @@ import com.google.cloud.storage.StorageOptions;
 import jakarta.validation.Valid;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 import transcribe.core.cloud_storage.CloudStorage;
@@ -25,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Component
-@Slf4j
 public class GoogleCloudStorage implements CloudStorage, DisposableBean {
 
     private final GoogleCloudProperties googleCloudProperties;
@@ -40,8 +39,13 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
     @SneakyThrows
     @LoggedMethodExecution
     public ResourceInfo upload(Path path) {
-        var blobId = BlobId.of(googleCloudProperties.getBucketName(), UlidCreator.getUlid().toString());
-        var blobInfo = BlobInfo.newBuilder(blobId).build();
+        var name = UlidCreator.getUlid().toString() + PathUtils.getExtension(path);
+        var blobId = BlobId.of(googleCloudProperties.getBucketName(), name);
+        var contentType = Files.probeContentType(path);
+
+        var blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(contentType)
+                .build();
 
         try (var is = Files.newInputStream(path); var writer = googleStorage.writer(blobInfo)) {
             var buffer = new byte[4096];

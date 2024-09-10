@@ -19,13 +19,11 @@ public class LocalDateJpaFilter<T> extends BetweenJpaFilter<T, LocalDate> {
         this.from = new DatePicker();
         from.addThemeVariants(DatePickerVariant.LUMO_SMALL);
         from.setPlaceholder("From date");
-        from.addValueChangeListener(_ -> listener.run());
         from.setClearButtonVisible(true);
 
         this.to = new DatePicker();
         to.addThemeVariants(DatePickerVariant.LUMO_SMALL);
         to.setPlaceholder("To date");
-        to.addValueChangeListener(_ -> listener.run());
         to.setClearButtonVisible(true);
 
         this.layout = new VerticalLayout(from, to);
@@ -46,6 +44,18 @@ public class LocalDateJpaFilter<T> extends BetweenJpaFilter<T, LocalDate> {
     @Override
     public Component getComponent() {
         return layout;
+    }
+
+    @Override
+    public void addValueChangeListener(Runnable listener) {
+        from.addValueChangeListener(_ -> listener.run());
+        to.addValueChangeListener(_ -> listener.run());
+    }
+
+    @Override
+    public void clear() {
+        from.clear();
+        to.clear();
     }
 
 }

@@ -17,13 +17,11 @@ public class NumberJpaFilter<T> extends BetweenJpaFilter<T, Double> {
         this.from = new NumberField();
         from.setPlaceholder("From");
         from.setValueChangeMode(ValueChangeMode.EAGER);
-        from.addValueChangeListener(_ -> listener.run());
         from.setMinWidth("0");
 
         this.to = new NumberField();
         to.setPlaceholder("To");
         to.setValueChangeMode(ValueChangeMode.EAGER);
-        to.addValueChangeListener(_ -> listener.run());
         to.setMinWidth("0");
 
         this.layout = new HorizontalLayout(from, to);
@@ -49,6 +47,18 @@ public class NumberJpaFilter<T> extends BetweenJpaFilter<T, Double> {
     @Override
     public Component getComponent() {
         return layout;
+    }
+
+    @Override
+    public void addValueChangeListener(Runnable listener) {
+        from.addValueChangeListener(_ -> listener.run());
+        to.addValueChangeListener(_ -> listener.run());
+    }
+
+    @Override
+    public void clear() {
+        from.clear();
+        to.clear();
     }
 
 }

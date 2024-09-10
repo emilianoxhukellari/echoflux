@@ -57,7 +57,6 @@
             <artifactId>vaadin-testbench-junit5</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.github.emilianoxhukellari</groupId>
             <artifactId>domain</artifactId>

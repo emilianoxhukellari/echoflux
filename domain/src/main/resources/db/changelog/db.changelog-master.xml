@@ -14,6 +14,7 @@
                 name       varchar(255) not null,
                 password   varchar(255) not null,
                 enabled    boolean      not null default true,
+
                 created_at timestamp,
                 created_by varchar(255),
                 updated_at timestamp,
@@ -25,6 +26,7 @@
                 id                  bigserial primary key,
                 application_user_id bigint       not null references application_user (id),
                 role                varchar(255) not null,
+
                 created_at          timestamp,
                 created_by          varchar(255),
                 updated_at          timestamp,
@@ -63,14 +65,37 @@
                 name        varchar(255) not null,
                 type        varchar(255) not null,
                 status      varchar(255) not null,
-                error       varchar(255),
+                error       text,
                 started_at  timestamp    not null,
                 ended_at    timestamp,
                 description text,
+
                 created_at  timestamp,
                 created_by  varchar(255),
                 updated_at  timestamp,
                 updated_by  varchar(255)
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcription_table" author="emiliano">
+        <sql>
+            create table transcription
+            (
+                id                  bigserial primary key,
+                status              varchar(255)  not null,
+                cloud_uri           varchar(1024) not null,
+                language            varchar(255)  not null,
+                name                varchar(1024) not null,
+                transcript          text,
+                length_millis       bigint        not null,
+                error               text,
+                application_user_id bigint references application_user (id),
+
+                created_at          timestamp,
+                created_by          varchar(255),
+                updated_at          timestamp,
+                updated_by          varchar(255)
             );
         </sql>
     </changeSet>

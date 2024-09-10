@@ -9,7 +9,6 @@ import transcribe.application.core.jpa.dialog.bound_field.JpaSaveDialogFieldFact
 
 import java.util.List;
 
-
 public class JpaSaveCorePropertiesDialog<T> extends JpaSaveDialog<T> {
 
     private final Binder<T> binder;

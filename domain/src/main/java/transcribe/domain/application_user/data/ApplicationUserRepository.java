@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 
-public interface ApplicationUserRepository extends JpaRepository<ApplicationUserEntity, Long>, JpaSpecificationExecutor<ApplicationUserEntity> {
+public interface ApplicationUserRepository
+        extends JpaRepository<ApplicationUserEntity, Long>, JpaSpecificationExecutor<ApplicationUserEntity> {
 
     Optional<ApplicationUserEntity> findByUsername(String username);
 

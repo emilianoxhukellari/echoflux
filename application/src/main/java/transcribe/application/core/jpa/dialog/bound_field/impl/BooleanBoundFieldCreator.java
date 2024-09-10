@@ -19,11 +19,8 @@ public class BooleanBoundFieldCreator implements BoundFieldCreator {
         var field = new Checkbox(property.getCaption());
         var getter = (ValueProvider<T, Boolean>) property.getGetter();
         var setter = (Setter<T, Boolean>) property.getSetter().orElseThrow();
-        var builder = binder.forField(field);
-        if (required) {
-            builder.asRequired();
-        }
-        builder.bind(getter, setter);
+        binder.forField(field)
+                .bind(getter, setter);
 
         return field;
     }

@@ -21,12 +21,6 @@ public class TextJpaFilter<T> extends JpaFilter<T> {
         textField.setWidth("10.6rem");
         textField.setClearButtonVisible(true);
         textField.setValueChangeMode(ValueChangeMode.EAGER);
-        textField.addValueChangeListener(_ -> {
-            if (listener != null) {
-                listener.run();
-            }
-        });
-        textField.clear();
     }
 
     @Override
@@ -41,10 +35,19 @@ public class TextJpaFilter<T> extends JpaFilter<T> {
                 : (root, _, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get(property)), pattern);
     }
 
-
     @Override
     public Component getComponent() {
         return textField;
+    }
+
+    @Override
+    public void addValueChangeListener(Runnable listener) {
+        textField.addValueChangeListener(_ -> listener.run());
+    }
+
+    @Override
+    public void clear() {
+        textField.clear();
     }
 
 }

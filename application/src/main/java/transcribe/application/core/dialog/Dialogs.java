@@ -1,6 +1,9 @@
 package transcribe.application.core.dialog;
 
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import transcribe.application.core.error.ErrorUtils;
+import transcribe.application.core.spring.SpringContext;
+import transcribe.application.security.AuthenticatedUser;
 
 public final class Dialogs {
 
@@ -22,6 +25,27 @@ public final class Dialogs {
         dialog.setConfirmButton("OK", _ -> dialog.close());
         dialog.setConfirmButtonTheme("primary");
         dialog.open();
+    }
+
+    public static void error(Throwable e) {
+        var dialog = new ConfirmDialog();
+        dialog.setHeader("Error");
+        dialog.setText(resolveErrorMessage(e));
+        dialog.setConfirmButton("OK", _ -> dialog.close());
+        dialog.setConfirmButtonTheme("error primary");
+        dialog.open();
+    }
+
+    private static String resolveErrorMessage(Throwable e) {
+        if (SpringContext.getBean(AuthenticatedUser.class).isAdmin()) {
+            return e.getMessage();
+        } else {
+            if (ErrorUtils.isPropagated(e)) {
+                return e.getCause().getMessage();
+            } else {
+                return "An error occurred. Please try again or contact support.";
+            }
+        }
     }
 
 }
