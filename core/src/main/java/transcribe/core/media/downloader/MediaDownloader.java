@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import transcribe.core.common.log.LoggedMethodExecution;
 import transcribe.core.common.temp_file.TempFileNameGenerator;
+import transcribe.core.media.downloader.provider.MediaDownloaderProvider;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 
 import java.net.URI;
@@ -26,5 +27,7 @@ public interface MediaDownloader extends TempFileNameGenerator {
     Optional<MediaFindResult> find(@NotNull(message = "Video uri is required") URI uri);
 
     boolean supports(@NotNull(message = "Video uri is required") URI uri);
+
+    MediaDownloaderProvider provider();
 
 }

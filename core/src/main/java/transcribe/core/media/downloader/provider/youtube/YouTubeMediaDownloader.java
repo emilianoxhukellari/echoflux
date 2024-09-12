@@ -12,6 +12,7 @@ import transcribe.core.common.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
+import transcribe.core.media.downloader.provider.MediaDownloaderProvider;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 
 import java.net.URI;
@@ -57,6 +58,11 @@ public class YouTubeMediaDownloader implements MediaDownloader {
     @Override
     public boolean supports(URI uri) {
         return YouTubeUtils.isYouTubeUri(uri);
+    }
+
+    @Override
+    public MediaDownloaderProvider provider() {
+        return MediaDownloaderProvider.YOUTUBE;
     }
 
     @Override

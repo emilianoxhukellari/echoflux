@@ -23,7 +23,7 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
     protected final Class<T> entityBeanType;
 
     /**
-     * Listener will be called after the entity has been saved.
+     * UserEventListener will be called after the entity has been saved.
      * */
     @Setter
     @Accessors(chain = true)

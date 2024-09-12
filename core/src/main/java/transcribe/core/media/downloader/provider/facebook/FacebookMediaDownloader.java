@@ -12,6 +12,7 @@ import transcribe.core.common.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
+import transcribe.core.media.downloader.provider.MediaDownloaderProvider;
 import transcribe.core.media.downloader.youtube_dl.YouTubeDL;
 import transcribe.core.media.downloader.youtube_dl.YouTubeDLMediaNotFound;
 import transcribe.core.media.downloader.youtube_dl.YouTubeDLRequest;
@@ -76,6 +77,11 @@ public class FacebookMediaDownloader implements MediaDownloader {
     @Override
     public boolean supports(URI uri) {
         return FacebookUtils.isFacebookUri(uri);
+    }
+
+    @Override
+    public MediaDownloaderProvider provider() {
+        return MediaDownloaderProvider.FACEBOOK;
     }
 
     @Override
