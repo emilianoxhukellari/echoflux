@@ -1,24 +1,19 @@
 package transcribe.application.core.broadcaster.impl;
 
-import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.stereotype.Component;
 import transcribe.application.core.broadcaster.Broadcaster;
-import transcribe.application.core.broadcaster.SubscriberId;
 import transcribe.application.core.broadcaster.Subscription;
 import transcribe.core.common.executor.CommonExecutor;
-import transcribe.core.common.utils.MoreLists;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @Component
 @RequiredArgsConstructor
@@ -28,72 +23,53 @@ public class BroadcasterImpl implements Broadcaster {
     private final ReentrantLock lock = new ReentrantLock();
     private final Map<Class<?>, List<EventConsumer<?>>> subscribers = new HashMap<>();
 
-    @Override
-    public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer) {
-        return subscribeById(event, consumer, null);
-    }
-
-    /**
-     * Only publishers that use the same id using {@link SubscriberId} will be able to send events to this listener.
-     * */
-    @Override
-    public <T> Subscription subscribeById(Class<T> event, Consumer<T> consumer, @Nullable Object id) {
-        addSynchronized(event, new EventConsumer<>(consumer, id));
+    public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer, Predicate<T> condition) {
+        addSynchronized(event, new EventConsumer<>(consumer, condition));
 
         return () -> removeSynchronized(event, consumer);
     }
 
-    /**
-     * Use {@link SubscriberId} for the id field if the event is intended for listeners that subscribe with an id.
-     * If the event does not have an id field, but the message is intended for listeners that subscribe with an id,
-     * the message will not be sent to any listeners. Otherwise, it will be sent to all listeners.
-     * */
+    public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer) {
+        return subscribe(event, consumer, _ -> true);
+    }
+
     @SuppressWarnings("unchecked")
-    @SneakyThrows
-    @Override
     public <T> void publish(T event) {
-        var subscriberId = getSubscriberIdFieldValue(event);
-
-        doSynchronized(() ->
-                ListUtils.emptyIfNull(subscribers.get(event.getClass()))
-                        .stream()
-                        .map((EventConsumer.class)::cast)
-                        .filter(c -> Objects.equals(c.id(), subscriberId))
-                        .forEach(c -> commonExecutor.execute(() -> c.consumer().accept(event)))
-        );
-    }
-
-    private void addSynchronized(Class<?> event, EventConsumer<?> consumer) {
-        doSynchronized(() -> subscribers.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer));
-    }
-
-    private void removeSynchronized(Class<?> event, Consumer<?> consumer) {
-        doSynchronized(() -> subscribers.get(event).removeIf(c -> c.consumer().equals(consumer)));
-    }
-
-    private void doSynchronized(Runnable action) {
         lock.lock();
         try {
-            action.run();
+            for (var c : ListUtils.emptyIfNull(subscribers.get(event.getClass()))) {
+                try {
+                    var casted = (EventConsumer<T>) c;
+                    if (casted.condition().test(event)) {
+                        commonExecutor.execute(() -> casted.consumer().accept(event));
+                    }
+                } catch (Throwable _) {
+                }
+            }
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * @return the value of the field annotated with {@link SubscriberId} or null if the event does not have such field
-     * */
-    @SneakyThrows
-    @Nullable
-    private static Object getSubscriberIdFieldValue(Object event) {
-        var idField = MoreLists.getFirst(FieldUtils.getFieldsListWithAnnotation(event.getClass(), SubscriberId.class));
-
-        return idField != null ? FieldUtils.readField(idField, event, true) : null;
+    private void addSynchronized(Class<?> event, EventConsumer<?> consumer) {
+        lock.lock();
+        try {
+            subscribers.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer);
+        } finally {
+            lock.unlock();
+        }
     }
 
-    private record EventConsumer<T>(Consumer<T> consumer, Object id) {
+    private void removeSynchronized(Class<?> event, Consumer<?> consumer) {
+        lock.lock();
+        try {
+            subscribers.get(event).removeIf(c -> c.consumer().equals(consumer));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private record EventConsumer<T>(Consumer<T> consumer, Predicate<T> condition) {
     }
 
 }
-
-

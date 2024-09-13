@@ -12,7 +12,6 @@ import com.vaadin.flow.component.upload.receivers.FileBuffer;
 import lombok.extern.slf4j.Slf4j;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.broadcaster.Broadcaster;
-import transcribe.application.core.broadcaster.SubscriberId;
 import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
@@ -53,7 +52,7 @@ public class TranscribeDialog extends EnhancedDialog {
         var startTranscribe = new Button("Start Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
 
         var ui = UI.getCurrent();
-        var userId = authenticatedUser.get().orElseThrow().getId();
+        var userId = authenticatedUser.find().orElseThrow().getId();
 
         var feedback = TranscriptionFeedback.builder()
                 .onDetailedStatusChanged(s -> broadcaster.publish(new DetailedStatusEvent(s, userId)))
@@ -65,7 +64,7 @@ public class TranscribeDialog extends EnhancedDialog {
             var command = TranscriptionPipelineCommand.builder()
                     .local(false)
                     .name("Transcription")
-                    .applicationUserId(authenticatedUser.get().map(ApplicationUserEntity::getId).orElseThrow())
+                    .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElseThrow())
                     .mediaUri(uri)
                     .language(Language.ENGLISH_US)
                     .build();
@@ -98,10 +97,10 @@ public class TranscribeDialog extends EnhancedDialog {
         super.onDetach(attachEvent);
     }
 
-    public record DetailedStatusEvent(DetailedTranscriptionStatus status, @SubscriberId Long userId) {
+    public record DetailedStatusEvent(DetailedTranscriptionStatus status, Long userId) {
     }
 
-    public record DownloadProgressEvent(int progress, @SubscriberId Long userId) {
+    public record DownloadProgressEvent(int progress, Long userId) {
     }
 
 }

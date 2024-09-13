@@ -73,7 +73,7 @@ public class MainLayout extends AppLayout {
     private Footer newFooter() {
         var footer = new Footer();
 
-        var user = authenticatedUser.get();
+        var user = authenticatedUser.find();
         if (user.isPresent()) {
             var userMenu = new MenuBar();
             userMenu.addThemeVariants(MenuBarVariant.LUMO_CONTRAST, MenuBarVariant.LUMO_TERTIARY_INLINE);

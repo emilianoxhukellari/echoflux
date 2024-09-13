@@ -49,17 +49,15 @@ public class TranscribeView extends Composite<VerticalLayout> {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         var ui = attachEvent.getUI();
-        var userId = authenticatedUser.get().orElseThrow().getId();
-
-        var sub1 = broadcaster.subscribeById(
+        var sub1 = broadcaster.subscribe(
                 TranscribeDialog.DetailedStatusEvent.class,
                 e -> UiUtils.safeAccess(ui, () -> status.setText(e.status().name())),
-                userId
+                e -> authenticatedUser.hasId(e.userId())
         );
-        var sub2 = broadcaster.subscribeById(
+        var sub2 = broadcaster.subscribe(
                 TranscribeDialog.DownloadProgressEvent.class,
                 e -> UiUtils.safeAccess(ui, () -> downloadProgress.setValue(e.progress())),
-                userId
+                e -> authenticatedUser.hasId(e.userId())
         );
 
         this.subscriptions = List.of(sub1, sub2);

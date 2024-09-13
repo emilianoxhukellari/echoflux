@@ -1,39 +1,23 @@
 package transcribe.application.security;
 
-import com.vaadin.flow.spring.security.AuthenticationContext;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
-import transcribe.core.common.utils.MoreSets;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.validation.annotation.Validated;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
-import transcribe.domain.application_user.data.ApplicationUserRepository;
 import transcribe.domain.application_user.data.Role;
 
 import java.util.Optional;
 
-@Component
-@RequiredArgsConstructor
-public class AuthenticatedUser {
+@Validated
+public interface AuthenticatedUser {
 
-    private final ApplicationUserRepository applicationUserRepository;
-    private final AuthenticationContext authenticationContext;
+    Optional<ApplicationUserEntity> find();
 
-    public Optional<ApplicationUserEntity> get() {
-        return authenticationContext.getAuthenticatedUser(UserDetails.class)
-                .flatMap(ud -> applicationUserRepository.findByUsername(ud.getUsername()));
-    }
+    boolean hasId(@NotNull Long id);
 
-    public void logout() {
-        authenticationContext.logout();
-    }
+    void logout();
 
-    public boolean hasRole(Role role) {
-        return get().map(u -> MoreSets.contains(u.getRoles(), role))
-                .orElse(false);
-    }
+    boolean hasRole(@NotNull Role role);
 
-    public boolean isAdmin() {
-        return hasRole(Role.ADMIN);
-    }
+    boolean isAdmin();
 
 }
