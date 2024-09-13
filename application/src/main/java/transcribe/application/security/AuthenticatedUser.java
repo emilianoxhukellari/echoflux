@@ -12,8 +12,6 @@ public interface AuthenticatedUser {
 
     Optional<ApplicationUserEntity> find();
 
-    boolean hasId(@NotNull Long id);
-
     void logout();
 
     boolean hasRole(@NotNull Role role);

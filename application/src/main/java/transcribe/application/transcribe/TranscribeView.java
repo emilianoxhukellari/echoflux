@@ -22,6 +22,7 @@ import transcribe.application.main.MainLayout;
 import transcribe.application.security.AuthenticatedUser;
 
 import java.util.List;
+import java.util.Objects;
 
 
 @PageTitle("Transcribe")
@@ -32,6 +33,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
 
     private final Broadcaster broadcaster = SpringContext.getBean(Broadcaster.class);
     private final AuthenticatedUser authenticatedUser = SpringContext.getBean(AuthenticatedUser.class);
+    private final Long authenticatedUserId = authenticatedUser.find().orElseThrow().getId();
     private final NativeLabel status = new NativeLabel();
     private final ProgressBar downloadProgress = new ProgressBar();
     private List<Subscription> subscriptions;
@@ -52,12 +54,12 @@ public class TranscribeView extends Composite<VerticalLayout> {
         var sub1 = broadcaster.subscribe(
                 TranscribeDialog.DetailedStatusEvent.class,
                 e -> UiUtils.safeAccess(ui, () -> status.setText(e.status().name())),
-                e -> authenticatedUser.hasId(e.userId())
+                e -> Objects.equals(e.userId(), authenticatedUserId)
         );
         var sub2 = broadcaster.subscribe(
                 TranscribeDialog.DownloadProgressEvent.class,
                 e -> UiUtils.safeAccess(ui, () -> downloadProgress.setValue(e.progress())),
-                e -> authenticatedUser.hasId(e.userId())
+                e -> Objects.equals(e.userId(), authenticatedUserId)
         );
 
         this.subscriptions = List.of(sub1, sub2);
