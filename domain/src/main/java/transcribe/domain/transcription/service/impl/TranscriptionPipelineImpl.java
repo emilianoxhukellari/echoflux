@@ -22,6 +22,7 @@ import transcribe.domain.transcription.service.TranscriptionFeedback;
 import transcribe.domain.transcription.service.TranscriptionPipeline;
 import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
+import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -49,9 +50,10 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
             return Optional.of(transcribeCreatedWithFeedback(entity, command, feedback));
         } catch (Throwable e) {
             service.update(
-                    mapper.toUpdateCommand(service.get(entity.getId()))
-                            .setStatus(TranscriptionStatus.FAILED)
-                            .setError(e.getMessage())
+                    UpdateTranscriptionCommand.builder()
+                            .id(entity.getId())
+                            .status(TranscriptionStatus.FAILED)
+                            .build()
             );
             feedback.getOnStatusChanged().accept(TranscriptionStatus.FAILED);
 
@@ -74,8 +76,10 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
         var result = ffprobeWrapper.ffprobe().probe(original.toAbsolutePath().toString());
         service.update(
-                mapper.toUpdateCommand(service.get(entity.getId()))
-                        .setLengthMillis((long) (result.getFormat().duration * 1000))
+                UpdateTranscriptionCommand.builder()
+                        .id(entity.getId())
+                        .lengthMillis((long) (result.getFormat().duration * 1000))
+                        .build()
         );
 
         var transcodeParameters = TranscodeParameters.builder()
@@ -86,8 +90,10 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var resourceInfo = cloudStorage.upload(ogg);
 
         service.update(
-                mapper.toUpdateCommand(service.get(entity.getId()))
-                        .setCloudUri(resourceInfo.getUri())
+                UpdateTranscriptionCommand.builder()
+                        .id(entity.getId())
+                        .cloudUri(resourceInfo.getUri())
+                        .build()
         );
 
         saveStatusAndSendFeedback(entity.getId(), TranscriptionStatus.TRANSCRIBING, feedback);
@@ -99,8 +105,10 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         RunnableUtils.runSilent(progressTrigger::stop);
 
         service.update(
-                mapper.toUpdateCommand(service.get(entity.getId()))
-                        .setTranscript(transcribeResult.getTranscript())
+                UpdateTranscriptionCommand.builder()
+                        .id(entity.getId())
+                        .transcript(transcribeResult.getTranscript())
+                        .build()
         );
 
         saveStatusAndSendFeedback(entity.getId(), TranscriptionStatus.FINISHED, feedback);
@@ -115,7 +123,12 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private void saveStatusAndSendFeedback(Long transcriptionId,
                                            TranscriptionStatus status,
                                            TranscriptionFeedback feedback) {
-        service.updateStatus(transcriptionId, status);
+        service.update(
+                UpdateTranscriptionCommand.builder()
+                        .id(transcriptionId)
+                        .status(status)
+                        .build()
+        );
         RunnableUtils.runSilent(() -> feedback.getOnStatusChanged().accept(status));
     }
 

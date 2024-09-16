@@ -21,18 +21,21 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
     private final ApplicationUserRepository repository;
     private final ApplicationUserMapper mapper;
 
+    @Override
     public ApplicationUserEntity create(CreateApplicationUserCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
 
         return repository.saveAndFlush(mapper.toEntity(command, hashedPassword));
     }
 
+    @Override
     public ApplicationUserEntity update(UpdateApplicationUserCommand command) {
         var user = repository.getReferenceById(command.getId());
 
         return repository.saveAndFlush(mapper.asEntity(user, command));
     }
 
+    @Override
     public ApplicationUserEntity changePassword(ChangePasswordCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
         var user = repository.getReferenceById(command.getId());

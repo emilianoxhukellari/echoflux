@@ -1,6 +1,5 @@
 package transcribe.domain.transcription.service;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,12 +20,10 @@ public class UpdateTranscriptionCommand {
     @NotNull
     private Long id;
 
-    @NotNull
     private TranscriptionStatus status;
 
     private URI cloudUri;
 
-    @NotBlank
     private String name;
 
     private String transcript;

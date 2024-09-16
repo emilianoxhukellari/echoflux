@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionRepository;
-import transcribe.domain.transcription.data.TranscriptionStatus;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
 import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
@@ -38,14 +37,6 @@ public class TranscriptionServiceImpl implements TranscriptionService {
         var entity = repository.getReferenceById(command.getId());
 
         return repository.saveAndFlush(mapper.asEntity(entity, command));
-    }
-
-    @Override
-    @Transactional
-    public TranscriptionEntity updateStatus(Long id, TranscriptionStatus status) {
-        var entity = repository.getReferenceById(id);
-
-        return repository.saveAndFlush(mapper.asEntity(entity, status));
     }
 
 }
