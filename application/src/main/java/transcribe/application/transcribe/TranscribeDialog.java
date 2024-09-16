@@ -1,106 +1,142 @@
 package transcribe.application.transcribe;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.NativeLabel;
-import com.vaadin.flow.component.progressbar.ProgressBar;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.FileBuffer;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.data.binder.Binder;
+import lombok.Data;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import transcribe.application.core.broadcaster.Broadcaster;
 import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
-import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
+import transcribe.application.core.operation.OperationSuccessImportance;
 import transcribe.application.core.spring.SpringContext;
-import transcribe.application.core.upload.UploadFileFactory;
 import transcribe.application.security.AuthenticatedUser;
-import transcribe.core.common.utils.UriUtils;
+import transcribe.application.transcribe.media_provider.MediaField;
+import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.transcribe.common.Language;
+import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.operation.data.OperationType;
-import transcribe.domain.transcription.data.DetailedTranscriptionStatus;
 import transcribe.domain.transcription.service.TranscriptionFeedback;
 import transcribe.domain.transcription.service.TranscriptionPipeline;
 import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
 
+import java.util.Optional;
+
 @Slf4j
 public class TranscribeDialog extends EnhancedDialog {
 
-    private final TranscriptionPipeline transcriptionPipeline = SpringContext.getBean(TranscriptionPipeline.class);
-    private final AuthenticatedUser authenticatedUser = SpringContext.getBean(AuthenticatedUser.class);
-    private final OperationRunner operationRunner = SpringContext.getBean(OperationRunner.class);
-    private final Broadcaster broadcaster = SpringContext.getBean(Broadcaster.class);
+    private final TranscriptionPipeline transcriptionPipeline;
+    private final OperationRunner operationRunner;
+    private final AuthenticatedUser authenticatedUser;
 
     public TranscribeDialog() {
-        var fileBuffer = new FileBuffer(UploadFileFactory.INSTANCE);
-        var upload = new Upload();
-        upload.setReceiver(fileBuffer);
-        upload.setDropLabelIcon(LineAwesomeIcon.UPLOAD_SOLID.create());
-        upload.setDropLabel(new NativeLabel("Upload media file"));
+        this.transcriptionPipeline = SpringContext.getBean(TranscriptionPipeline.class);
+        this.operationRunner = SpringContext.getBean(OperationRunner.class);
+        this.authenticatedUser = SpringContext.getBean(AuthenticatedUser.class);
 
-        var status = new NativeLabel("Status");
-        var downloadProgress = new ProgressBar();
-        downloadProgress.setMin(0);
-        downloadProgress.setMax(100);
+        var binder = new Binder<Command>();
+        binder.setBean(new Command());
 
-        var uriField = new TextField("Media URI");
-        var startTranscribe = new Button("Start Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
+        var mediaProviderField = new MediaField();
+        binder.forField(mediaProviderField)
+                .asRequired("Media is required")
+                .bind(Command::getMediaValue, Command::setMediaValue);
 
-        var ui = UI.getCurrent();
-        var userId = authenticatedUser.find().orElseThrow().getId();
+        var language = new ComboBox<>("Language", Language.values());
+        language.setClearButtonVisible(true);
+        language.setItemLabelGenerator(Language::getDisplayName);
+        binder.forField(language)
+                .asRequired("Language is required")
+                .bind(Command::getLanguage, Command::setLanguage);
 
-        var feedback = TranscriptionFeedback.builder()
-                .onDetailedStatusChanged(s -> broadcaster.publish(new DetailedStatusEvent(s, userId)))
-                .downloadPublicCallback(p -> broadcaster.publish(new DownloadProgressEvent(p, userId)))
-                .build();
+        var form = new FormLayout();
+        form.add(mediaProviderField, 2);
+        form.add(language, 2);
 
-        startTranscribe.addClickListener(_ -> {
-            var uri = UriUtils.newUri(uriField.getValue());
-            var command = TranscriptionPipelineCommand.builder()
-                    .local(false)
-                    .name("Transcription")
-                    .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElseThrow())
-                    .mediaUri(uri)
-                    .language(Language.ENGLISH_US)
-                    .build();
-
-            var operation = Operation.builder()
-                    .name("Transcribing")
-                    .type(OperationType.NON_BLOCKING)
-                    .beforeCall(this::close)
-                    .callable(OperationCallable.ofRunnable(() -> transcriptionPipeline.transcribeWithFeedback(command, feedback)))
-                    .build();
-
-            operationRunner.run(operation, ui);
+        var transcribeButton = newTranscribeButton();
+        transcribeButton.addClickListener(_ -> {
+            if (binder.validate().isOk()) {
+                startTranscribe(binder.getBean());
+            }
         });
 
-        setHeaderTitle("Transcribe");
+        getFooter().add(newTranscribeButtonContainer(transcribeButton));
 
-        setMinWidth("500px");
-        add(upload, status, downloadProgress, uriField, startTranscribe);
-
+        add(form);
+        setHeaderTitle("Media source");
         setModal(true);
+        setDraggable(false);
+        setResizable(true);
+        setWidth("500px");
+        setHeight("560px");
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
+    private void startTranscribe(Command command) {
+        var pipelineCommand = TranscriptionPipelineCommand.builder()
+                .name(command.getMediaValue().name())
+                .mediaUri(command.getMediaValue().uri())
+                .mediaOrigin(command.getMediaValue().mediaOrigin())
+                .language(command.getLanguage())
+                .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElse(null))
+                .build();
+
+        var feedback = TranscriptionFeedback.builder()
+                .transcribeProgressCallback(p -> log.info("Progress: {}%", p))
+                .build();
+
+        var operation = Operation.<Optional<TranscribeResult>>builder()
+                .name(String.format("Transcribing \"%s\"", command.getMediaValue().name()))
+                .beforeCall(this::close)
+                .type(OperationType.NON_BLOCKING)
+                .callable(() -> transcriptionPipeline.transcribeWithFeedback(pipelineCommand, feedback))
+                .onSuccess(r -> {
+                    if (r.isPresent()) {
+                        log.info("Transcription of \"{}\" succeeded with {} words",
+                                command.getMediaValue().name(), r.get().getWords().size());
+                    } else {
+                        log.error("Transcription of \"{}\" failed", command.getMediaValue().name());
+                    }
+                })
+                .successImportance(OperationSuccessImportance.HIGH)
+                .customSuccessMessage(String.format("Transcribed \"%s\"", command.getMediaValue().name()))
+                .build();
+
+        operationRunner.run(operation, UI.getCurrent());
     }
 
-    @Override
-    protected void onDetach(DetachEvent attachEvent) {
-        super.onDetach(attachEvent);
+    private static Button newTranscribeButton() {
+        var button = new Button("TRANSCRIBE", LineAwesomeIcon.PODCAST_SOLID.create());
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        button.setHeight("50px");
+        button.setWidth("65%");
+
+        return button;
     }
 
-    public record DetailedStatusEvent(DetailedTranscriptionStatus status, Long userId) {
+    private static HorizontalLayout newTranscribeButtonContainer(Button button) {
+        var buttonContainer = new HorizontalLayout(button);
+        buttonContainer.setWidthFull();
+        buttonContainer.setAlignItems(FlexComponent.Alignment.CENTER);
+        buttonContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        return buttonContainer;
     }
 
-    public record DownloadProgressEvent(int progress, Long userId) {
+    @Data
+    @Accessors(chain = true)
+    private static class Command {
+
+        private MediaValue mediaValue;
+        private Language language;
+
     }
 
 }

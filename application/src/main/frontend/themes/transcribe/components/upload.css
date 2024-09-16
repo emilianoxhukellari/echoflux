@@ -1,0 +1,4 @@
+vaadin-upload.transcribe-upload {
+    border: 3px dashed var(--lumo-contrast-20pct);
+    align-content: center;
+}

@@ -9,7 +9,7 @@ import transcribe.core.audio.ffmpeg.FFmpegWrapper;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
 import transcribe.core.audio.transcoder.temp_file.TranscoderTempDirectory;
-import transcribe.core.common.log.LoggedMethodExecution;
+import transcribe.core.core.log.LoggedMethodExecution;
 
 import java.nio.file.Path;
 

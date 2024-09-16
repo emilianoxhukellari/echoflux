@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.core.common.utils.UriUtils;
+import transcribe.core.core.utils.UriUtils;
 
 import java.net.URI;
 

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import transcribe.core.transcribe.common.Language;
+import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.net.URI;
 
@@ -28,6 +29,7 @@ public class TranscriptionPipelineCommand {
     @NotNull
     private URI mediaUri;
 
-    private boolean local;
+    @NotNull
+    private MediaOrigin mediaOrigin;
 
 }

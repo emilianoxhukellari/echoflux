@@ -1,0 +1,10 @@
+vaadin-tabsheet.transcribe-tab-sheet::part(content) {
+    padding: 6px;
+    margin-top: 6px;
+    border-radius: 10px;
+    background-color: hsl(214deg 60% 80% / 14%);
+}
+
+vaadin-tabsheet.invalid-field::part(content) {
+    background-color: hsl(3deg 75% 62% / 14%);
+}

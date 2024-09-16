@@ -1,7 +1,7 @@
 package transcribe.application.core.upload;
 
 import com.vaadin.flow.component.upload.receivers.FileFactory;
-import transcribe.core.common.temp_file.TempFileNameGenerator;
+import transcribe.core.core.temp_file.TempFileNameGenerator;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 
 import java.io.File;

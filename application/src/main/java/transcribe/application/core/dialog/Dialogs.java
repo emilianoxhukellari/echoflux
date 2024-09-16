@@ -18,9 +18,13 @@ public final class Dialogs {
         dialog.open();
     }
 
-    public static void show(String message) {
+    public static void info(String message) {
+        info("Information", message);
+    }
+
+    public static void info(String header, String message) {
         var dialog = new ConfirmDialog();
-        dialog.setHeader("Information");
+        dialog.setHeader(header);
         dialog.setText(message);
         dialog.setConfirmButton("OK", _ -> dialog.close());
         dialog.setConfirmButtonTheme("primary");
@@ -33,6 +37,19 @@ public final class Dialogs {
         dialog.setText(resolveErrorMessage(e));
         dialog.setConfirmButton("OK", _ -> dialog.close());
         dialog.setConfirmButtonTheme("error primary");
+        dialog.open();
+    }
+
+    public static void warn(String message) {
+        warn("Warning", message);
+    }
+
+    public static void warn(String header, String message) {
+        var dialog = new ConfirmDialog();
+        dialog.setHeader(header);
+        dialog.setText(message);
+        dialog.setConfirmButton("OK", _ -> dialog.close());
+        dialog.setConfirmButtonTheme("contrast primary");
         dialog.open();
     }
 

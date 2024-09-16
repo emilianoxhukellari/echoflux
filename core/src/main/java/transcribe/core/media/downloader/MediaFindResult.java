@@ -14,6 +14,7 @@ import java.net.URI;
 public class MediaFindResult {
 
     private String title;
+    private URI uri;
     private URI thumbnailUri;
 
 }

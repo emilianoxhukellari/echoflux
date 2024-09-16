@@ -83,14 +83,14 @@
             create table transcription
             (
                 id                  bigserial primary key,
-                status              varchar(255)  not null,
-                cloud_uri           varchar(1024) not null,
-                language            varchar(255)  not null,
-                name                varchar(1024) not null,
+                status              varchar(255)                            not null,
+                cloud_uri           varchar(1024),
+                language            varchar(255)                            not null,
+                name                varchar(1024)                           not null,
                 transcript          text,
-                length_millis       bigint        not null,
+                length_millis       bigint,
                 error               text,
-                application_user_id bigint references application_user (id),
+                application_user_id bigint references application_user (id) not null,
 
                 created_at          timestamp,
                 created_by          varchar(255),

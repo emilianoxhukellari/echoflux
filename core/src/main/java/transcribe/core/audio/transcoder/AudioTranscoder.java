@@ -3,7 +3,7 @@ package transcribe.core.audio.transcoder;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
-import transcribe.core.common.temp_file.TempFileNameGenerator;
+import transcribe.core.core.temp_file.TempFileNameGenerator;
 
 import java.nio.file.Path;
 

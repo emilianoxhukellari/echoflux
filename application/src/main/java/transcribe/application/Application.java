@@ -3,6 +3,7 @@ package transcribe.application;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.theme.Theme;
+import com.vaadin.flow.theme.lumo.Lumo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -10,7 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@Theme(value = "transcribe")
+@Theme(value = "transcribe", variant = Lumo.DARK)
 @Push
 @SpringBootApplication
 @ComponentScan({"transcribe.application", "transcribe.core", "transcribe.domain"})

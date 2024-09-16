@@ -2,8 +2,11 @@ package transcribe.domain.transcription.data;
 
 public enum TranscriptionStatus {
 
-    IN_PROGRESS,
-    COMPLETED,
+    CREATED,
+    DOWNLOADING_PUBLIC,
+    PROCESSING,
+    TRANSCRIBING,
+    FINISHED,
     FAILED
 
 }

@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import transcribe.core.common.executor.CommonExecutor;
+import transcribe.core.core.executor.CommonExecutor;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.youtube_dl.*;
 import transcribe.core.properties.YouTubeDLProperties;

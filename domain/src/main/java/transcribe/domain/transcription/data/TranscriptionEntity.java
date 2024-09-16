@@ -8,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,7 +40,6 @@ public class TranscriptionEntity extends AuditEntity {
     private TranscriptionStatus status;
 
     @Column(name = "cloud_uri")
-    @NotNull
     private URI cloudUri;
 
     @Column(name = "language")
@@ -49,11 +48,10 @@ public class TranscriptionEntity extends AuditEntity {
     private Language language;
 
     @Column(name = "name")
-    @NotNull
+    @NotBlank
     private String name;
 
     @Column(name = "transcript")
-    @NotNull
     private String transcript;
 
     @Column(name = "application_user_id")
@@ -61,8 +59,6 @@ public class TranscriptionEntity extends AuditEntity {
     private Long applicationUserId;
 
     @Column(name = "length_millis")
-    @NotNull
-    @Min(0)
     private Long lengthMillis;
 
     @Column(name = "error")

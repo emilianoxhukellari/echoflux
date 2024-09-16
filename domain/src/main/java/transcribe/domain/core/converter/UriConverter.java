@@ -2,7 +2,7 @@ package transcribe.domain.core.converter;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import transcribe.core.common.utils.UriUtils;
+import transcribe.core.core.utils.UriUtils;
 
 import java.net.URI;
 import java.util.Objects;

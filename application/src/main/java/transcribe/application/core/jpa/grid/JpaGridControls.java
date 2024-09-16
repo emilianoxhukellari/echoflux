@@ -60,7 +60,7 @@ public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecification
 
         var sizeButton = new Button(
                 VaadinIcon.HASH.create(),
-                _ -> Dialogs.show("Total items: " + grid.getDataProvider().size(new Query<>()))
+                _ -> Dialogs.info("Total items: " + grid.getDataProvider().size(new Query<>()))
         );
         sizeButton.setTooltipText("Size");
         addTopLeft(sizeButton);

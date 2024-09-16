@@ -1,7 +1,7 @@
 package transcribe.core.media.temp_file;
 
-import transcribe.core.common.temp_file.TempDirectory;
-import transcribe.core.common.utils.FileUtils;
+import transcribe.core.core.temp_file.TempDirectory;
+import transcribe.core.core.utils.FileUtils;
 
 import java.nio.file.Path;
 

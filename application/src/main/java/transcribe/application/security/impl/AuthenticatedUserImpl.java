@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import transcribe.application.security.AuthenticatedUser;
-import transcribe.core.common.utils.MoreSets;
+import transcribe.core.core.utils.MoreSets;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.ApplicationUserRepository;
 import transcribe.domain.application_user.data.Role;

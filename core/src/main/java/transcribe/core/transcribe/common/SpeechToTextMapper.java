@@ -5,7 +5,6 @@ import com.google.protobuf.Duration;
 import org.mapstruct.*;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
-        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SpeechToTextMapper {
 

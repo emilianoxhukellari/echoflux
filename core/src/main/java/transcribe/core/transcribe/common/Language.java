@@ -7,10 +7,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum Language {
 
-    ALBANIAN("sq-AL"),
-    ENGLISH_GB("en-GB"),
-    ENGLISH_US("en-US");
+    ALBANIAN("sq-AL", "Albanian"),
+    ENGLISH_GB("en-GB", "English (UK)"),
+    ENGLISH_US("en-US", "English (US)"),;
 
     private final String bcp47;
+    private final String displayName;
 
 }

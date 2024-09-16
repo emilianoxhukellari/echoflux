@@ -1,0 +1,93 @@
+package transcribe.application.transcribe.media_provider.impl;
+
+import com.vaadin.flow.component.html.NativeLabel;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.FileBuffer;
+import com.vaadin.flow.component.upload.receivers.FileData;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.vaadin.lineawesome.LineAwesomeIcon;
+import transcribe.application.core.upload.UploadFileFactory;
+import transcribe.application.transcribe.media_provider.MediaProvider;
+import transcribe.application.transcribe.media_provider.MediaValue;
+import transcribe.core.core.error.PropagatedException;
+import transcribe.core.core.utils.FileUtils;
+import transcribe.core.core.utils.UriUtils;
+import transcribe.core.run.RunnableUtils;
+import transcribe.domain.transcription.data.MediaOrigin;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+public class LocalMediaProvider extends HorizontalLayout implements MediaProvider {
+
+    private final FileBuffer fileBuffer;
+    private final Upload upload;
+    private Consumer<MediaValue> onReady;
+    private Runnable onClientCleared;
+    private Path path;
+
+    public LocalMediaProvider() {
+        this.fileBuffer = new FileBuffer(UploadFileFactory.INSTANCE);
+
+        this.upload = new Upload();
+        upload.setReceiver(fileBuffer);
+        upload.setAcceptedFileTypes("audio/*", "video/*");
+        upload.setDropLabelIcon(LineAwesomeIcon.UPLOAD_SOLID.create());
+        upload.setDropLabel(new NativeLabel("Upload media file"));
+        upload.addClassName("transcribe-upload");
+        upload.setSizeFull();
+
+        upload.addSucceededListener(e -> {
+            path = Optional.ofNullable(fileBuffer.getFileData())
+                    .map(FileData::getFile)
+                    .map(File::toPath)
+                    .orElse(null);
+
+            if (!StringUtils.containsAny(e.getMIMEType(), "audio/", "video/")) {
+                clear();
+                throw new PropagatedException("Unsupported media type. Please upload an audio or video file.");
+            }
+
+            RunnableUtils.consumeIfPresent(
+                    onReady,
+                    new MediaValue(UriUtils.toUri(path), FilenameUtils.getBaseName(e.getFileName()), MediaOrigin.LOCAL)
+            );
+        });
+        upload.addFileRemovedListener(_ -> {
+            cleanup();
+            RunnableUtils.runIfPresent(onClientCleared);
+        });
+
+        add(upload);
+        setSizeFull();
+        setPadding(false);
+    }
+
+    @Override
+    public void onReady(Consumer<MediaValue> onReady) {
+        this.onReady = onReady;
+    }
+
+    @Override
+    public void onClientCleared(Runnable onClientCleared) {
+        this.onClientCleared = onClientCleared;
+    }
+
+    @Override
+    public void clear() {
+        upload.getElement().executeJs(
+                "this.dispatchEvent(new CustomEvent('file-abort', { detail: { file: this.files[0] } }));"
+        );
+        cleanup();
+    }
+
+    private void cleanup() {
+        FileUtils.deleteIfExists(path);
+        this.path = null;
+    }
+
+}

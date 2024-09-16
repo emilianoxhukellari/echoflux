@@ -5,7 +5,7 @@ import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
 import transcribe.application.core.broadcaster.Broadcaster;
 import transcribe.application.core.broadcaster.Subscription;
-import transcribe.core.common.executor.CommonExecutor;
+import transcribe.core.core.executor.CommonExecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,14 +23,14 @@ public class BroadcasterImpl implements Broadcaster {
     private final ReentrantLock lock = new ReentrantLock();
     private final Map<Class<?>, List<EventConsumer<?>>> subscribers = new HashMap<>();
 
+    public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer) {
+        return subscribe(event, consumer, _ -> true);
+    }
+
     public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer, Predicate<T> condition) {
         addSynchronized(event, new EventConsumer<>(consumer, condition));
 
         return () -> removeSynchronized(event, consumer);
-    }
-
-    public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer) {
-        return subscribe(event, consumer, _ -> true);
     }
 
     @SuppressWarnings("unchecked")

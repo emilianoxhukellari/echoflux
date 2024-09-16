@@ -3,7 +3,7 @@ package transcribe.core.transcribe;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
-import transcribe.core.common.log.LoggedMethodExecution;
+import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.transcribe.common.Language;
 import transcribe.core.transcribe.common.TranscribeResult;
 

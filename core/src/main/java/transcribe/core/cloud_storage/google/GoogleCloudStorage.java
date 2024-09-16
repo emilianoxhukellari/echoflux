@@ -16,7 +16,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.cloud_storage.ResourceInfo;
-import transcribe.core.common.log.LoggedMethodExecution;
+import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.properties.GoogleCloudProperties;
 
 import java.nio.ByteBuffer;

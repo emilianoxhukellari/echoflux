@@ -7,8 +7,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import transcribe.core.common.log.LoggedMethodExecution;
-import transcribe.core.common.utils.UriUtils;
+import transcribe.core.core.log.LoggedMethodExecution;
+import transcribe.core.core.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
@@ -71,6 +71,7 @@ public class FacebookMediaDownloader implements MediaDownloader {
         return Optional.of(MediaFindResult.builder()
                 .title(ArrayUtils.get(parts, 0, StringUtils.EMPTY))
                 .thumbnailUri(UriUtils.newUri(ArrayUtils.get(parts, 1, StringUtils.EMPTY)))
+                .uri(uri)
                 .build());
     }
 

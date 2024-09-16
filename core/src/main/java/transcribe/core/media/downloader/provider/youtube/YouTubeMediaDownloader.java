@@ -6,9 +6,9 @@ import com.github.kiulian.downloader.downloader.request.RequestVideoInfo;
 import com.github.kiulian.downloader.model.videos.formats.AudioFormat;
 import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
-import transcribe.core.common.log.LoggedMethodExecution;
-import transcribe.core.common.utils.MoreLists;
-import transcribe.core.common.utils.UriUtils;
+import transcribe.core.core.log.LoggedMethodExecution;
+import transcribe.core.core.utils.MoreLists;
+import transcribe.core.core.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
@@ -52,6 +52,7 @@ public class YouTubeMediaDownloader implements MediaDownloader {
                 .map(i -> MediaFindResult.builder()
                         .title(i.details().title())
                         .thumbnailUri(UriUtils.newUri(MoreLists.getLast(i.details().thumbnails())))
+                        .uri(uri)
                         .build());
     }
 

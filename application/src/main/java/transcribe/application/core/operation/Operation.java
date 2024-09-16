@@ -6,7 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import transcribe.core.common.no_op.NoOp;
+import org.apache.commons.lang3.StringUtils;
+import transcribe.core.core.no_op.NoOp;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.function.Consumer;
@@ -35,7 +36,21 @@ public class Operation<T> {
 
     @NotNull
     @Builder.Default
+    private OperationSuccessImportance successImportance = OperationSuccessImportance.NORMAL;
+
+    @NotNull
+    @Builder.Default
+    private String customSuccessMessage = StringUtils.EMPTY;
+
+    @Builder.Default
+    private boolean onSuccessNotify = true;
+
+    @NotNull
+    @Builder.Default
     private Consumer<Throwable> onError = NoOp.consumer();
+
+    @Builder.Default
+    private boolean onErrorNotify = true;
 
     @NotNull
     @Builder.Default
