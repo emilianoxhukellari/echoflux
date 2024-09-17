@@ -1,10 +1,10 @@
-package transcribe.application.core.broadcaster.impl;
+package transcribe.domain.core.broadcaster.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
-import transcribe.application.core.broadcaster.Broadcaster;
-import transcribe.application.core.broadcaster.Subscription;
+import transcribe.domain.core.broadcaster.Broadcaster;
+import transcribe.domain.core.broadcaster.Subscription;
 import transcribe.core.core.executor.CommonExecutor;
 
 import java.util.ArrayList;
@@ -22,10 +22,6 @@ public class BroadcasterImpl implements Broadcaster {
     private final CommonExecutor commonExecutor;
     private final ReentrantLock lock = new ReentrantLock();
     private final Map<Class<?>, List<EventConsumer<?>>> subscribers = new HashMap<>();
-
-    public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer) {
-        return subscribe(event, consumer, _ -> true);
-    }
 
     public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer, Predicate<T> condition) {
         addSynchronized(event, new EventConsumer<>(consumer, condition));

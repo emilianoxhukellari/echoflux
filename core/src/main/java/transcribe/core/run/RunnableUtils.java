@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 @Slf4j
 public final class RunnableUtils {
 
-    public static Optional<Throwable> runSilent(Runnable runnable) {
+    public static Optional<Throwable> runQuietly(Runnable runnable) {
         try {
             runnable.run();
             return Optional.empty();

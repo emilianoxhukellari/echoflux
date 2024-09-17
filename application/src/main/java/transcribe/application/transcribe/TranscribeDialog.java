@@ -24,7 +24,6 @@ import transcribe.core.transcribe.common.Language;
 import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.operation.data.OperationType;
-import transcribe.domain.transcription.service.TranscriptionFeedback;
 import transcribe.domain.transcription.service.TranscriptionPipeline;
 import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
 
@@ -68,13 +67,15 @@ public class TranscribeDialog extends EnhancedDialog {
             }
         });
 
-        getFooter().add(newTranscribeButtonContainer(transcribeButton));
+        addCloseButtonListener(mediaProviderField::clear);
 
+        getFooter().add(newTranscribeButtonContainer(transcribeButton));
         add(form);
         setHeaderTitle("Media source");
         setModal(true);
         setDraggable(false);
-        setResizable(true);
+        setResizable(false);
+        setCloseOnEsc(false);
         setWidth("500px");
         setHeight("560px");
     }
@@ -88,15 +89,11 @@ public class TranscribeDialog extends EnhancedDialog {
                 .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElse(null))
                 .build();
 
-        var feedback = TranscriptionFeedback.builder()
-                .transcribeProgressCallback(p -> log.info("Progress: {}%", p))
-                .build();
-
         var operation = Operation.<Optional<TranscribeResult>>builder()
                 .name(String.format("Transcribing \"%s\"", command.getMediaValue().name()))
                 .beforeCall(this::close)
                 .type(OperationType.NON_BLOCKING)
-                .callable(() -> transcriptionPipeline.transcribeWithFeedback(pipelineCommand, feedback))
+                .callable(() -> transcriptionPipeline.transcribe(pipelineCommand))
                 .onSuccess(r -> {
                     if (r.isPresent()) {
                         log.info("Transcription of \"{}\" succeeded with {} words",

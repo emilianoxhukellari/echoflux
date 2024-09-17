@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.transcription.data.TranscriptionStatus;
+import transcribe.domain.transcription.event.TranscriptionStatusChangeUserEvent;
 
 import java.util.Optional;
 
@@ -12,11 +13,11 @@ import java.util.Optional;
 public interface TranscriptionPipeline {
 
     /**
-     * This method will not throw on error. Instead, the status of {@link TranscriptionStatus#FAILED} will be sent to the feedback.
+     * This method does not throw on error. Instead, it emits {@link TranscriptionStatusChangeUserEvent}
+     * with status {@link TranscriptionStatus#FAILED}.
      *
      * @return {@link TranscribeResult} if successful, empty otherwise.
      */
-    Optional<TranscribeResult> transcribeWithFeedback(@Valid @NotNull TranscriptionPipelineCommand command,
-                                                      @Valid @NotNull TranscriptionFeedback feedback);
+    Optional<TranscribeResult> transcribe(@Valid @NotNull TranscriptionPipelineCommand command);
 
 }

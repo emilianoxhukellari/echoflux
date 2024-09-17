@@ -1,4 +1,4 @@
-package transcribe.domain.bean;
+package transcribe.domain.core.bean;
 
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;

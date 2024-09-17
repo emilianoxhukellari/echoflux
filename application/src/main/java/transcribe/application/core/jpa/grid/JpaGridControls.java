@@ -13,7 +13,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.icon.CustomizedIcon;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import transcribe.domain.bean.BeanUtils;
+import transcribe.domain.core.bean.BeanUtils;
 
 public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor<T>> extends VerticalLayout {
 

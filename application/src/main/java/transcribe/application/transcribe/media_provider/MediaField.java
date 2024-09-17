@@ -26,7 +26,7 @@ public class MediaField extends CustomField<MediaValue> {
         publicMedia.setHeight("180px");
 
         localMedia.onReady(r -> {
-            publicMedia.clear();
+            clear();
             setValue(r);
         });
         localMedia.onClientCleared(() -> Optional.ofNullable(getValue())
@@ -35,7 +35,7 @@ public class MediaField extends CustomField<MediaValue> {
                 .ifPresent(_ -> clear()));
 
         publicMedia.onReady(r -> {
-            localMedia.clear();
+            clear();
             setValue(r);
         });
         publicMedia.onClientCleared(() -> Optional.ofNullable(getValue())
@@ -51,6 +51,16 @@ public class MediaField extends CustomField<MediaValue> {
         tabSheet.add(newLocalTab(), localMedia);
 
         add(tabSheet);
+    }
+
+    /**
+     * Clears the field and potentially performs cleanup.
+     * */
+    @Override
+    public void clear() {
+        super.clear();
+        localMedia.clear();
+        publicMedia.clear();
     }
 
     private static Tab newPublicTab() {

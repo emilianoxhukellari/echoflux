@@ -7,6 +7,7 @@ import transcribe.core.audio.common.AudioContainer;
 import transcribe.core.audio.ffmpeg.FFprobeWrapper;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
+import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.progress.ProgressTrigger;
@@ -17,8 +18,10 @@ import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionStatus;
+import transcribe.domain.transcription.event.TranscriptionLengthEvent;
+import transcribe.domain.transcription.event.TranscriptionProgressChangeEvent;
+import transcribe.domain.transcription.event.TranscriptionStatusChangeUserEvent;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
-import transcribe.domain.transcription.service.TranscriptionFeedback;
 import transcribe.domain.transcription.service.TranscriptionPipeline;
 import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
@@ -38,16 +41,24 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private final SpeechToText speechToText;
     private final TranscriptionMapper mapper;
     private final TranscriptionService service;
+    private final Broadcaster broadcaster;
     private final FFprobeWrapper ffprobeWrapper;
 
     @Override
     @LoggedMethodExecution(logReturn = false)
-    public Optional<TranscribeResult> transcribeWithFeedback(TranscriptionPipelineCommand command, TranscriptionFeedback feedback) {
+    public Optional<TranscribeResult> transcribe(TranscriptionPipelineCommand command) {
         var entity = service.create(mapper.toCreateCommand(command));
-        RunnableUtils.runSilent(() -> feedback.getOnStatusChanged().accept(TranscriptionStatus.CREATED));
+
+        broadcaster.publishQuietly(
+                TranscriptionStatusChangeUserEvent.builder()
+                        .applicationUserId(command.getApplicationUserId())
+                        .transcriptionId(entity.getId())
+                        .status(TranscriptionStatus.CREATED)
+                        .build()
+        );
 
         try {
-            return Optional.of(transcribeCreatedWithFeedback(entity, command, feedback));
+            return Optional.of(transcribeCreated(entity, command));
         } catch (Throwable e) {
             service.update(
                     UpdateTranscriptionCommand.builder()
@@ -55,30 +66,53 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                             .status(TranscriptionStatus.FAILED)
                             .build()
             );
-            feedback.getOnStatusChanged().accept(TranscriptionStatus.FAILED);
+            broadcaster.publishQuietly(
+                    TranscriptionStatusChangeUserEvent.builder()
+                            .applicationUserId(command.getApplicationUserId())
+                            .transcriptionId(entity.getId())
+                            .status(TranscriptionStatus.FAILED)
+                            .build()
+            );
 
             return Optional.empty();
         }
     }
 
     @SneakyThrows
-    private TranscribeResult transcribeCreatedWithFeedback(TranscriptionEntity entity, TranscriptionPipelineCommand command, TranscriptionFeedback feedback) {
+    private TranscribeResult transcribeCreated(TranscriptionEntity entity, TranscriptionPipelineCommand command) {
         var original = switch (command.getMediaOrigin()) {
             case LOCAL -> Path.of(command.getMediaUri());
             case PUBLIC -> {
-                saveStatusAndSendFeedback(entity.getId(), TranscriptionStatus.DOWNLOADING_PUBLIC, feedback);
+                saveStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.DOWNLOADING_PUBLIC);
 
                 yield mediaDownloaderFactory.getRequired(command.getMediaUri())
-                        .download(command.getMediaUri(), feedback.getDownloadPublicCallback());
+                        .download(
+                                command.getMediaUri(),
+                                p -> broadcaster.publishQuietly(
+                                        TranscriptionProgressChangeEvent.builder()
+                                                .applicationUserId(command.getApplicationUserId())
+                                                .transcriptionId(entity.getId())
+                                                .progress(p)
+                                                .build()
+                                )
+                        );
             }
         };
-        saveStatusAndSendFeedback(entity.getId(), TranscriptionStatus.PROCESSING, feedback);
+        saveStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.PROCESSING);
 
         var result = ffprobeWrapper.ffprobe().probe(original.toAbsolutePath().toString());
+        var lengthMillis = (long) (result.getFormat().duration * 1000);
         service.update(
                 UpdateTranscriptionCommand.builder()
                         .id(entity.getId())
-                        .lengthMillis((long) (result.getFormat().duration * 1000))
+                        .lengthMillis(lengthMillis)
+                        .build()
+        );
+        broadcaster.publishQuietly(
+                TranscriptionLengthEvent.builder()
+                        .applicationUserId(command.getApplicationUserId())
+                        .transcriptionId(entity.getId())
+                        .lengthMillis(lengthMillis)
                         .build()
         );
 
@@ -96,13 +130,22 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        saveStatusAndSendFeedback(entity.getId(), TranscriptionStatus.TRANSCRIBING, feedback);
+        saveStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.TRANSCRIBING);
         // todo: duration must be calculated using some statistics service
-        var progressTrigger = new ProgressTrigger(Duration.ofSeconds(7), feedback.getTranscribeProgressCallback(), 95);
-        RunnableUtils.runSilent(progressTrigger::start);
+        var progressTrigger = new ProgressTrigger(
+                Duration.ofSeconds(7),
+                p -> broadcaster.publishQuietly(
+                        TranscriptionProgressChangeEvent.builder()
+                                .applicationUserId(command.getApplicationUserId())
+                                .transcriptionId(entity.getId())
+                                .progress(p)
+                                .build()
+                ),
+                95);
+        RunnableUtils.runQuietly(progressTrigger::start);
 
         var transcribeResult = speechToText.transcribe(resourceInfo.getUri(), command.getLanguage());
-        RunnableUtils.runSilent(progressTrigger::stop);
+        RunnableUtils.runQuietly(progressTrigger::stop);
 
         service.update(
                 UpdateTranscriptionCommand.builder()
@@ -111,8 +154,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        saveStatusAndSendFeedback(entity.getId(), TranscriptionStatus.FINISHED, feedback);
-        RunnableUtils.runSilent(() -> FileUtils.deleteIfExists(original, ogg));
+        saveStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.FINISHED);
+        RunnableUtils.runQuietly(() -> FileUtils.deleteIfExists(original, ogg));
 
         return transcribeResult;
     }
@@ -120,16 +163,20 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     /**
      * Throws on status save, but silently runs feedback callback.
      */
-    private void saveStatusAndSendFeedback(Long transcriptionId,
-                                           TranscriptionStatus status,
-                                           TranscriptionFeedback feedback) {
+    private void saveStatusAndPublish(Long transcriptionId, Long applicationUserId, TranscriptionStatus status) {
         service.update(
                 UpdateTranscriptionCommand.builder()
                         .id(transcriptionId)
                         .status(status)
                         .build()
         );
-        RunnableUtils.runSilent(() -> feedback.getOnStatusChanged().accept(status));
+        broadcaster.publishQuietly(
+                TranscriptionStatusChangeUserEvent.builder()
+                        .applicationUserId(applicationUserId)
+                        .transcriptionId(transcriptionId)
+                        .status(status)
+                        .build()
+        );
     }
 
 }

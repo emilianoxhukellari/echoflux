@@ -7,7 +7,7 @@ import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.lang.Nullable;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.bean.BeanUtils;
+import transcribe.domain.core.bean.BeanUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;

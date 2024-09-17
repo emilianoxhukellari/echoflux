@@ -5,8 +5,18 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.collections4.PredicateUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EnhancedDialog extends Dialog {
+
+    private final List<Runnable> closeButtonListeners = ListUtils.predicatedList(
+            new ArrayList<>(),
+            PredicateUtils.notNullPredicate()
+    );
 
     public EnhancedDialog() {
         getHeader().add(newCloseButton());
@@ -50,8 +60,17 @@ public class EnhancedDialog extends Dialog {
         return this;
     }
 
+    public Dialog addCloseButtonListener(Runnable listener) {
+        closeButtonListeners.add(listener);
+
+        return this;
+    }
+
     private Button newCloseButton() {
-        var closeButton = new Button(VaadinIcon.CLOSE_BIG.create(), _ -> close());
+        var closeButton = new Button(VaadinIcon.CLOSE_BIG.create(), _ -> {
+            close();
+            closeButtonListeners.forEach(Runnable::run);
+        });
         closeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
 
         return closeButton;

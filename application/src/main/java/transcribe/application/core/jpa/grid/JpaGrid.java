@@ -33,7 +33,7 @@ import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.utils.MoreArrays;
 import transcribe.core.core.utils.MoreLists;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.bean.BeanUtils;
+import transcribe.domain.core.bean.BeanUtils;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.ArrayList;

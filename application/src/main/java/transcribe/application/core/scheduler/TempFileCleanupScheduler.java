@@ -10,6 +10,7 @@ import transcribe.core.audio.transcoder.temp_file.TranscoderTempDirectory;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 
 import java.io.File;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -25,7 +26,8 @@ public class TempFileCleanupScheduler {
 
     @Scheduled(fixedDelay = 1000 * 60)
     public void cleanup() {
-        var ageFilter = new AgeFileFilter(Instant.now().minusSeconds(DELETE_AFTER_MINUTES * 60));
+        // todo: test
+        var ageFilter = new AgeFileFilter(Instant.now().minus(Duration.ofMinutes(DELETE_AFTER_MINUTES)));
 
         DIRECTORIES.stream()
                 .filter(File::exists)
