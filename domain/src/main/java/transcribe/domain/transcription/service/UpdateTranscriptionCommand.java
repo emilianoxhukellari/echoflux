@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import transcribe.domain.transcription.data.TranscriptionStatus;
 
 import java.net.URI;
@@ -14,7 +13,6 @@ import java.net.URI;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Accessors(chain = true)
 public class UpdateTranscriptionCommand {
 
     @NotNull
@@ -27,8 +25,6 @@ public class UpdateTranscriptionCommand {
     private String name;
 
     private String transcript;
-
-    private Long lengthMillis;
 
     private String error;
 

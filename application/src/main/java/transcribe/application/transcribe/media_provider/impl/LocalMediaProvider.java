@@ -48,7 +48,7 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
                     .orElse(null);
 
             if (!StringUtils.containsAny(e.getMIMEType(), "audio/", "video/")) {
-                clear();
+                clearAndCleanup();
                 throw new PropagatedException("Unsupported media type. Please upload an audio or video file.");
             }
 
@@ -78,7 +78,7 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
     }
 
     @Override
-    public void clear() {
+    public void clearAndCleanup() {
         upload.getElement().executeJs(
                 "this.dispatchEvent(new CustomEvent('file-abort', { detail: { file: this.files[0] } }));"
         );

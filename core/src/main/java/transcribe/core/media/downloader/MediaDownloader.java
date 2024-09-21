@@ -2,6 +2,8 @@ package transcribe.core.media.downloader;
 
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
+import transcribe.core.core.log.LoggedMethodExecution;
+import transcribe.core.core.no_op.NoOp;
 import transcribe.core.core.temp_file.TempFileNameGenerator;
 import transcribe.core.media.downloader.provider.MediaDownloaderProvider;
 import transcribe.core.media.temp_file.MediaTempDirectory;
@@ -16,11 +18,16 @@ import java.util.Optional;
 @Validated
 public interface MediaDownloader extends TempFileNameGenerator {
 
-    Path download(@NotNull(message = "Video uri is required") URI uri, @NotNull MediaDownloadProgressCallback callback);
+    @LoggedMethodExecution
+    default Path download(@NotNull URI uri) {
+        return download(uri, NoOp.mediaDownloadProgressCallback());
+    }
 
-    Optional<MediaFindResult> find(@NotNull(message = "Video uri is required") URI uri);
+    Path download(@NotNull URI uri, @NotNull MediaDownloadProgressCallback callback);
 
-    boolean supports(@NotNull(message = "Video uri is required") URI uri);
+    Optional<MediaFindResult> find(@NotNull URI uri);
+
+    boolean supports(@NotNull URI uri);
 
     MediaDownloaderProvider provider();
 

@@ -6,24 +6,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import transcribe.domain.application_user.event.ApplicationUserEvent;
-import transcribe.domain.transcription.data.TranscriptionStatus;
+import transcribe.domain.transcription.data.TranscriptionEntity;
 
-/**
- * Emitted when the status of a transcription has changed. Statuses are {@link TranscriptionStatus#values()}.
- * */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TranscriptionStatusChangeUserEvent implements TranscriptionEvent, ApplicationUserEvent {
+public class TranscriptionUpdateUserEvent implements ApplicationUserEvent {
 
     @NotNull
     private Long applicationUserId;
 
     @NotNull
-    private Long transcriptionId;
-
-    @NotNull
-    private TranscriptionStatus status;
+    private TranscriptionEntity transcription;
 
 }

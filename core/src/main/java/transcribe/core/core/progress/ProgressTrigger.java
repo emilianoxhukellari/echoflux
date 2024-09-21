@@ -1,6 +1,5 @@
 package transcribe.core.core.progress;
 
-import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -11,18 +10,22 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ProgressTrigger {
 
     private static final Executor executor = Executors.newVirtualThreadPerTaskExecutor();
-    private static final int TICK_INTERVAL_MILLIS = 1000;
 
     private final ReentrantLock lock = new ReentrantLock();
     private final AtomicBoolean running = new AtomicBoolean(false);
-    private final Duration duration;
+    private final long durationNanos;
     private final ProgressCallback progressCallback;
-    private final int tickUntilProgress;
+    private final long tickIntervalMillis;
+    private final long tickUntilProgress;
 
-    public ProgressTrigger(Duration duration, ProgressCallback progressCallback, int tickUntilProgress) {
-        this.duration = Objects.requireNonNull(duration, "Duration is required");
-        this.progressCallback = Objects.requireNonNull(progressCallback, "Progress callback is required");
+    public ProgressTrigger(long durationMillis,
+                           long tickIntervalMillis,
+                           long tickUntilProgress,
+                           ProgressCallback progressCallback) {
+        this.durationNanos = durationMillis * 1_000_000;
+        this.tickIntervalMillis = tickIntervalMillis;
         this.tickUntilProgress = tickUntilProgress;
+        this.progressCallback = Objects.requireNonNull(progressCallback, "Progress callback is required");
     }
 
     @SuppressWarnings("BusyWait")
@@ -32,10 +35,10 @@ public class ProgressTrigger {
             var progress = new AtomicInteger();
 
             executor.execute(() -> {
-                while (duration.toNanos() > System.nanoTime() - startTime && progress.get() <= tickUntilProgress) {
+                while (durationNanos > System.nanoTime() - startTime && progress.get() <= tickUntilProgress) {
                     try {
-                        Thread.sleep(TICK_INTERVAL_MILLIS);
-                        var p = (int) Math.min(tickUntilProgress, (System.nanoTime() - startTime) * 100 / duration.toNanos());
+                        Thread.sleep(tickIntervalMillis);
+                        var p = (int) Math.min(tickUntilProgress, (System.nanoTime() - startTime) * 100 / durationNanos);
                         if (lock.tryLock()) {
                             try {
                                 if (running.get()) {

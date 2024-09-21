@@ -51,6 +51,11 @@ public final class BeanUtils {
         return fields.stream().findFirst();
     }
 
+    public static <T> Field getIdField(Class<T> beanType) {
+        return findIdField(beanType)
+                .orElseThrow(() -> new IllegalArgumentException("Bean does not have an @Id field"));
+    }
+
     public static <T> List<String> getFieldNames(Class<T> beanType) {
         Validate.notNull(beanType, "Bean type must not be null");
 
@@ -70,10 +75,7 @@ public final class BeanUtils {
     public static <T> Object getIdFieldValue(T bean, Class<T> beanType) {
         Validate.notNull(bean, "Bean must not be null");
 
-        var idField = findIdField(beanType)
-                .orElseThrow(() -> new IllegalArgumentException("Bean does not have an @Id field"));
-
-        return getFieldValue(bean, idField.getName());
+        return getFieldValue(bean, getIdField(beanType).getName());
     }
 
     public static <T> String getPrettyName(Class<T> beanType) {

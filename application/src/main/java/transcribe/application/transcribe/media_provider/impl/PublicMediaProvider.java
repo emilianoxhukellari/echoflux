@@ -116,7 +116,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
         var closeButton = new Button(VaadinIcon.CLOSE_SMALL.create());
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         closeButton.addClickListener(_ -> {
-            clear();
+            clearAndCleanup();
             RunnableUtils.runIfPresent(onClientCleared);
         });
 
@@ -136,7 +136,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     }
 
     @Override
-    public void clear() {
+    public void clearAndCleanup() {
         searchUri.clear();
         removeAll();
         add(searchContainer);

@@ -8,6 +8,6 @@ public interface MediaProvider {
 
     void onClientCleared(Runnable onClientCleared);
 
-    void clear();
+    void clearAndCleanup();
 
 }

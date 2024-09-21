@@ -5,17 +5,18 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.EnhancedDialog;
+import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.core.operation.OperationSuccessImportance;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcribe.media_provider.MediaField;
@@ -29,7 +30,6 @@ import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
 
 import java.util.Optional;
 
-@Slf4j
 public class TranscribeDialog extends EnhancedDialog {
 
     private final TranscriptionPipeline transcriptionPipeline;
@@ -67,7 +67,7 @@ public class TranscribeDialog extends EnhancedDialog {
             }
         });
 
-        addCloseButtonListener(mediaProviderField::clear);
+        addCloseButtonListener(mediaProviderField::clearAndCleanup);
 
         getFooter().add(newTranscribeButtonContainer(transcribeButton));
         add(form);
@@ -96,14 +96,21 @@ public class TranscribeDialog extends EnhancedDialog {
                 .callable(() -> transcriptionPipeline.transcribe(pipelineCommand))
                 .onSuccess(r -> {
                     if (r.isPresent()) {
-                        log.info("Transcription of \"{}\" succeeded with {} words",
-                                command.getMediaValue().name(), r.get().getWords().size());
+                        Notifications.success(
+                                String.format("Transcribed \"%s\"", command.getMediaValue().name()),
+                                Notification.Position.TOP_CENTER,
+                                5000
+                        );
                     } else {
-                        log.error("Transcription of \"{}\" failed", command.getMediaValue().name());
+                        Notifications.newNotification(
+                                String.format("Transcription of \"%s\" failed", command.getMediaValue().name()),
+                                Notification.Position.TOP_END,
+                                4000,
+                                NotificationVariant.LUMO_ERROR
+                        );
                     }
                 })
-                .successImportance(OperationSuccessImportance.HIGH)
-                .customSuccessMessage(String.format("Transcribed \"%s\"", command.getMediaValue().name()))
+                .onSuccessNotify(false)
                 .build();
 
         operationRunner.run(operation, UI.getCurrent());

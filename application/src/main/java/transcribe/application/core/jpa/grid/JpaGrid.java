@@ -91,8 +91,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addIdColumn() {
-        addColumn(BeanUtils.findIdField(beanType).orElseThrow().getName())
-                .setWidth(COLUMN_WIDTH);
+        addColumn(BeanUtils.getIdField(beanType).getName()).setWidth(COLUMN_WIDTH);
     }
 
     @Override
@@ -137,7 +136,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addIdFilter() {
-        addFilter(BeanUtils.findIdField(beanType).orElseThrow().getName());
+        addFilter(BeanUtils.getIdField(beanType).getName());
     }
 
     public void addFilters(String... propertyNames) {
@@ -280,16 +279,9 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     private Sort newSort(Query<T, CombinedFilter<T>> query) {
         var sort = VaadinSpringDataHelpers.toSpringDataSort(query);
 
-        if (sort.isEmpty()) {
-            var sortById = BeanUtils.findIdField(beanType)
-                    .map(f -> Sort.by(Sort.Direction.DESC, f.getName()));
-
-            if (sortById.isPresent()) {
-                return sortById.get();
-            }
-        }
-
-        return sort;
+        return sort.isSorted()
+                ? sort
+                : Sort.by(Sort.Direction.DESC, BeanUtils.getIdField(beanType).getName());
     }
 
 }

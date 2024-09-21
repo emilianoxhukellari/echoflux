@@ -10,8 +10,15 @@ public final class Notifications {
     }
 
     public static void success(String message, Notification.Position position, int durationMillis) {
+        newNotification(message, position, durationMillis, NotificationVariant.LUMO_SUCCESS);
+    }
+
+    public static void newNotification(String message,
+                                       Notification.Position position,
+                                       int durationMillis,
+                                       NotificationVariant variant) {
         var notification = new Notification(message, durationMillis);
-        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        notification.addThemeVariants(variant);
         notification.setPosition(position);
         notification.open();
     }
