@@ -8,15 +8,17 @@ import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.icon.AbstractIcon;
 import com.vaadin.flow.data.binder.PropertyDefinition;
+import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import lombok.Getter;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import transcribe.application.core.dialog.Dialogs;
@@ -36,6 +38,7 @@ import transcribe.domain.audit.data.AuditEntity;
 import transcribe.domain.core.bean.BeanUtils;
 import transcribe.domain.operation.data.OperationType;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -53,8 +56,10 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     private final R repository;
     @Getter
     private final Class<T> beanType;
+    private final Field idField;
     private final List<JpaFilter<T>> filters = new ArrayList<>();
     private final ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> filterDataProvider;
+    private final Specification<T> defaultSpecification;
 
     private boolean clearingFilters;
     @Getter
@@ -62,16 +67,26 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     private HeaderRow filterRow;
     private GridContextMenu<T> contextMenu;
 
-    public JpaGrid(Class<T> beanType, R repository) {
+    public JpaGrid(Class<T> beanType, R repository, Specification<T> defaultSpecification) {
         super(DEFAULT_PAGE_SIZE);
 
         this.beanType = Objects.requireNonNull(beanType, "Jpa grid requires a bean type");
         this.repository = Objects.requireNonNull(repository, "Jpa grid requires a JpaSpecificationExecutor");
+        this.defaultSpecification = Objects.requireNonNull(defaultSpecification, "Default specification cannot be null");
+        this.idField = BeanUtils.getIdField(beanType);
         this.filterDataProvider = newDataProvider();
 
         configureBeanType(beanType, false);
         setDataProvider(this.filterDataProvider);
         addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
+    }
+
+    public JpaGrid(Class<T> beanType, R repository) {
+        this(beanType, repository, (_, _, criteriaBuilder) -> criteriaBuilder.conjunction());
+    }
+
+    public void refreshItem(T item) {
+        getDataProvider().refreshItem(item);
     }
 
     public void refreshAll() {
@@ -91,7 +106,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addIdColumn() {
-        addColumn(BeanUtils.getIdField(beanType).getName()).setWidth(COLUMN_WIDTH);
+        addColumn(idField.getName()).setWidth(COLUMN_WIDTH);
     }
 
     @Override
@@ -107,8 +122,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
 
     @Override
     public void addColumns(String... propertyNames) {
-        Objects.requireNonNull(propertyNames, "Property names cannot be null");
-        Stream.of(propertyNames).forEach(name -> addColumn(name)
+        Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(name -> addColumn(name)
                 .setWidth(COLUMN_WIDTH));
     }
 
@@ -136,13 +150,11 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addIdFilter() {
-        addFilter(BeanUtils.getIdField(beanType).getName());
+        addFilter(idField.getName());
     }
 
     public void addFilters(String... propertyNames) {
-        Objects.requireNonNull(propertyNames, "Property names cannot be null");
-
-        Stream.of(propertyNames).forEach(this::addFilter);
+        Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(this::addFilter);
     }
 
     public void addFilter(String propertyName) {
@@ -228,7 +240,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                             .description(String.format(
                                     "Entity of type [%s] with ID [%s]",
                                     BeanUtils.getPrettyName(beanType),
-                                    BeanUtils.getIdFieldValue(e, beanType)
+                                    BeanUtils.getFieldValue(e, idField)
                             ))
                             .callable(OperationCallable.ofRunnable(() -> repository.delete(e)))
                             .onSuccess(_ -> refreshAll())
@@ -260,28 +272,34 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     private ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> newDataProvider() {
-        return DataProvider.fromFilteringCallbacks(this::fetch, this::count).withConfigurableFilter();
+        return new CallbackDataProvider<>(this::fetch, this::count, item -> BeanUtils.getFieldValue(item, idField))
+                .withConfigurableFilter();
     }
 
     private Stream<T> fetch(Query<T, CombinedFilter<T>> query) {
-        var specification = query.getFilter().orElse(CombinedFilter.empty()).specification();
-        var pageRequest = PageRequest.of(query.getPage(), query.getPageSize(), newSort(query));
+        var specification = toSpecification(query);
+        var pageRequest = PageRequest.of(query.getPage(), query.getPageSize(), toSort(query));
 
         return repository.findAll(specification, pageRequest).stream();
     }
 
     private int count(Query<T, CombinedFilter<T>> query) {
-        var specification = query.getFilter().orElse(CombinedFilter.empty()).specification();
+        var specification = toSpecification(query);
 
         return Math.toIntExact(repository.count(specification));
     }
 
-    private Sort newSort(Query<T, CombinedFilter<T>> query) {
+    private Specification<T> toSpecification(Query<T, CombinedFilter<T>> query) {
+        return query.getFilter().orElse(CombinedFilter.empty()).specification()
+                .and(defaultSpecification);
+    }
+
+    private Sort toSort(Query<T, CombinedFilter<T>> query) {
         var sort = VaadinSpringDataHelpers.toSpringDataSort(query);
 
         return sort.isSorted()
                 ? sort
-                : Sort.by(Sort.Direction.DESC, BeanUtils.getIdField(beanType).getName());
+                : Sort.by(Sort.Direction.DESC, idField.getName());
     }
 
 }

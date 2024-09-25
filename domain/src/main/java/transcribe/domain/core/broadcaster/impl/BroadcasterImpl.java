@@ -5,7 +5,7 @@ import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
-import transcribe.core.core.executor.CommonExecutor;
+import transcribe.core.core.executor.VirtualThreadExecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,9 +19,9 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class BroadcasterImpl implements Broadcaster {
 
-    private final CommonExecutor commonExecutor;
+    private final VirtualThreadExecutor virtualThreadExecutor;
     private final ReentrantLock lock = new ReentrantLock();
-    private final Map<Class<?>, List<EventConsumer<?>>> subscribers = new HashMap<>();
+    private final Map<Class<?>, List<EventConsumer<?>>> eventSubscribersMap = new HashMap<>();
 
     public <T> Subscription subscribe(Class<T> event, Consumer<T> consumer, Predicate<T> condition) {
         addSynchronized(event, new EventConsumer<>(consumer, condition));
@@ -33,11 +33,11 @@ public class BroadcasterImpl implements Broadcaster {
     public <T> void publish(T event) {
         lock.lock();
         try {
-            for (var c : ListUtils.emptyIfNull(subscribers.get(event.getClass()))) {
+            for (var c : ListUtils.emptyIfNull(eventSubscribersMap.get(event.getClass()))) {
                 try {
                     var casted = (EventConsumer<T>) c;
                     if (casted.condition().test(event)) {
-                        commonExecutor.execute(() -> casted.consumer().accept(event));
+                        virtualThreadExecutor.execute(() -> casted.consumer().accept(event));
                     }
                 } catch (Throwable _) {
                 }
@@ -50,7 +50,7 @@ public class BroadcasterImpl implements Broadcaster {
     private void addSynchronized(Class<?> event, EventConsumer<?> consumer) {
         lock.lock();
         try {
-            subscribers.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer);
+            eventSubscribersMap.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer);
         } finally {
             lock.unlock();
         }
@@ -59,7 +59,7 @@ public class BroadcasterImpl implements Broadcaster {
     private void removeSynchronized(Class<?> event, Consumer<?> consumer) {
         lock.lock();
         try {
-            subscribers.get(event).removeIf(c -> c.consumer().equals(consumer));
+            eventSubscribersMap.get(event).removeIf(c -> c.consumer().equals(consumer));
         } finally {
             lock.unlock();
         }

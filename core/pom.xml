@@ -35,11 +35,6 @@
             <version>2.42.0</version>
         </dependency>
         <dependency>
-            <groupId>com.github.sealedtx</groupId>
-            <artifactId>java-youtube-downloader</artifactId>
-            <version>3.2.3</version>
-        </dependency>
-        <dependency>
             <groupId>net.bramp.ffmpeg</groupId>
             <artifactId>ffmpeg</artifactId>
             <version>0.8.0</version>

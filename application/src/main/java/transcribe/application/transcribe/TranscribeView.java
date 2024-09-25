@@ -1,30 +1,44 @@
 package transcribe.application.transcribe;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.virtuallist.VirtualList;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import transcribe.application.core.spring.SpringContext;
+import transcribe.application.core.icon.IconFactory;
+import transcribe.application.core.jpa.core.CoreAttributePropertySet;
+import transcribe.application.core.jpa.grid.JpaGrid;
+import transcribe.application.core.jpa.grid.JpaGridControls;
+import transcribe.application.core.progress.BallScaleRippleMultipleProgress;
+import transcribe.application.core.ui.UiUtils;
 import transcribe.application.main.MainLayout;
-import transcribe.core.core.executor.CommonExecutor;
+import transcribe.application.security.AuthenticatedUser;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
-import transcribe.domain.transcription.data.TranscriptionMetadataEntity;
-import transcribe.domain.transcription.data.TranscriptionMetadataRepository;
+import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.domain.transcription.data.TranscriptionRepository;
 import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
 import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
+import java.util.Objects;
 
 @PageTitle("Transcribe")
 @Route(value = "transcribe", layout = MainLayout.class)
@@ -32,38 +46,102 @@ import java.util.List;
 @Slf4j
 public class TranscribeView extends Composite<VerticalLayout> {
 
-    private final CommonExecutor executor = SpringContext.getBean(CommonExecutor.class);
-    private final Broadcaster broadcaster = SpringContext.getBean(Broadcaster.class);
+    private final Broadcaster broadcaster;
     private final List<Subscription> subscriptions = new ArrayList<>();
-    private final TranscriptionMetadataRepository repository = SpringContext.getBean(TranscriptionMetadataRepository.class);
+    private final JpaGrid<TranscriptionEntity, TranscriptionRepository> grid;
+    private final Long applicationUserId;
 
-    public TranscribeView() {
+    public TranscribeView(Broadcaster broadcaster, AuthenticatedUser authenticatedUser, TranscriptionRepository repository) {
+        this.broadcaster = broadcaster;
+        this.applicationUserId = authenticatedUser.get().getId();
+
         var button = new Button("Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(_ -> new TranscribeDialog().open());
+        this.grid = new JpaGrid<>(
+                TranscriptionEntity.class,
+                repository,
+                (root, _, criteriaBuilder) -> criteriaBuilder.equal(root.get("applicationUserId"), applicationUserId)
+        );
+        grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        grid.addColumns("name", "language", "status", "createdAt");
+        grid.addColumn("lengthMillis")
+                .setRenderer(new TextRenderer<>(TranscribeView::newDuration))
+                .setHeader("Duration");
+        grid.addColumn(new ComponentRenderer<>(TranscribeView::newStatus))
+                .setHeader("Status");
 
-        var virtualList = new VirtualList<TranscriptionMetadataEntity>();
+        grid.setAllColumnsResizable();
+        grid.addFilters("name", "language", "status", "createdAt");
 
-        getContent().add(button, virtualList);
+        var controls = new JpaGridControls<>(grid);
+        controls.addTopRight(button);
+
+        var content = getContent();
+        content.setAlignItems(FlexComponent.Alignment.CENTER);
+        content.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        content.addAndExpand(controls);
+
+        var corePropertySet = new CoreAttributePropertySet<>(TranscriptionEntity.class, List.of());
+        log.info("All properties: {}", Arrays.toString(corePropertySet.getPropertyNamesAsArray()));
+    }
+
+    private static String newDuration(TranscriptionEntity entity) {
+        var duration = Objects.requireNonNullElse(entity.getLengthMillis(), 0L);
+
+        return DurationFormatUtils.formatDuration(duration, "H'h' m'm' s's'")
+                .replaceAll("0h ", StringUtils.EMPTY)
+                .replaceAll("0m ", StringUtils.EMPTY);
+    }
+
+    private static Component newStatus(TranscriptionEntity entity) {
+        var status = entity.getStatus();
+        var layout = new HorizontalLayout();
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        switch (status) {
+            case FAILED -> layout.add(IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem",  "Error"));
+            case FINISHED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Success"));
+            case CREATED -> {}
+            case DOWNLOADING_PUBLIC, PROCESSING -> {
+               //var progress = new CircularProgress();
+               //progress.setMax(100);
+               //progress.setIndeterminate(true);
+                var progress = new BallScaleRippleMultipleProgress();
+                layout.add(progress);
+            }
+            case TRANSCRIBING -> {
+                var progress = new BallScaleRippleMultipleProgress();
+                layout.add(progress);
+            }
+        }
+
+        return layout;
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        var ui = attachEvent.getUI();
 
         var sub1 = broadcaster.subscribe(
                 TranscriptionCreateUserEvent.class,
-                e -> log.info("Created: {}", e)
+                _ -> UiUtils.safeAccess(ui, grid::refreshAll),
+                e -> Objects.equals(e.getApplicationUserId(), applicationUserId)
         );
 
         var sub2 = broadcaster.subscribe(
                 TranscriptionUpdateUserEvent.class,
-                e -> log.info("Updated: {}", e)
+                e -> UiUtils.safeAccess(ui, () -> grid.refreshItem(e.getEntity())),
+                e -> Objects.equals(e.getEntity().getApplicationUserId(), applicationUserId)
         );
 
         subscriptions.addAll(List.of(sub1, sub2));
     }
 
+    @Override
     protected void onDetach(DetachEvent detachEvent) {
         super.onDetach(detachEvent);
 

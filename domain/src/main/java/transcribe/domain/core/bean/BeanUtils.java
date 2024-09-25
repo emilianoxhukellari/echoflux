@@ -65,18 +65,13 @@ public final class BeanUtils {
     }
 
     @SneakyThrows
-    public static <T> Object getFieldValue(T bean, String fieldName) {
+    public static <T> Object getFieldValue(T bean, Field field) {
         Validate.notNull(bean, "Bean must not be null");
-        Validate.notBlank(fieldName, "Field name must not be blank");
+        Validate.notNull(field, "Field must not be null");
 
-        return FieldUtils.readField(bean, fieldName, true);
+        return FieldUtils.readField(field, bean, true);
     }
 
-    public static <T> Object getIdFieldValue(T bean, Class<T> beanType) {
-        Validate.notNull(bean, "Bean must not be null");
-
-        return getFieldValue(bean, getIdField(beanType).getName());
-    }
 
     public static <T> String getPrettyName(Class<T> beanType) {
         return beanType.getSimpleName().replaceAll("([a-z])([A-Z])", "$1 $2");

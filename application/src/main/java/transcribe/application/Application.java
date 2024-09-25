@@ -11,11 +11,11 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@Theme(value = "transcribe", variant = Lumo.DARK)
+@Theme(value = "transcribe", variant = Lumo.LIGHT)
 @Push
 @SpringBootApplication
 @ComponentScan({"transcribe.application", "transcribe.core", "transcribe.domain"})
-@EnableJpaRepositories("transcribe.domain")
+@EnableJpaRepositories(value = "transcribe.domain")
 @EntityScan("transcribe.domain")
 @EnableScheduling
 public class Application implements AppShellConfigurator {

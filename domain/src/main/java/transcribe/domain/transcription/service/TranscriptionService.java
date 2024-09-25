@@ -14,4 +14,6 @@ public interface TranscriptionService {
 
     TranscriptionEntity get(@NotNull Long id);
 
+    double getRealTimeFactor();
+
 }

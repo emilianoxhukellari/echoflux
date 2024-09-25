@@ -1,5 +1,6 @@
 server:
   port: ${PORT:8080}
+  address: 0.0.0.0
 
 logging:
   level:
@@ -36,6 +37,9 @@ gcloud:
 
 youtube-dl:
   execution-path: ${YOUTUBE_DL_EXECUTION_PATH}
+
+yt-dlp:
+  execution-path: ${YT_DLP_EXECUTION_PATH}
 
 ffmpeg:
   ffmpeg-execution-path: ${FFMPEG_EXECUTION_PATH}

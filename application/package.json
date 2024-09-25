@@ -3,7 +3,6 @@
   "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
-    "@material/web": "2.1.0",
     "@polymer/polymer": "3.5.1",
     "@vaadin/bundles": "24.4.5",
     "@vaadin/common-frontend": "0.0.19",
@@ -82,7 +81,7 @@
       "workbox-core": "7.1.0",
       "workbox-precaching": "7.1.0"
     },
-    "hash": "f8f1feeca5cb8861e9a8cfa6ac7fa5942695d13b9b92db3e9904b0169a0b5197"
+    "hash": "2a4c77083ab51f28e5e318219da09835683db988de08b49ff99c8f3532628271"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -101,7 +100,6 @@
     "date-fns": "$date-fns",
     "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
     "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
-    "@vaadin/vaadin-material-styles": "$@vaadin/vaadin-material-styles",
-    "@material/web": "$@material/web"
+    "@vaadin/vaadin-material-styles": "$@vaadin/vaadin-material-styles"
   }
 }

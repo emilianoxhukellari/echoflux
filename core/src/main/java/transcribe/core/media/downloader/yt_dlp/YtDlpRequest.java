@@ -1,18 +1,19 @@
-package transcribe.core.media.downloader.youtube_dl;
+package transcribe.core.media.downloader.yt_dlp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.File;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class YouTubeDLResponse {
+public class YtDlpRequest {
 
-    private int exitCode;
-    private String output;
-    private String error;
+    private File directory;
+    private String[] arguments;
 
 }

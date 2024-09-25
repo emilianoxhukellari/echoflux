@@ -1,4 +1,4 @@
-package transcribe.core.media.downloader.provider.facebook;
+package transcribe.core.media.downloader.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -9,37 +9,41 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.utils.UriUtils;
-import transcribe.core.media.downloader.MediaDownloadProgressCallback;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
-import transcribe.core.media.downloader.provider.MediaDownloaderProvider;
-import transcribe.core.media.downloader.youtube_dl.YouTubeDL;
-import transcribe.core.media.downloader.youtube_dl.YouTubeDLMediaNotFound;
-import transcribe.core.media.downloader.youtube_dl.YouTubeDLRequest;
+import transcribe.core.media.downloader.yt_dlp.YtDlp;
+import transcribe.core.media.downloader.yt_dlp.YtDlpMediaUnavailableException;
+import transcribe.core.media.downloader.yt_dlp.YtDlpRequest;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class FacebookMediaDownloader implements MediaDownloader {
+public class MediaDownloaderImpl implements MediaDownloader {
 
-    private final YouTubeDL youTubeDL;
+    private final YtDlp youTubeDL;
 
     @Override
-    @SneakyThrows
     @LoggedMethodExecution
-    public Path download(URI uri, MediaDownloadProgressCallback callback) {
+    @SneakyThrows
+    public Path download(URI uri) {
         var fileName = newFileName();
-        var request = YouTubeDLRequest.builder()
-                .uri(uri.toString())
-                .directory(MediaTempDirectory.INSTANCE.locationString())
-                .options(List.of("format bestaudio", "output " + fileName + ".%(ext)s"))
+        var arguments = ArrayUtils.toArray(
+                uri.toString(),
+                "--format",
+                "bestaudio",
+                "--output",
+                String.format("%s.%%(ext)s", fileName)
+        );
+        var request = YtDlpRequest.builder()
+                .directory(MediaTempDirectory.INSTANCE.locationFile())
+                .arguments(arguments)
                 .build();
-        youTubeDL.execute(request, callback);
+
+        youTubeDL.execute(request);
 
         var fileFilter = WildcardFileFilter.builder()
                 .setWildcards(new String[]{fileName + ".*"})
@@ -54,15 +58,14 @@ public class FacebookMediaDownloader implements MediaDownloader {
     @Override
     @LoggedMethodExecution
     public Optional<MediaFindResult> find(URI uri) {
-        var request = YouTubeDLRequest.builder()
-                .uri(uri.toString())
-                .options(List.of("skip-download", "get-title", "get-thumbnail"))
+        var request = YtDlpRequest.builder()
+                .arguments(ArrayUtils.toArray(uri.toString(), "--skip-download", "--get-title", "--get-thumbnail"))
                 .build();
 
         String out;
         try {
             out = youTubeDL.execute(request).getOutput();
-        } catch (YouTubeDLMediaNotFound e) {
+        } catch (YtDlpMediaUnavailableException e) {
             return Optional.empty();
         }
 
@@ -76,18 +79,8 @@ public class FacebookMediaDownloader implements MediaDownloader {
     }
 
     @Override
-    public boolean supports(URI uri) {
-        return FacebookUtils.isFacebookUri(uri);
-    }
-
-    @Override
-    public MediaDownloaderProvider provider() {
-        return MediaDownloaderProvider.FACEBOOK;
-    }
-
-    @Override
     public String fileNamePrefix() {
-        return "facebook";
+        return "download";
     }
 
 }

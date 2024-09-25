@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-public final class CommonExecutor implements Executor {
+public final class VirtualThreadExecutor implements Executor {
 
     private static final ExecutorService executor = new DelegatingSecurityContextExecutorService(
             Executors.newVirtualThreadPerTaskExecutor()

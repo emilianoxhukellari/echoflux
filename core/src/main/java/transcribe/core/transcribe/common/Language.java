@@ -14,4 +14,9 @@ public enum Language {
     private final String bcp47;
     private final String displayName;
 
+    @Override
+    public String toString() {
+        return displayName;
+    }
+
 }

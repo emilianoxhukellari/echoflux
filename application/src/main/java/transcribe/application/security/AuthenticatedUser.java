@@ -10,6 +10,10 @@ import java.util.Optional;
 @Validated
 public interface AuthenticatedUser {
 
+    default ApplicationUserEntity get() {
+        return find().orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
+    }
+
     Optional<ApplicationUserEntity> find();
 
     void logout();

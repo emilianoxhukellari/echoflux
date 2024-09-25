@@ -22,6 +22,7 @@ import transcribe.application.home.HomeView;
 import transcribe.application.operation.OperationsView;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcribe.TranscribeView;
+import transcribe.application.transcription.TranscriptionsView;
 import transcribe.application.user.UsersView;
 
 public class MainLayout extends AppLayout {
@@ -65,6 +66,7 @@ public class MainLayout extends AppLayout {
         addIfHasAccess(nav, HomeView.class, "Home", LineAwesomeIcon.HOME_SOLID.create());
         addIfHasAccess(nav, TranscribeView.class, "Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
         addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
+        addIfHasAccess(nav, TranscriptionsView.class, "Transcriptions", LineAwesomeIcon.FILE_AUDIO_SOLID.create());
         addIfHasAccess(nav, OperationsView.class, "Operations", LineAwesomeIcon.COGS_SOLID.create());
 
         return nav;

@@ -6,7 +6,6 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.binder.Result;
 import com.vaadin.flow.data.binder.Setter;
-import com.vaadin.flow.data.binder.ValueContext;
 import com.vaadin.flow.data.converter.Converter;
 import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.spring.annotation.SpringComponent;
@@ -23,17 +22,10 @@ public class LongBoundFieldCreator implements BoundFieldCreator {
         var getter = (ValueProvider<T, Long>) property.getGetter();
         var setter = (Setter<T, Long>) property.getSetter().orElseThrow();
         var builder = binder.forField(field).withConverter(
-                new Converter<Double, Long>() {
-                    @Override
-                    public Result<Long> convertToModel(Double value, ValueContext context) {
-                        return value == null ? Result.ok(null) : Result.ok(value.longValue());
-                    }
-
-                    @Override
-                    public Double convertToPresentation(Long value, ValueContext context) {
-                        return value == null ? null : value.doubleValue();
-                    }
-                }
+                Converter.from(
+                        v -> Result.ok(v == null ? null : v.longValue()),
+                        v -> v == null ? null : v.doubleValue()
+                )
         );
         if (required) {
             builder.asRequired();

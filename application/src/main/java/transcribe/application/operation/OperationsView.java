@@ -9,14 +9,14 @@ import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.main.MainLayout;
 import transcribe.domain.operation.data.OperationEntity;
-import transcribe.domain.operation.data.OperationRepository;
+import transcribe.domain.operation.data.OperationRepositoryJpa;
 
 @PageTitle("Operations")
 @Route(value = "operations", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class OperationsView extends Composite<VerticalLayout> {
 
-    public OperationsView(OperationRepository repository) {
+    public OperationsView(OperationRepositoryJpa repository) {
         var grid = new JpaGrid<>(OperationEntity.class, repository);
 
         grid.addCoreAttributeColumns();

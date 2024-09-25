@@ -6,7 +6,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import transcribe.application.core.operation.OperationProgress;
-import transcribe.application.core.progress.CircularProgress;
+import transcribe.application.core.progress.BallClipRotatePulseProgress;
 
 public class NonBlockingOperationProgress implements OperationProgress {
 
@@ -17,7 +17,7 @@ public class NonBlockingOperationProgress implements OperationProgress {
         this.notification.setPosition(Notification.Position.TOP_END);
         this.notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
 
-        var hl = new HorizontalLayout(newProgressBar(), new Text(name));
+        var hl = new HorizontalLayout(new BallClipRotatePulseProgress(), new Text(name));
         hl.setAlignItems(FlexComponent.Alignment.CENTER);
         hl.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         hl.setWidth("300px");
@@ -33,14 +33,6 @@ public class NonBlockingOperationProgress implements OperationProgress {
     @Override
     public void close() {
         notification.close();
-    }
-
-    private static CircularProgress newProgressBar() {
-        var progress = new CircularProgress();
-        progress.setIndeterminate(true);
-        progress.setSize("45px");
-
-        return progress;
     }
 
 }

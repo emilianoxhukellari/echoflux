@@ -67,6 +67,14 @@ public class TranscribeDialog extends EnhancedDialog {
             }
         });
 
+        binder.addValueChangeListener(_ -> {
+            if (binder.isValid()) {
+                transcribeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            } else {
+                transcribeButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            }
+        });
+
         addCloseButtonListener(mediaProviderField::clearAndCleanup);
 
         getFooter().add(newTranscribeButtonContainer(transcribeButton));
@@ -111,6 +119,8 @@ public class TranscribeDialog extends EnhancedDialog {
                     }
                 })
                 .onSuccessNotify(false)
+                .onProgressNotify(false)
+
                 .build();
 
         operationRunner.run(operation, UI.getCurrent());
@@ -118,7 +128,7 @@ public class TranscribeDialog extends EnhancedDialog {
 
     private static Button newTranscribeButton() {
         var button = new Button("TRANSCRIBE", LineAwesomeIcon.PODCAST_SOLID.create());
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        button.addThemeVariants(ButtonVariant.LUMO_LARGE);
         button.setHeight("50px");
         button.setWidth("65%");
 

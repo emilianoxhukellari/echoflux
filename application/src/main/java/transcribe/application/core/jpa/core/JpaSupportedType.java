@@ -25,6 +25,7 @@ public enum JpaSupportedType {
     LONG(Long.class, null),
     FLOAT(Float.class, null),
     INTEGER(Integer.class, null),
+    URI(java.net.URI.class, null),
     COLLECTION(Collection.class, JpaGridRendererFactory::newCollectionRenderer);
 
     @Getter

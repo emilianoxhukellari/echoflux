@@ -60,4 +60,7 @@ public class Operation<T> {
     @Builder.Default
     private OperationType type = OperationType.BLOCKING;
 
+    @Builder.Default
+    private boolean onProgressNotify = true;
+
 }

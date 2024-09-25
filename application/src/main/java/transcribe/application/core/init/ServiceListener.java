@@ -19,8 +19,10 @@ public class ServiceListener implements VaadinServiceInitListener {
     }
 
     private void initSession(SessionInitEvent event) {
-        event.getSession().setErrorHandler(e ->
-                UiUtils.safeAccess(UI.getCurrent(), () -> Dialogs.error(e.getThrowable()))
+        event.getSession().setErrorHandler(e -> {
+                    log.error("Session error: ", e.getThrowable());
+                    UiUtils.safeAccess(UI.getCurrent(), () -> Dialogs.error(e.getThrowable()));
+                }
         );
 
         log.info("Session initialized");

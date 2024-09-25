@@ -1,6 +1,5 @@
 package transcribe.domain.transcription.data;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,9 +7,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -61,13 +60,28 @@ public class TranscriptionEntity extends AuditEntity {
     @NotNull
     private Long applicationUserId;
 
+    @Column(name = "transcribe_progress")
+    @Min(0)
+    @Max(100)
+    private Integer transcribeProgress;
+
+    @Column(name = "length_millis")
+    @Min(0)
+    private Long lengthMillis;
+
+    @Column(name = "download_duration_millis")
+    @Min(0)
+    private Long downloadDurationMillis;
+
+    @Column(name = "process_duration_millis")
+    @Min(0)
+    private Long processDurationMillis;
+
+    @Column(name = "transcribe_duration_millis")
+    @Min(0)
+    private Long transcribeDurationMillis;
+
     @Column(name = "error")
     private String error;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "transcription_metadata_id", referencedColumnName = "id", unique = true)
-    @NotNull
-    @Builder.Default
-    private TranscriptionMetadataEntity metadata = new TranscriptionMetadataEntity();
 
 }

@@ -18,6 +18,6 @@ public class TranscriptionCreateUserEvent implements ApplicationUserEvent {
     private Long applicationUserId;
 
     @NotNull
-    private TranscriptionEntity transcription;
+    private TranscriptionEntity entity;
 
 }

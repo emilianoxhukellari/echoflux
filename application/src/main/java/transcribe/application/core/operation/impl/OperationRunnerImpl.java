@@ -9,7 +9,7 @@ import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.ui.UiUtils;
-import transcribe.core.core.executor.CommonExecutor;
+import transcribe.core.core.executor.VirtualThreadExecutor;
 import transcribe.domain.operation.service.OperationService;
 
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class OperationRunnerImpl implements OperationRunner {
 
     private final OperationService operationService;
-    private final CommonExecutor commonExecutor;
+    private final VirtualThreadExecutor virtualThreadExecutor;
 
     @Override
     public <T> void run(Operation<T> operation, UI ui) {
@@ -29,7 +29,9 @@ public class OperationRunnerImpl implements OperationRunner {
                 operation.getType()
         );
 
-        var progress = switch (operation.getType()) {
+        var progress = !operation.isOnProgressNotify()
+                ? new NoOpOperationProgress()
+                : switch (operation.getType()) {
             case NON_BLOCKING -> new NonBlockingOperationProgress(operation.getName());
             case BLOCKING -> new BlockingOperationProgress(operation.getName());
         };
@@ -37,7 +39,7 @@ public class OperationRunnerImpl implements OperationRunner {
         CompletableFuture.runAsync(() -> UiUtils.safeAccess(ui, () -> {
                     progress.open();
                     operation.getBeforeCall().run();
-                }), commonExecutor)
+                }), virtualThreadExecutor)
                 .thenApply(_ -> operation.getCallable().call())
                 .thenAccept(result -> {
                     UiUtils.safeAccess(ui, () -> {
