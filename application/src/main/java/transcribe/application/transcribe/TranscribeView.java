@@ -24,7 +24,7 @@ import transcribe.application.core.icon.IconFactory;
 import transcribe.application.core.jpa.core.CoreAttributePropertySet;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
-import transcribe.application.core.progress.BallScaleRippleMultipleProgress;
+import transcribe.application.core.progress.BallClipRotatePulseProgress;
 import transcribe.application.core.ui.UiUtils;
 import transcribe.application.main.MainLayout;
 import transcribe.application.security.AuthenticatedUser;
@@ -109,11 +109,11 @@ public class TranscribeView extends Composite<VerticalLayout> {
                //var progress = new CircularProgress();
                //progress.setMax(100);
                //progress.setIndeterminate(true);
-                var progress = new BallScaleRippleMultipleProgress();
+                var progress = new BallClipRotatePulseProgress();
                 layout.add(progress);
             }
             case TRANSCRIBING -> {
-                var progress = new BallScaleRippleMultipleProgress();
+                var progress = new BallClipRotatePulseProgress();
                 layout.add(progress);
             }
         }
