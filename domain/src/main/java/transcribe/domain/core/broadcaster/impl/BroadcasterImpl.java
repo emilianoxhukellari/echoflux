@@ -2,10 +2,10 @@ package transcribe.domain.core.broadcaster.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.ListUtils;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Component;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
-import transcribe.core.core.executor.VirtualThreadExecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class BroadcasterImpl implements Broadcaster {
 
-    private final VirtualThreadExecutor virtualThreadExecutor;
+    private final DelegatingSecurityContextExecutorService executor;
     private final ReentrantLock lock = new ReentrantLock();
     private final Map<Class<?>, List<EventConsumer<?>>> eventSubscribersMap = new HashMap<>();
 
@@ -37,7 +37,7 @@ public class BroadcasterImpl implements Broadcaster {
                 try {
                     var casted = (EventConsumer<T>) c;
                     if (casted.condition().test(event)) {
-                        virtualThreadExecutor.execute(() -> casted.consumer().accept(event));
+                        executor.execute(() -> casted.consumer().accept(event));
                     }
                 } catch (Throwable _) {
                 }

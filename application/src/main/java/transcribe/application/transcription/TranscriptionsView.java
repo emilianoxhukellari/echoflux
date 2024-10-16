@@ -18,17 +18,9 @@ public class TranscriptionsView extends Composite<VerticalLayout> {
 
     public TranscriptionsView(TranscriptionRepository repository) {
         var grid = new JpaGrid<>(TranscriptionEntity.class, repository);
-
-        grid.addCoreAttributeColumns();
-        grid.addAuditColumns();
-        grid.addIdColumn();
-
+        grid.addAllColumns();
         grid.setAllColumnsResizable();
-
-        grid.addCoreAttributeFilters();
-        grid.addAuditFilters();
-        grid.addIdFilter();
-
+        grid.addAllFilters();
         grid.addCrudActions();
 
         getContent().addAndExpand(new JpaGridControls<>(grid));

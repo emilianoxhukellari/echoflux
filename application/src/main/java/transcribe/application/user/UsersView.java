@@ -40,20 +40,17 @@ public class UsersView extends Composite<VerticalLayout> {
         grid.addContextMenuItem("Edit", e -> new UpdateUserDialog(e)
                 .setSaveListener(grid::refreshAll)
                 .open());
-        grid.addContextMenuItem("Delete", e -> Dialogs.confirm(
-                "Are you sure you want to delete this user?",
-                () -> {
-                    var operation = Operation.builder()
-                            .name("Deleting application user")
-                            .description("User with ID " + e.getId())
-                            .callable(OperationCallable.ofRunnable(() -> service.delete(e.getId())))
-                            .onSuccess(_ -> grid.refreshAll())
-                            .type(OperationType.NON_BLOCKING)
-                            .build();
+        grid.addConfirmedContextMenuItem("Delete", e -> {
+            var operation = Operation.builder()
+                    .name("Deleting application user")
+                    .description("User with ID " + e.getId())
+                    .callable(OperationCallable.ofRunnable(() -> service.delete(e.getId())))
+                    .onSuccess(_ -> grid.refreshAll())
+                    .type(OperationType.NON_BLOCKING)
+                    .build();
 
-                    operationRunner.run(operation, UI.getCurrent());
-                }
-        ));
+            operationRunner.run(operation, UI.getCurrent());
+        });
         grid.addContextMenuItem("Change password", e -> new ChangePasswordDialog(e).open());
 
         var jpaGridControls = new JpaGridControls<>(grid);

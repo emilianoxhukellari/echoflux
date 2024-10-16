@@ -22,7 +22,7 @@ import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.core.utils.UriUtils;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
-import transcribe.core.run.RunnableUtils;
+import transcribe.core.function.FunctionUtils;
 import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.util.Optional;
@@ -85,7 +85,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                         Dialogs.info("Media not found", "Make sure the URL is correct.");
                     } else {
                         setMediaResult(r.get());
-                        RunnableUtils.consumeIfPresent(
+                        FunctionUtils.consumeIfPresent(
                                 onReady,
                                 new MediaValue(r.get().getUri(), r.get().getTitle(), MediaOrigin.PUBLIC)
                         );
@@ -124,7 +124,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         closeButton.addClickListener(_ -> {
             clearAndCleanup();
-            RunnableUtils.runIfPresent(onClientCleared);
+            FunctionUtils.runIfPresent(onClientCleared);
         });
 
         container.add(closeButton);

@@ -14,7 +14,7 @@ import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.core.error.PropagatedException;
 import transcribe.core.core.utils.FileUtils;
 import transcribe.core.core.utils.UriUtils;
-import transcribe.core.run.RunnableUtils;
+import transcribe.core.function.FunctionUtils;
 import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.io.File;
@@ -52,14 +52,14 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
                 throw new PropagatedException("Unsupported media type. Please upload an audio or video file.");
             }
 
-            RunnableUtils.consumeIfPresent(
+            FunctionUtils.consumeIfPresent(
                     onReady,
                     new MediaValue(UriUtils.toUri(path), FilenameUtils.getBaseName(e.getFileName()), MediaOrigin.LOCAL)
             );
         });
         upload.addFileRemovedListener(_ -> {
             cleanup();
-            RunnableUtils.runIfPresent(onClientCleared);
+            FunctionUtils.runIfPresent(onClientCleared);
         });
 
         add(upload);

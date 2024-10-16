@@ -3,13 +3,13 @@ package transcribe.application.core.operation.impl;
 import com.vaadin.flow.component.UI;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Component;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.ui.UiUtils;
-import transcribe.core.core.executor.VirtualThreadExecutor;
 import transcribe.domain.operation.service.OperationService;
 
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class OperationRunnerImpl implements OperationRunner {
 
     private final OperationService operationService;
-    private final VirtualThreadExecutor virtualThreadExecutor;
+    private final DelegatingSecurityContextExecutorService executor;
 
     @Override
     public <T> void run(Operation<T> operation, UI ui) {
@@ -39,7 +39,7 @@ public class OperationRunnerImpl implements OperationRunner {
         CompletableFuture.runAsync(() -> UiUtils.safeAccess(ui, () -> {
                     progress.open();
                     operation.getBeforeCall().run();
-                }), virtualThreadExecutor)
+                }), executor)
                 .thenApply(_ -> operation.getCallable().call())
                 .thenAccept(result -> {
                     UiUtils.safeAccess(ui, () -> {

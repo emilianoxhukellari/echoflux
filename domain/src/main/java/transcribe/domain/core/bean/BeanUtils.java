@@ -8,11 +8,13 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class BeanUtils {
@@ -31,11 +33,23 @@ public final class BeanUtils {
 
     @SneakyThrows
     public static <T> T invokeNoArgsConstructor(Class<T> beanType) {
+        Objects.requireNonNull(beanType, "Bean type must not be null");
+
         return ConstructorUtils.invokeConstructor(beanType);
     }
 
+    @SneakyThrows
+    public static <T> T invokeEmptyBuilder(Class<T> beanType) {
+        Objects.requireNonNull(beanType, "Bean type must not be null");
+
+        var builder = MethodUtils.invokeStaticMethod(beanType, "builder");
+        var buildMethod = MethodUtils.getAccessibleMethod(builder.getClass(), "build");
+
+        return beanType.cast(buildMethod.invoke(builder));
+    }
+
     public static <T> boolean isFieldRequired(Class<T> beanType, String fieldName) {
-        Validate.notNull(beanType, "Bean type must not be null");
+        Objects.requireNonNull(beanType, "Bean type must not be null");
         Validate.notBlank(fieldName, "Field name must not be blank");
 
         var field = FieldUtils.getField(beanType, fieldName, true);
@@ -57,7 +71,7 @@ public final class BeanUtils {
     }
 
     public static <T> List<String> getFieldNames(Class<T> beanType) {
-        Validate.notNull(beanType, "Bean type must not be null");
+        Objects.requireNonNull(beanType, "Bean type must not be null");
 
         return FieldUtils.getAllFieldsList(beanType).stream()
                 .map(Field::getName)
@@ -66,14 +80,13 @@ public final class BeanUtils {
 
     @SneakyThrows
     public static <T> Object getFieldValue(T bean, Field field) {
-        Validate.notNull(bean, "Bean must not be null");
-        Validate.notNull(field, "Field must not be null");
+        Objects.requireNonNull(bean, "Bean must not be null");
+        Objects.requireNonNull(field, "Field must not be null");
 
         return FieldUtils.readField(field, bean, true);
     }
 
-
-    public static <T> String getPrettyName(Class<T> beanType) {
+    public static <T> String getDisplayName(Class<T> beanType) {
         return beanType.getSimpleName().replaceAll("([a-z])([A-Z])", "$1 $2");
     }
 

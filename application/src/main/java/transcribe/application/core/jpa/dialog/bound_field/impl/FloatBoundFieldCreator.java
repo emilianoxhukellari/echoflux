@@ -23,17 +23,10 @@ public class FloatBoundFieldCreator implements BoundFieldCreator {
         var getter = (ValueProvider<T, Float>) property.getGetter();
         var setter = (Setter<T, Float>) property.getSetter().orElseThrow();
         var builder = binder.forField(field).withConverter(
-                new Converter<Double, Float>() {
-                    @Override
-                    public Result<Float> convertToModel(Double value, ValueContext context) {
-                        return value == null ? Result.ok(null) : Result.ok(value.floatValue());
-                    }
-
-                    @Override
-                    public Double convertToPresentation(Float value, ValueContext context) {
-                        return value == null ? null : value.doubleValue();
-                    }
-                }
+                Converter.from(
+                        v -> Result.ok(v == null ? null : v.floatValue()),
+                        v -> v == null ? null : v.doubleValue()
+                )
         );
         if (required) {
             builder.asRequired();

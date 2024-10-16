@@ -1,4 +1,4 @@
-package transcribe.domain.transcription.service.impl;
+package transcribe.domain.transcription.pipeline.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -8,12 +8,13 @@ import transcribe.core.audio.ffmpeg.FFprobeWrapper;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
 import transcribe.core.media.downloader.MediaDownloader;
+import transcribe.domain.completion.pipeline.CompletionPipeline;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.progress.ProgressTrigger;
 import transcribe.core.core.utils.FileUtils;
-import transcribe.core.run.RunnableUtils;
+import transcribe.core.function.FunctionUtils;
 import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.transcription.data.TranscriptionEntity;
@@ -21,8 +22,8 @@ import transcribe.domain.transcription.data.TranscriptionStatus;
 import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
 import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
-import transcribe.domain.transcription.service.TranscriptionPipeline;
-import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
+import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
+import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
 import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
@@ -39,6 +40,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private final SpeechToText speechToText;
     private final TranscriptionMapper mapper;
     private final TranscriptionService transcriptionService;
+    private final CompletionPipeline completionPipeline;
     private final Broadcaster broadcaster;
     private final FFprobeWrapper ffprobeWrapper;
 
@@ -69,18 +71,16 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
             case LOCAL -> Path.of(command.getMediaUri());
             case PUBLIC -> {
                 updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.DOWNLOADING_PUBLIC);
-
-                var downloadStart = System.nanoTime();
-                var downloaded = mediaDownloader.download(command.getMediaUri());
+                var downloadedTimed = FunctionUtils.getTimed(() -> mediaDownloader.download(command.getMediaUri()));
 
                 transcriptionService.update(
                         UpdateTranscriptionCommand.builder()
                                 .id(entity.getId())
-                                .downloadDurationMillis((System.nanoTime() - downloadStart) / 1_000_000)
+                                .downloadDurationMillis(downloadedTimed.getDuration().toMillis())
                                 .build()
                 );
 
-                yield downloaded;
+                yield downloadedTimed.getResult();
             }
         };
         updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.PROCESSING);
@@ -126,17 +126,19 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         p
                 )
         );
-        RunnableUtils.runQuietly(progressTrigger::start);
+        FunctionUtils.runQuietly(progressTrigger::start);
 
-        var transcribeStart = System.nanoTime();
-        var transcribeResult = speechToText.transcribe(resourceInfo.getUri(), command.getLanguage());
+        var timedTranscribeResult = FunctionUtils.getTimed(
+                () -> speechToText.transcribe(resourceInfo.getUri(), command.getLanguage())
+        );
+        var transcribeResult = timedTranscribeResult.getResult();
         transcriptionService.update(
                 UpdateTranscriptionCommand.builder()
                         .id(entity.getId())
-                        .transcribeDurationMillis((System.nanoTime() - transcribeStart) / 1_000_000)
+                        .transcribeDurationMillis(timedTranscribeResult.getDuration().toMillis())
                         .build()
         );
-        RunnableUtils.runQuietly(progressTrigger::stop);
+        FunctionUtils.runQuietly(progressTrigger::stop);
 
         transcriptionService.update(
                 UpdateTranscriptionCommand.builder()
@@ -145,8 +147,16 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.FINISHED);
-        RunnableUtils.runQuietly(() -> FileUtils.deleteIfExists(original, ogg));
+        updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.ENHANCING);
+        completionPipeline.complete(transcribeResult.getTranscript()).ifPresent(r -> transcriptionService.update(
+                UpdateTranscriptionCommand.builder()
+                        .id(entity.getId())
+                        .completionId(r.getCompletionId())
+                        .build()
+        ));
+
+        updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.COMPLETED);
+        FunctionUtils.runQuietly(() -> FileUtils.deleteIfExists(original, ogg));
 
         return transcribeResult;
     }

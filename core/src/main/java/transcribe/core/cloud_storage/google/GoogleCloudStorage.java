@@ -39,7 +39,7 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
     @SneakyThrows
     @LoggedMethodExecution
     public ResourceInfo upload(Path path) {
-        var name = UlidCreator.getUlid().toString() + PathUtils.getExtension(path);
+        var name = String.format("%s.%s", UlidCreator.getUlid().toString(), PathUtils.getExtension(path));
         var blobId = BlobId.of(googleCloudProperties.getBucketName(), name);
         var contentType = Files.probeContentType(path);
 

@@ -9,26 +9,19 @@ import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.main.MainLayout;
 import transcribe.domain.operation.data.OperationEntity;
-import transcribe.domain.operation.data.OperationRepositoryJpa;
+import transcribe.domain.operation.data.OperationRepository;
 
 @PageTitle("Operations")
 @Route(value = "operations", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class OperationsView extends Composite<VerticalLayout> {
 
-    public OperationsView(OperationRepositoryJpa repository) {
+    public OperationsView(OperationRepository repository) {
         var grid = new JpaGrid<>(OperationEntity.class, repository);
 
-        grid.addCoreAttributeColumns();
-        grid.addAuditColumns();
-        grid.addIdColumn();
-
+        grid.addAllColumns();
         grid.setAllColumnsResizable();
-
-        grid.addCoreAttributeFilters();
-        grid.addAuditFilters();
-        grid.addIdFilter();
-
+        grid.addAllFilters();
         grid.addCrudActionsExcluding("durationSeconds");
 
         getContent().addAndExpand(new JpaGridControls<>(grid));

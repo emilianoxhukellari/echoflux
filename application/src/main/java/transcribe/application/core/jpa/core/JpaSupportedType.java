@@ -1,5 +1,6 @@
 package transcribe.application.core.jpa.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.renderer.Renderer;
 import lombok.Getter;
@@ -26,6 +27,7 @@ public enum JpaSupportedType {
     FLOAT(Float.class, null),
     INTEGER(Integer.class, null),
     URI(java.net.URI.class, null),
+    JSON(JsonNode.class, null),
     COLLECTION(Collection.class, JpaGridRendererFactory::newCollectionRenderer);
 
     @Getter

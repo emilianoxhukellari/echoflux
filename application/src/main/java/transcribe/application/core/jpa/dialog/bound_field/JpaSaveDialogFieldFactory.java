@@ -13,7 +13,9 @@ import java.util.Collection;
 @Slf4j
 public final class JpaSaveDialogFieldFactory {
 
-    private static final Collection<BoundFieldCreator> fieldCreators = SpringContext.get().getBeansOfType(BoundFieldCreator.class).values();
+    private static final Collection<BoundFieldCreator> fieldCreators = SpringContext.get()
+            .getBeansOfType(BoundFieldCreator.class)
+            .values();
 
     public static <T> Component newBoundField(PropertyDefinition<T, ?> property, Binder<T> binder) {
         var required = BeanUtils.isFieldRequired(property.getPropertyHolderType(), property.getName());

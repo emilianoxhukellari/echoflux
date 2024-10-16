@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import transcribe.domain.operation.data.OperationEntity;
-import transcribe.domain.operation.data.OperationRepositoryJpa;
+import transcribe.domain.operation.data.OperationRepository;
 import transcribe.domain.operation.data.OperationStatus;
 import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.operation.mapper.OperationMapper;
@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Transactional
 public class OperationServiceImpl implements OperationService {
 
-    private final OperationRepositoryJpa repository;
+    private final OperationRepository repository;
     private final OperationMapper mapper;
 
     @Override

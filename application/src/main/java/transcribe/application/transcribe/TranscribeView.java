@@ -4,6 +4,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -17,11 +18,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.icon.IconFactory;
-import transcribe.application.core.jpa.core.CoreAttributePropertySet;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.core.progress.BallClipRotatePulseProgress;
@@ -36,7 +35,6 @@ import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
 import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -82,17 +80,12 @@ public class TranscribeView extends Composite<VerticalLayout> {
         content.setAlignItems(FlexComponent.Alignment.CENTER);
         content.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         content.addAndExpand(controls);
-
-        var corePropertySet = new CoreAttributePropertySet<>(TranscriptionEntity.class, List.of());
-        log.info("All properties: {}", Arrays.toString(corePropertySet.getPropertyNamesAsArray()));
     }
 
     private static String newDuration(TranscriptionEntity entity) {
-        var duration = Objects.requireNonNullElse(entity.getLengthMillis(), 0L);
+        long duration = Objects.requireNonNullElse(entity.getLengthMillis(), 0L);
 
-        return DurationFormatUtils.formatDuration(duration, "H'h' m'm' s's'")
-                .replaceAll("0h ", StringUtils.EMPTY)
-                .replaceAll("0m ", StringUtils.EMPTY);
+        return DurationFormatUtils.formatDuration(duration, "H'h' m'm' s's'");
     }
 
     private static Component newStatus(TranscriptionEntity entity) {
@@ -103,18 +96,15 @@ public class TranscribeView extends Composite<VerticalLayout> {
 
         switch (status) {
             case FAILED -> layout.add(IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem",  "Error"));
-            case FINISHED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Success"));
+            case COMPLETED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Success"));
             case CREATED -> {}
             case DOWNLOADING_PUBLIC, PROCESSING -> {
-               //var progress = new CircularProgress();
-               //progress.setMax(100);
-               //progress.setIndeterminate(true);
                 var progress = new BallClipRotatePulseProgress();
                 layout.add(progress);
             }
             case TRANSCRIBING -> {
-                var progress = new BallClipRotatePulseProgress();
-                layout.add(progress);
+                var percent = Objects.toString(entity.getTranscribeProgress(), "0") + "%";
+                layout.add(new Text(percent));
             }
         }
 

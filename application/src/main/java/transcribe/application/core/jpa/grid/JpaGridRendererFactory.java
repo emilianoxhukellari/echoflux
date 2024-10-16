@@ -16,13 +16,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Collection;
+import java.util.Objects;
 
 public class JpaGridRendererFactory {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.MEDIUM);
 
     public static <T> LocalDateTimeRenderer<T> newLocalDateTimeRenderer(PropertyDefinition<T, ?> propertyDefinition) {
-        Validate.notNull(propertyDefinition, "Property definition is required");
+        Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(LocalDateTime.class.isAssignableFrom(propertyDefinition.getType()), "Property definition must be of assignable to LocalDateTime");
 
         return new LocalDateTimeRenderer<>(
@@ -32,7 +33,7 @@ public class JpaGridRendererFactory {
     }
 
     public static <T> ComponentRenderer<AbstractIcon<?>, T> newBooleanRenderer(PropertyDefinition<T, ?> propertyDefinition) {
-        Validate.notNull(propertyDefinition, "Property definition is required");
+        Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(Boolean.class.isAssignableFrom(propertyDefinition.getType()), "Property definition must be of assignable to Boolean");
 
         return new ComponentRenderer<>(
@@ -50,7 +51,7 @@ public class JpaGridRendererFactory {
     }
 
     public static <T> TextRenderer<T> newCollectionRenderer(PropertyDefinition<T, ?> propertyDefinition) {
-        Validate.notNull(propertyDefinition, "Property definition is required");
+        Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(Collection.class.isAssignableFrom(propertyDefinition.getType()), "Property definition must be of assignable to Collection");
 
         return new TextRenderer<>(item -> {

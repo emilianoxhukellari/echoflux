@@ -11,7 +11,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.service.CreateTranscriptionCommand;
-import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
+import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,

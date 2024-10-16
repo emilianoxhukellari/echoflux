@@ -1,4 +1,4 @@
-package transcribe.application.transcribe.media_provider;
+package transcribe.application.core.field;
 
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -6,6 +6,7 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.tabs.TabSheetVariant;
 import org.vaadin.lineawesome.LineAwesomeIcon;
+import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.application.transcribe.media_provider.impl.PublicMediaProvider;
 import transcribe.application.transcribe.media_provider.impl.LocalMediaProvider;
 import transcribe.domain.transcription.data.MediaOrigin;

@@ -17,6 +17,8 @@ import transcribe.core.core.no_op.NoOp;
 import transcribe.domain.core.bean.BeanUtils;
 import transcribe.domain.operation.data.OperationType;
 
+import java.util.Objects;
+
 public abstract class JpaSaveDialog<T> extends EnhancedDialog {
 
     private final OperationRunner operationRunner = SpringContext.getBean(OperationRunner.class);
@@ -30,9 +32,9 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
     private Runnable saveListener = NoOp.runnable();
 
     public JpaSaveDialog(Class<T> entityBeanType) {
-        this.entityBeanType = Validate.notNull(entityBeanType, "Entity bean type must not be null");
+        this.entityBeanType = Objects.requireNonNull(entityBeanType, "Entity bean type must not be null");
 
-        setHeaderTitle(String.format("Save %s", BeanUtils.getPrettyName(entityBeanType)));
+        setHeaderTitle(String.format("Save %s", BeanUtils.getDisplayName(entityBeanType)));
         getFooter().add(newFooterContent());
         setWidth("800px");
     }
@@ -55,7 +57,7 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
             if (validate()) {
                 var operation = Operation.builder()
                         .name("Saving entity")
-                        .description(String.format("Entity of type [%s]", BeanUtils.getPrettyName(entityBeanType)))
+                        .description(String.format("Entity of type [%s]", BeanUtils.getDisplayName(entityBeanType)))
                         .beforeCall(this::close)
                         .callable(OperationCallable.ofRunnable(this::save))
                         .onSuccess(_ -> saveListener.run())

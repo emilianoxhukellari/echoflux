@@ -21,6 +21,8 @@ public class GoogleCloudProperties {
     @NotBlank
     private String speechEndpoint;
     @NotBlank
+    private String aiPlatformEndpoint;
+    @NotBlank
     private String location;
 
 }

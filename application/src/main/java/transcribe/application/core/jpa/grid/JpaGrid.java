@@ -93,6 +93,18 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         getDataProvider().refreshAll();
     }
 
+    public void addAllColumns() {
+        addCoreAttributeColumns();
+        addAuditColumns();
+        addIdColumn();
+    }
+
+    public void addAllFilters() {
+        addCoreAttributeFilters();
+        addAuditFilters();
+        addIdFilter();
+    }
+
     public void addCoreAttributeColumns() {
         addCoreAttributeColumnsExcluding();
     }
@@ -164,7 +176,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addFilter(PropertyDefinition<T, ?> propertyDefinition) {
-        Validate.notNull(propertyDefinition, "Property definition cannot be null");
+        Objects.requireNonNull(propertyDefinition, "Property definition cannot be null");
 
         addFilter(FilterFactory.newFilter(propertyDefinition));
     }
@@ -199,9 +211,18 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
 
     public void addContextMenuItem(String text, Consumer<T> onClick) {
         Validate.notBlank(text, "Text cannot be blank");
-        Validate.notNull(onClick, "OnClick consumer cannot be null");
+        Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
 
         ensureContextMenu().addItem(text, e -> e.getItem().ifPresent(onClick));
+    }
+
+    public void addConfirmedContextMenuItem(String text, Consumer<T> onClick) {
+        Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
+
+        addContextMenuItem(text, e -> Dialogs.confirm(
+                String.format("Perform action [%s]?", text),
+                () -> onClick.accept(e)
+        ));
     }
 
     private HeaderRow ensureFilterRow() {
@@ -232,24 +253,21 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                         .setSaveListener(this::refreshAll)
                         .open()
         );
-        addContextMenuItem("Delete", e -> Dialogs.confirm(
-                "Are you sure you want to delete this entity?",
-                () -> {
-                    var operation = Operation.builder()
-                            .name("Deleting entity")
-                            .description(String.format(
-                                    "Entity of type [%s] with ID [%s]",
-                                    BeanUtils.getPrettyName(beanType),
-                                    BeanUtils.getFieldValue(e, idField)
-                            ))
-                            .callable(OperationCallable.ofRunnable(() -> repository.delete(e)))
-                            .onSuccess(_ -> refreshAll())
-                            .type(OperationType.NON_BLOCKING)
-                            .build();
+        addConfirmedContextMenuItem("Delete", e -> {
+            var operation = Operation.builder()
+                    .name("Deleting entity")
+                    .description(String.format(
+                            "Entity of type [%s] with ID [%s]",
+                            BeanUtils.getDisplayName(beanType),
+                            BeanUtils.getFieldValue(e, idField)
+                    ))
+                    .callable(OperationCallable.ofRunnable(() -> repository.delete(e)))
+                    .onSuccess(_ -> refreshAll())
+                    .type(OperationType.NON_BLOCKING)
+                    .build();
 
-                    SpringContext.getBean(OperationRunner.class).run(operation, UI.getCurrent());
-                }
-        ));
+            SpringContext.getBean(OperationRunner.class).run(operation, UI.getCurrent());
+        });
 
         crudActionsData = JpaGridCrudActionsData.builder()
                 .withCrudActions(true)

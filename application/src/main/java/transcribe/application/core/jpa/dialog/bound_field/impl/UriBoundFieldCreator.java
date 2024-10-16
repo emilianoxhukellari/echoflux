@@ -27,7 +27,10 @@ public class UriBoundFieldCreator implements BoundFieldCreator {
         var getter = (ValueProvider<T, URI>) property.getGetter();
         var setter = (Setter<T, URI>) property.getSetter().orElseThrow();
         var builder = binder.forField(field).withConverter(
-                Converter.from(v -> Result.ok(UriUtils.newUri(v)), v -> Objects.toString(v, StringUtils.EMPTY))
+                Converter.from(
+                        v -> Result.ok(UriUtils.newUri(v)),
+                        v -> Objects.toString(v, StringUtils.EMPTY)
+                )
         );
         if (required) {
             builder.asRequired();

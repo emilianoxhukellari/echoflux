@@ -31,8 +31,10 @@ public class TextJpaFilter<T> extends JpaFilter<T> {
         var pattern = "%" + textField.getValue().toLowerCase() + "%";
 
         return asCollection
-                ? (root, _, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.join(property, JoinType.LEFT)), pattern)
-                : (root, _, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get(property)), pattern);
+                ? (root, _, criteriaBuilder) ->
+                criteriaBuilder.like(criteriaBuilder.lower(root.join(property, JoinType.LEFT).as(String.class)), pattern)
+                : (root, _, criteriaBuilder) ->
+                criteriaBuilder.like(criteriaBuilder.lower(root.get(property).as(String.class)), pattern);
     }
 
     @Override

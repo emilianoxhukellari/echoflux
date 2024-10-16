@@ -6,7 +6,8 @@ public enum TranscriptionStatus {
     DOWNLOADING_PUBLIC,
     PROCESSING,
     TRANSCRIBING,
-    FINISHED,
+    ENHANCING,
+    COMPLETED,
     FAILED
 
 }

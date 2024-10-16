@@ -12,8 +12,6 @@ public interface TranscriptionService {
 
     TranscriptionEntity update(@Valid @NotNull UpdateTranscriptionCommand command);
 
-    TranscriptionEntity get(@NotNull Long id);
-
     double getRealTimeFactor();
 
 }

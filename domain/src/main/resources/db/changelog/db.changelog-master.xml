@@ -78,6 +78,30 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add_completion_table" author="emiliano">
+        <sql>
+            create table completion
+            (
+                id              bigserial primary key,
+                input           text         not null,
+                output          text,
+                input_tokens    integer,
+                output_tokens   integer,
+                model           varchar(255),
+                temperature     real,
+                top_p           real,
+                status          varchar(255) not null,
+                duration_millis bigint,
+                error           text,
+
+                created_at      timestamp,
+                created_by      varchar(255),
+                updated_at      timestamp,
+                updated_by      varchar(255)
+            );
+        </sql>
+    </changeSet>
+
     <changeSet id="add_transcription_table" author="emiliano">
         <sql>
             create table transcription
@@ -89,6 +113,7 @@
                 name                       varchar(1024)                           not null,
                 transcript                 text,
                 application_user_id        bigint references application_user (id) not null,
+                completion_id              bigint references completion (id),
                 length_millis              bigint,
                 download_duration_millis   bigint,
                 process_duration_millis    bigint,
@@ -101,6 +126,24 @@
                 updated_at                 timestamp,
                 updated_by                 varchar(255)
             );
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_settings_table" author="emiliano">
+        <sql>
+            create table settings
+            (
+                id         bigserial primary key,
+                key        varchar(255) not null unique,
+                name       varchar(255) not null,
+                value      jsonb        not null,
+
+                created_at timestamp,
+                created_by varchar(255),
+                updated_at timestamp,
+                updated_by varchar(255)
+            );
+            create index settings_key_index on settings (key);
         </sql>
     </changeSet>
 

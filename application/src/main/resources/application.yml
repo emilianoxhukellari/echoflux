@@ -33,6 +33,7 @@ gcloud:
   private-key: ${GCLOUD_KEY}
   bucket-name: ${GCLOUD_BUCKET_NAME}
   speech-endpoint: 'europe-west4-speech.googleapis.com:443'
+  ai-platform-endpoint: 'europe-west4-aiplatform.googleapis.com:443'
   location: 'europe-west4'
 
 youtube-dl:

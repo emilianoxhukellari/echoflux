@@ -19,14 +19,14 @@ import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
-import transcribe.application.transcribe.media_provider.MediaField;
+import transcribe.application.core.field.MediaField;
 import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.transcribe.common.Language;
 import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.operation.data.OperationType;
-import transcribe.domain.transcription.service.TranscriptionPipeline;
-import transcribe.domain.transcription.service.TranscriptionPipelineCommand;
+import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
+import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 
 import java.util.Optional;
 

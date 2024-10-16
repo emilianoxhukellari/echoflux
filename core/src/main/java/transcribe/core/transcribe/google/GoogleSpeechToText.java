@@ -1,6 +1,7 @@
 package transcribe.core.transcribe.google;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -22,6 +23,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 @Component
 @Slf4j
@@ -30,8 +32,8 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
     private final SpeechClient speechClient;
     private final String implicitRecognizer;
 
-    public GoogleSpeechToText(GoogleCloudProperties googleCloudProperties) {
-        this.speechClient = newSpeechClient(googleCloudProperties);
+    public GoogleSpeechToText(GoogleCloudProperties googleCloudProperties, ExecutorService executorService) {
+        this.speechClient = newSpeechClient(googleCloudProperties, executorService);
         this.implicitRecognizer = newImplicitRecognizer(googleCloudProperties);
     }
 
@@ -82,7 +84,7 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
     }
 
     @SneakyThrows
-    private static SpeechClient newSpeechClient(GoogleCloudProperties properties) {
+    private static SpeechClient newSpeechClient(GoogleCloudProperties properties, ExecutorService executorService) {
         @Cleanup
         var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);
         var credentials = GoogleCredentials.fromStream(privateKeyStream).createScoped(SpeechSettings.getDefaultServiceScopes());
@@ -94,7 +96,12 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
                 .setTotalTimeoutDuration(Duration.ofMinutes(60))
                 .build();
 
+        var grpcChannelProvider = InstantiatingGrpcChannelProvider.newBuilder()
+                        .setExecutor(executorService)
+                        .build();
+
         var settingsBuilder = SpeechSettings.newBuilder()
+                .setTransportChannelProvider(grpcChannelProvider)
                 .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .setEndpoint(properties.getSpeechEndpoint());
 

@@ -15,6 +15,8 @@ import transcribe.application.core.icon.CustomizedIcon;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
 import transcribe.domain.core.bean.BeanUtils;
 
+import java.util.Objects;
+
 public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor<T>> extends VerticalLayout {
 
     private final JpaGrid<T, R> grid;
@@ -80,7 +82,7 @@ public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecification
     }
 
     public JpaGridControls<T, R> addCreateEntityButton(Runnable onClick) {
-        Validate.notNull(onClick, "On click action must not be null");
+        Objects.requireNonNull(onClick, "On click action must not be null");
 
         var button = new Button(LineAwesomeIcon.PLUS_SOLID.create(), _ -> onClick.run());
         button.setTooltipText("Create new entity");
@@ -97,7 +99,7 @@ public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecification
     }
 
     public JpaGridControls<T, R> addTopRight(Component component) {
-        topRight.add(component);
+        topRight.addComponentAsFirst(component);
 
         return this;
     }

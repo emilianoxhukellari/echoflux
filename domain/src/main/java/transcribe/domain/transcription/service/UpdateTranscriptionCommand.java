@@ -28,6 +28,8 @@ public class UpdateTranscriptionCommand {
 
     private String transcript;
 
+    private Long completionId;
+
     @Min(0)
     @Max(100)
     private Integer transcribeProgress;

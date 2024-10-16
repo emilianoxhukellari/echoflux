@@ -3,8 +3,10 @@ package transcribe.domain.transcription.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import transcribe.core.settings.SettingsLoader;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionRepository;
+import transcribe.domain.transcription.data.TranscriptionSettings;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
 import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
@@ -14,17 +16,9 @@ import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 @RequiredArgsConstructor
 public class TranscriptionServiceImpl implements TranscriptionService {
 
-    private final static int AVERAGE_REAL_TIME_FACTOR_WINDOW = 50_000;
-    private final static double REAL_TIME_FACTOR_FALLBACK = 1.0;
-
     private final TranscriptionRepository repository;
     private final TranscriptionMapper mapper;
-
-    @Override
-    @Transactional(readOnly = true)
-    public TranscriptionEntity get(Long id) {
-        return repository.findById(id).orElseThrow();
-    }
+    private final SettingsLoader settingsLoader;
 
     @Override
     @Transactional
@@ -43,10 +37,11 @@ public class TranscriptionServiceImpl implements TranscriptionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public double getRealTimeFactor() {
-        return repository.findAverageRealTimeFactor(AVERAGE_REAL_TIME_FACTOR_WINDOW)
-                .orElse(REAL_TIME_FACTOR_FALLBACK);
+        var settings = settingsLoader.load(TranscriptionSettings.class);
+
+        return repository.findAverageRealTimeFactor(settings.getAverageRealTimeFactorWindow())
+                .orElse(settings.getRealTimeFactorFallback());
     }
 
 }

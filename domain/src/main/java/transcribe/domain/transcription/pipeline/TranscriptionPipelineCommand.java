@@ -1,4 +1,4 @@
-package transcribe.domain.transcription.service;
+package transcribe.domain.transcription.pipeline;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

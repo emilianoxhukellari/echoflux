@@ -8,6 +8,7 @@ import transcribe.application.core.jpa.core.CoreAttributePropertySet;
 import transcribe.application.core.jpa.dialog.bound_field.JpaSaveDialogFieldFactory;
 
 import java.util.List;
+import java.util.Objects;
 
 public class JpaSaveCorePropertiesDialog<T> extends JpaSaveDialog<T> {
 
@@ -19,7 +20,7 @@ public class JpaSaveCorePropertiesDialog<T> extends JpaSaveDialog<T> {
                                        JpaRepository<T, ?> repository,
                                        List<String> excludedProperties) {
         super(beanType);
-        this.repository = Validate.notNull(repository, "Repository must not be null");
+        this.repository = Objects.requireNonNull(repository, "Repository must not be null");
         this.binder = new Binder<>(beanType);
         this.binder.setBean(entity);
 

@@ -30,11 +30,11 @@ public final class FilterFactory {
                                              Class<?> propertyHolderType,
                                              boolean asCollection) {
         Validate.notBlank(propertyName, "Property is required");
-        Validate.notNull(propertyType, "Bean type is required");
+        Objects.requireNonNull(propertyHolderType, "Property holder type is required");
         var supportedType = JpaSupportedType.ofBeanType(propertyType);
 
         return switch (supportedType) {
-            case STRING, URI -> new TextJpaFilter<>(propertyName, asCollection);
+            case STRING, URI, JSON -> new TextJpaFilter<>(propertyName, asCollection);
             case BOOLEAN -> new BooleanJpaFilter<>(propertyName, asCollection);
             case ENUM -> new EnumJpaFilter<>(propertyName, propertyType, asCollection);
             case LOCAL_DATE, LOCAL_DATE_TIME -> new LocalDateJpaFilter<>(propertyName, asCollection);

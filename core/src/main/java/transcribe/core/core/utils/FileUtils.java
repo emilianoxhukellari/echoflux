@@ -12,7 +12,10 @@ public final class FileUtils {
 
     @SneakyThrows
     public static Path newTempDirectory(String prefix) {
-        return Files.createTempDirectory(prefix);
+        var path = Files.createTempDirectory(prefix);
+        log.info("Created temporary directory [{}]", path);
+
+        return path;
     }
 
     /**
