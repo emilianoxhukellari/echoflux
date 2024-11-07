@@ -27,6 +27,11 @@ spring:
     multipart:
       max-file-size: 5000MB
       max-request-size: 5000MB
+  freemarker:
+    template-loader-path: classpath:/templates/
+    suffix: .ftl
+    charset: utf-8
+    check-template-location: true
 
 gcloud:
   project-id: ${GCLOUD_PROJECT_ID}
@@ -35,9 +40,6 @@ gcloud:
   speech-endpoint: 'europe-west4-speech.googleapis.com:443'
   ai-platform-endpoint: 'europe-west4-aiplatform.googleapis.com:443'
   location: 'europe-west4'
-
-youtube-dl:
-  execution-path: ${YOUTUBE_DL_EXECUTION_PATH}
 
 yt-dlp:
   execution-path: ${YT_DLP_EXECUTION_PATH}

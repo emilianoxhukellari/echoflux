@@ -8,7 +8,7 @@ import transcribe.application.core.jpa.filter.impl.NumberJpaFilter;
 import transcribe.application.core.jpa.filter.impl.EnumJpaFilter;
 import transcribe.application.core.jpa.filter.impl.LocalDateJpaFilter;
 import transcribe.application.core.jpa.filter.impl.TextJpaFilter;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 
 import java.util.Objects;
 

@@ -6,14 +6,13 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.Query;
-import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.icon.CustomizedIcon;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 
 import java.util.Objects;
 

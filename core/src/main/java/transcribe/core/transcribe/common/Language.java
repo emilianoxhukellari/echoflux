@@ -2,21 +2,21 @@ package transcribe.core.transcribe.common;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import transcribe.core.core.display_name.DisplayName;
 
-@RequiredArgsConstructor
 @Getter
+@RequiredArgsConstructor
 public enum Language {
 
-    ALBANIAN("sq-AL", "Albanian"),
-    ENGLISH_GB("en-GB", "English (UK)"),
-    ENGLISH_US("en-US", "English (US)"),;
+    @DisplayName("Albanian")
+    ALBANIAN("sq-AL"),
+
+    @DisplayName("English (GB)")
+    ENGLISH_GB("en-GB"),
+
+    @DisplayName("English (US)")
+    ENGLISH_US("en-US"),;
 
     private final String bcp47;
-    private final String displayName;
-
-    @Override
-    public String toString() {
-        return displayName;
-    }
 
 }

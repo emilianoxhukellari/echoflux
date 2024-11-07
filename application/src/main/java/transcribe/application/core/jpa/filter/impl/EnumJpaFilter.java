@@ -5,17 +5,20 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
+import transcribe.core.core.utils.MoreArrays;
+import transcribe.core.core.utils.MoreEnums;
 
 public class EnumJpaFilter<T> extends JpaFilter<T> {
 
-    private final ComboBox<Object> comboBox;
+    private final ComboBox<Enum<?>> comboBox;
 
     public EnumJpaFilter(String property, Class<?> enumClass, boolean asCollection) {
         super(property, asCollection);
         Validate.isTrue(enumClass.isEnum(), "Class must be an enum");
 
         this.comboBox = new ComboBox<>();
-        this.comboBox.setItems(enumClass.getEnumConstants());
+        comboBox.setItems(MoreArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
+        comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
         comboBox.setPlaceholder("Filter");
         comboBox.setWidth("10.6rem");
         comboBox.setClearButtonVisible(true);

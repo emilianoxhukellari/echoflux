@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.json.JsonMapper;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 import transcribe.domain.settings.schema_processor.SettingsSchemaProcessor;
 
 @Component

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CompletionPipelineResult {
+public class CompletionsPipelineResult {
 
     @NotNull
     private Long completionId;

@@ -1,5 +1,7 @@
 package transcribe.core.core.progress;
 
+import transcribe.core.function.FunctionUtils;
+
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -60,12 +62,7 @@ public class ProgressTrigger {
 
     public void stop() {
         if (running.compareAndSet(true, false)) {
-            lock.lock();
-            try {
-                progressCallback.onProgress(100);
-            } finally {
-                lock.unlock();
-            }
+            FunctionUtils.runSynchronized(() -> progressCallback.onProgress(100), lock);
         }
     }
 

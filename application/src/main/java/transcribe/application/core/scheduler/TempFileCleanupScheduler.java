@@ -1,5 +1,6 @@
 package transcribe.application.core.scheduler;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AgeFileFilter;
@@ -8,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import transcribe.core.audio.transcoder.temp_file.TranscoderTempDirectory;
 import transcribe.core.media.temp_file.MediaTempDirectory;
+import transcribe.core.settings.SettingsLoader;
 
 import java.io.File;
 import java.time.Duration;
@@ -16,18 +18,22 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class TempFileCleanupScheduler {
 
     private final static List<File> DIRECTORIES = List.of(
             MediaTempDirectory.INSTANCE.locationFile(),
             TranscoderTempDirectory.INSTANCE.locationFile()
     );
-    private final static int DELETE_AFTER_MINUTES = 30;
+
+    private final SettingsLoader settingsLoader;
 
     @Scheduled(fixedDelay = 1000 * 60)
     public void cleanup() {
         // todo: test
-        var ageFilter = new AgeFileFilter(Instant.now().minus(Duration.ofMinutes(DELETE_AFTER_MINUTES)));
+        var deleteAfterMinutes = settingsLoader.load(TempFileCleanupSettings.class)
+                .getDeleteAfterMinutes();
+        var ageFilter = new AgeFileFilter(Instant.now().minus(Duration.ofMinutes(deleteAfterMinutes)));
 
         DIRECTORIES.stream()
                 .filter(File::exists)

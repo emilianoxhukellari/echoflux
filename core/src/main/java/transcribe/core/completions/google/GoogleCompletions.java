@@ -19,9 +19,11 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import transcribe.core.completions.CompletionResult;
 import transcribe.core.completions.Completions;
+import transcribe.core.core.qualifier.Qualifiers;
 import transcribe.core.properties.GoogleCloudProperties;
 import transcribe.core.settings.SettingsLoader;
 
@@ -37,7 +39,7 @@ public class GoogleCompletions implements Completions, DisposableBean {
     private final SettingsLoader settingsLoader;
 
     public GoogleCompletions(GoogleCloudProperties properties,
-                             ExecutorService executorService,
+                             @Qualifier(Qualifiers.VIRTUAL_THREAD_EXECUTOR) ExecutorService executorService,
                              GoogleCompletionsMapper mapper,
                              SettingsLoader settingsLoader) {
         this.vertexAI = newVertexAI(properties, executorService);
@@ -65,7 +67,7 @@ public class GoogleCompletions implements Completions, DisposableBean {
         while (Candidate.FinishReason.MAX_TOKENS == ResponseHandler.getFinishReason(currentResponse)) {
             log.info("Max tokens reached, requesting next part");
 
-            currentResponse = chatSession.sendMessage(settings.getContinueMessage());
+            currentResponse = chatSession.sendMessage(settings.getContinuePhrase());
             responseList.add(currentResponse);
         }
 

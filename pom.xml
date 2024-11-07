@@ -14,12 +14,13 @@
         <module>application</module>
         <module>core</module>
         <module>domain</module>
+        <module>template</module>
     </modules>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.8</version>
+        <version>3.3.5</version>
     </parent>
 
     <properties>
@@ -27,7 +28,6 @@
     </properties>
 
     <repositories>
-
     </repositories>
 
     <dependencies>
@@ -78,6 +78,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
             <version>4.5.0-M2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

@@ -19,7 +19,7 @@ public enum JpaSupportedType {
 
     STRING(String.class,null),
     BOOLEAN(Boolean.class, JpaGridRendererFactory::newBooleanRenderer),
-    ENUM(Enum.class, null),
+    ENUM(Enum.class, JpaGridRendererFactory::newEnumRenderer),
     LOCAL_DATE_TIME(LocalDateTime.class, JpaGridRendererFactory::newLocalDateTimeRenderer),
     LOCAL_DATE(LocalDateTime.class, null),
     DOUBLE(Double.class, null),

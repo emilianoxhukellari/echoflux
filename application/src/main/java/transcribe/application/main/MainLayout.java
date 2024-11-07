@@ -18,10 +18,12 @@ import com.vaadin.flow.theme.lumo.LumoIcon;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
+import transcribe.application.completion.CompletionsView;
 import transcribe.application.home.HomeView;
 import transcribe.application.operation.OperationsView;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.settings.SettingsView;
+import transcribe.application.template.TemplatesView;
 import transcribe.application.transcribe.TranscribeView;
 import transcribe.application.transcription.TranscriptionsView;
 import transcribe.application.user.UsersView;
@@ -68,6 +70,8 @@ public class MainLayout extends AppLayout {
         addIfHasAccess(nav, TranscribeView.class, "Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
         addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
         addIfHasAccess(nav, TranscriptionsView.class, "Transcriptions", LineAwesomeIcon.FILE_AUDIO_SOLID.create());
+        addIfHasAccess(nav, CompletionsView.class, "Completions", LineAwesomeIcon.CHECK_CIRCLE_SOLID.create());
+        addIfHasAccess(nav, TemplatesView.class, "Templates", LineAwesomeIcon.FILE_CODE_SOLID.create());
         addIfHasAccess(nav, OperationsView.class, "Operations", LineAwesomeIcon.PLAY_SOLID.create());
         addIfHasAccess(nav, SettingsView.class, "Settings", LineAwesomeIcon.COG_SOLID.create());
 

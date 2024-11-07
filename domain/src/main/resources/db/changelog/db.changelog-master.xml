@@ -147,4 +147,20 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add_template_table" author="emiliano">
+        <sql>
+            create table template
+            (
+                id         bigserial primary key,
+                name       varchar(255) not null unique,
+                content    text         not null,
+
+                created_at timestamp,
+                created_by varchar(255),
+                updated_at timestamp,
+                updated_by varchar(255)
+            );
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

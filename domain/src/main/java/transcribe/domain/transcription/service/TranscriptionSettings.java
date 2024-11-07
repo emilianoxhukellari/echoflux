@@ -1,6 +1,6 @@
-package transcribe.domain.transcription.data;
+package transcribe.domain.transcription.service;
 
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,11 +15,11 @@ import transcribe.core.settings.Settings;
 public class TranscriptionSettings {
 
     @Builder.Default
-    @Min(1)
+    @Positive
     private int averageRealTimeFactorWindow = 50_000;
 
     @Builder.Default
-    @Min(0)
+    @Positive
     private double realTimeFactorFallback = 1.0;
 
 }

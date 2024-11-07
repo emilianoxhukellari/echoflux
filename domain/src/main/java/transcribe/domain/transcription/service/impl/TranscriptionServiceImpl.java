@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import transcribe.core.settings.SettingsLoader;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionRepository;
-import transcribe.domain.transcription.data.TranscriptionSettings;
+import transcribe.domain.transcription.service.TranscriptionSettings;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
 import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;

@@ -21,7 +21,12 @@ import java.util.List;
 @Theme(value = "transcribe", variant = Lumo.LIGHT)
 @Push
 @SpringBootApplication
-@ComponentScan({"transcribe.application", "transcribe.core", "transcribe.domain"})
+@ComponentScan({
+        "transcribe.application",
+        "transcribe.core",
+        "transcribe.domain",
+        "transcribe.template"
+})
 @EnableJpaRepositories("transcribe.domain")
 @EntityScan("transcribe.domain")
 @EnableScheduling

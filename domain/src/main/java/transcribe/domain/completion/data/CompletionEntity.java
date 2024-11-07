@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import transcribe.core.core.constraint.float_range.FloatRange;
 import transcribe.domain.audit.data.AuditEntity;
+import transcribe.domain.core.annotation.BigText;
 
 @Entity
 @Table(name = "completion")
@@ -35,9 +36,11 @@ public class CompletionEntity extends AuditEntity {
 
     @Column(name = "input")
     @NotEmpty
+    @BigText
     private String input;
 
     @Column(name = "output")
+    @BigText
     private String output;
 
     @Column(name = "input_tokens")

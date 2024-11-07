@@ -2,8 +2,11 @@ package transcribe.domain.core.broadcaster.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.ListUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Component;
+import transcribe.core.core.qualifier.Qualifiers;
+import transcribe.core.function.FunctionUtils;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
 
@@ -19,6 +22,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class BroadcasterImpl implements Broadcaster {
 
+    @Qualifier(Qualifiers.DELEGATING_SECURITY_VIRTUAL_THREAD_EXECUTOR)
     private final DelegatingSecurityContextExecutorService executor;
     private final ReentrantLock lock = new ReentrantLock();
     private final Map<Class<?>, List<EventConsumer<?>>> eventSubscribersMap = new HashMap<>();
@@ -34,13 +38,12 @@ public class BroadcasterImpl implements Broadcaster {
         lock.lock();
         try {
             for (var c : ListUtils.emptyIfNull(eventSubscribersMap.get(event.getClass()))) {
-                try {
+                FunctionUtils.runQuietly(() -> {
                     var casted = (EventConsumer<T>) c;
                     if (casted.condition().test(event)) {
                         executor.execute(() -> casted.consumer().accept(event));
                     }
-                } catch (Throwable _) {
-                }
+                });
             }
         } finally {
             lock.unlock();
@@ -48,21 +51,17 @@ public class BroadcasterImpl implements Broadcaster {
     }
 
     private void addSynchronized(Class<?> event, EventConsumer<?> consumer) {
-        lock.lock();
-        try {
-            eventSubscribersMap.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer);
-        } finally {
-            lock.unlock();
-        }
+        FunctionUtils.runSynchronized(
+                () -> eventSubscribersMap.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer),
+                lock
+        );
     }
 
     private void removeSynchronized(Class<?> event, Consumer<?> consumer) {
-        lock.lock();
-        try {
-            eventSubscribersMap.get(event).removeIf(c -> c.consumer().equals(consumer));
-        } finally {
-            lock.unlock();
-        }
+        FunctionUtils.runSynchronized(
+                () -> eventSubscribersMap.get(event).removeIf(c -> c.consumer().equals(consumer)),
+                lock
+        );
     }
 
     private record EventConsumer<T>(Consumer<T> consumer, Predicate<T> condition) {

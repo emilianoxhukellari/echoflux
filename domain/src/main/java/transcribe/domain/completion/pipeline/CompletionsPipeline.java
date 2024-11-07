@@ -5,8 +5,8 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Optional;
 
 @Validated
-public interface CompletionPipeline {
+public interface CompletionsPipeline {
 
-    Optional<CompletionPipelineResult> complete(String input);
+    Optional<CompletionsPipelineResult> complete(String input);
 
 }

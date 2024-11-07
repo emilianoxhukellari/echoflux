@@ -8,7 +8,8 @@ import transcribe.core.audio.ffmpeg.FFprobeWrapper;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
 import transcribe.core.media.downloader.MediaDownloader;
-import transcribe.domain.completion.pipeline.CompletionPipeline;
+import transcribe.core.settings.SettingsLoader;
+import transcribe.domain.completion.pipeline.CompletionsPipeline;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.core.log.LoggedMethodExecution;
@@ -17,6 +18,8 @@ import transcribe.core.core.utils.FileUtils;
 import transcribe.core.function.FunctionUtils;
 import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.transcribe.common.TranscribeResult;
+import transcribe.domain.template.service.RenderTemplateCommand;
+import transcribe.domain.template.service.TemplateService;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionStatus;
 import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
@@ -24,10 +27,12 @@ import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
+import transcribe.domain.transcription.pipeline.TranscriptionPipelineSettings;
 import transcribe.domain.transcription.service.TranscriptionService;
 import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -40,9 +45,11 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private final SpeechToText speechToText;
     private final TranscriptionMapper mapper;
     private final TranscriptionService transcriptionService;
-    private final CompletionPipeline completionPipeline;
+    private final CompletionsPipeline completionsPipeline;
     private final Broadcaster broadcaster;
     private final FFprobeWrapper ffprobeWrapper;
+    private final SettingsLoader settingsLoader;
+    private final TemplateService templateService;
 
     @Override
     @LoggedMethodExecution(logReturn = false)
@@ -127,28 +134,37 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 )
         );
         FunctionUtils.runQuietly(progressTrigger::start);
-
         var timedTranscribeResult = FunctionUtils.getTimed(
                 () -> speechToText.transcribe(resourceInfo.getUri(), command.getLanguage())
         );
+
         var transcribeResult = timedTranscribeResult.getResult();
         transcriptionService.update(
                 UpdateTranscriptionCommand.builder()
                         .id(entity.getId())
+                        .transcript(transcribeResult.getTranscript())
                         .transcribeDurationMillis(timedTranscribeResult.getDuration().toMillis())
                         .build()
         );
         FunctionUtils.runQuietly(progressTrigger::stop);
-
-        transcriptionService.update(
-                UpdateTranscriptionCommand.builder()
-                        .id(entity.getId())
-                        .transcript(transcribeResult.getTranscript())
-                        .build()
-        );
+        FunctionUtils.runQuietly(() -> FileUtils.deleteIfExists(original, ogg));
 
         updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.ENHANCING);
-        completionPipeline.complete(transcribeResult.getTranscript()).ifPresent(r -> transcriptionService.update(
+
+        var settings = settingsLoader.load(TranscriptionPipelineSettings.class);
+        var dataModel = Map.<String, Object>of(
+                settings.getEnhanceCompletionTextDataModelKey(),
+                transcribeResult.getTranscript()
+        );
+        var completionInput = templateService.render(
+                RenderTemplateCommand.builder()
+                        .name(settings.getEnhanceCompletionDynamicTemplateName())
+                        .dataModel(dataModel)
+                        .build()
+        );
+        var completionResult = completionsPipeline.complete(completionInput);
+
+        completionResult.ifPresent(r -> transcriptionService.update(
                 UpdateTranscriptionCommand.builder()
                         .id(entity.getId())
                         .completionId(r.getCompletionId())
@@ -156,8 +172,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         ));
 
         updateStatusAndPublish(entity.getId(), command.getApplicationUserId(), TranscriptionStatus.COMPLETED);
-        FunctionUtils.runQuietly(() -> FileUtils.deleteIfExists(original, ogg));
 
+        // todo: return the enhanced transcript
         return transcribeResult;
     }
 

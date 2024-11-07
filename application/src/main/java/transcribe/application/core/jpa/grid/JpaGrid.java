@@ -13,6 +13,7 @@ import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
@@ -35,7 +36,7 @@ import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.utils.MoreArrays;
 import transcribe.core.core.utils.MoreLists;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 import transcribe.domain.operation.data.OperationType;
 
 import java.lang.reflect.Field;
@@ -73,7 +74,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         this.beanType = Objects.requireNonNull(beanType, "Jpa grid requires a bean type");
         this.repository = Objects.requireNonNull(repository, "Jpa grid requires a JpaSpecificationExecutor");
         this.defaultSpecification = Objects.requireNonNull(defaultSpecification, "Default specification cannot be null");
-        this.idField = BeanUtils.getIdField(beanType);
+        this.idField = BeanUtils.getSingleFieldWithAnnotation(beanType, Id.class);
         this.filterDataProvider = newDataProvider();
 
         configureBeanType(beanType, false);
@@ -110,7 +111,10 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addCoreAttributeColumnsExcluding(String... excludedProperties) {
-        addColumns(CoreAttributePropertySet.getExcluding(beanType, MoreArrays.toList(excludedProperties)).getPropertyNamesAsArray());
+        addColumns(
+                CoreAttributePropertySet.getExcluding(beanType, MoreArrays.toList(excludedProperties))
+                        .getPropertyNamesAsArray()
+        );
     }
 
     public void addAuditColumns() {
@@ -252,6 +256,10 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                 v -> new JpaSaveCorePropertiesDialog<>(v, beanType, repository, excludedPropertiesList)
                         .setSaveListener(this::refreshAll)
                         .open()
+        );
+        addItemDoubleClickListener(v -> new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, repository, excludedPropertiesList)
+                .setSaveListener(this::refreshAll)
+                .open()
         );
         addConfirmedContextMenuItem("Delete", e -> {
             var operation = Operation.builder()

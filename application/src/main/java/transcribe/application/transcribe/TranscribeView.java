@@ -53,9 +53,6 @@ public class TranscribeView extends Composite<VerticalLayout> {
         this.broadcaster = broadcaster;
         this.applicationUserId = authenticatedUser.get().getId();
 
-        var button = new Button("Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        button.addClickListener(_ -> new TranscribeDialog().open());
         this.grid = new JpaGrid<>(
                 TranscriptionEntity.class,
                 repository,
@@ -72,6 +69,10 @@ public class TranscribeView extends Composite<VerticalLayout> {
 
         grid.setAllColumnsResizable();
         grid.addFilters("name", "language", "status", "createdAt");
+
+        var button = new Button("Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        button.addClickListener(_ -> new TranscribeDialog().open());
 
         var controls = new JpaGridControls<>(grid);
         controls.addTopRight(button);
@@ -98,7 +99,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
             case FAILED -> layout.add(IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem",  "Error"));
             case COMPLETED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Success"));
             case CREATED -> {}
-            case DOWNLOADING_PUBLIC, PROCESSING -> {
+            case DOWNLOADING_PUBLIC, PROCESSING, ENHANCING -> {
                 var progress = new BallClipRotatePulseProgress();
                 layout.add(progress);
             }
@@ -136,6 +137,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
         super.onDetach(detachEvent);
 
         subscriptions.forEach(Subscription::remove);
+        subscriptions.clear();
     }
 
 }

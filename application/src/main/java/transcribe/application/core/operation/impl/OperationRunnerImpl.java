@@ -3,6 +3,7 @@ package transcribe.application.core.operation.impl;
 import com.vaadin.flow.component.UI;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Component;
 import transcribe.application.core.dialog.Dialogs;
@@ -10,6 +11,7 @@ import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.ui.UiUtils;
+import transcribe.core.core.qualifier.Qualifiers;
 import transcribe.domain.operation.service.OperationService;
 
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +21,8 @@ import java.util.concurrent.CompletableFuture;
 public class OperationRunnerImpl implements OperationRunner {
 
     private final OperationService operationService;
+
+    @Qualifier(Qualifiers.DELEGATING_SECURITY_VIRTUAL_THREAD_EXECUTOR)
     private final DelegatingSecurityContextExecutorService executor;
 
     @Override

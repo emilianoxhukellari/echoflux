@@ -7,14 +7,13 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.commons.lang3.Validate;
 import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.no_op.NoOp;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.Objects;
@@ -36,7 +35,7 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
 
         setHeaderTitle(String.format("Save %s", BeanUtils.getDisplayName(entityBeanType)));
         getFooter().add(newFooterContent());
-        setWidth("800px");
+        setWidth("600px");
     }
 
     protected abstract void save();

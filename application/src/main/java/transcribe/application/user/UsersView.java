@@ -6,7 +6,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
-import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
@@ -37,9 +36,17 @@ public class UsersView extends Composite<VerticalLayout> {
         grid.addAuditFilters();
         grid.addIdFilter();
 
-        grid.addContextMenuItem("Edit", e -> new UpdateUserDialog(e)
-                .setSaveListener(grid::refreshAll)
-                .open());
+        grid.addContextMenuItem(
+                "Edit",
+                e -> new UpdateUserDialog(e)
+                        .setSaveListener(grid::refreshAll)
+                        .open()
+        );
+        grid.addItemDoubleClickListener(
+                e -> new UpdateUserDialog(e.getItem())
+                        .setSaveListener(grid::refreshAll)
+                        .open()
+        );
         grid.addConfirmedContextMenuItem("Delete", e -> {
             var operation = Operation.builder()
                     .name("Deleting application user")

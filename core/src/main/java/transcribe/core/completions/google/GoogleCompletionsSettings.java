@@ -17,7 +17,7 @@ public class GoogleCompletionsSettings {
 
     @Builder.Default
     @NotBlank
-    private String continueMessage = "continue";
+    private String continuePhrase = "continue";
 
     @Builder.Default
     @NotBlank

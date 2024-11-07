@@ -3,11 +3,12 @@ package transcribe.application.core.jpa.core;
 import com.vaadin.flow.data.binder.BeanPropertySet;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.binder.PropertySet;
+import jakarta.persistence.Id;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.lang.Nullable;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -32,7 +33,8 @@ public class CoreAttributePropertySet<T> implements PropertySet<T> {
         this.sortedFieldNames = FieldUtils.getAllFieldsList(beanType)
                 .stream().map(Field::getName)
                 .toList();
-        this.idField = BeanUtils.findIdField(beanType).orElse(null);
+        this.idField = BeanUtils.findOneFieldWithAnnotation(beanType, Id.class)
+                .orElse(null);
     }
 
     public static <T> CoreAttributePropertySet<T> getExcluding(Class<T> beanType, List<String> excludedProperties) {

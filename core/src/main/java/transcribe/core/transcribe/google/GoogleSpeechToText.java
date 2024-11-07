@@ -10,11 +10,15 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.DisposableBean;
+import org.apache.commons.lang3.Validate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.log.LoggedMethodExecution;
+import transcribe.core.core.qualifier.Qualifiers;
 import transcribe.core.core.utils.MoreLists;
 import transcribe.core.properties.GoogleCloudProperties;
+import transcribe.core.settings.SettingsLoader;
+import transcribe.core.transcribe.GoogleSpeechSettings;
 import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.transcribe.common.Language;
 import transcribe.core.transcribe.common.TranscribeResult;
@@ -23,24 +27,33 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 @Component
 @Slf4j
-public class GoogleSpeechToText implements SpeechToText, DisposableBean {
+public class GoogleSpeechToText implements SpeechToText {
 
-    private final SpeechClient speechClient;
     private final String implicitRecognizer;
+    private final SettingsLoader settingsLoader;
+    private final GoogleCloudProperties googleCloudProperties;
+    private final ExecutorService executorService;
 
-    public GoogleSpeechToText(GoogleCloudProperties googleCloudProperties, ExecutorService executorService) {
-        this.speechClient = newSpeechClient(googleCloudProperties, executorService);
+    public GoogleSpeechToText(GoogleCloudProperties googleCloudProperties,
+                              @Qualifier(Qualifiers.VIRTUAL_THREAD_EXECUTOR) ExecutorService executorService,
+                              SettingsLoader settingsLoader) {
+        this.googleCloudProperties = googleCloudProperties;
+        this.executorService = executorService;
+        this.settingsLoader = settingsLoader;
         this.implicitRecognizer = newImplicitRecognizer(googleCloudProperties);
     }
 
     @SneakyThrows
     @LoggedMethodExecution(logReturn = false)
     public TranscribeResult transcribe(URI cloudUri, List<Language> languages) {
-        var recognitionConfig = newRecognitionConfig(languages);
+        var settings = settingsLoader.load(GoogleSpeechSettings.class);
+
+        var recognitionConfig = newRecognitionConfig(languages, settings);
         var uri = cloudUri.toString();
 
         var batchRecognizeFileMetadata = BatchRecognizeFileMetadata.newBuilder()
@@ -57,6 +70,9 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
                 .setRecognizer(implicitRecognizer)
                 .build();
 
+        @Cleanup
+        var speechClient = newSpeechClient(googleCloudProperties, executorService, settings);
+
         var response = speechClient.batchRecognizeOperationCallable().call(batchRecognizeRequest);
         var singleResponse = response.getResultsMap().get(uri);
         var resultsList = singleResponse.getInlineResult().getTranscript().getResultsList();
@@ -64,36 +80,40 @@ public class GoogleSpeechToText implements SpeechToText, DisposableBean {
         return GoogleSpeechToTextUtils.toTranscribeResult(resultsList);
     }
 
-    @Override
-    public void destroy() {
-        speechClient.close();
-    }
+    private static RecognitionConfig newRecognitionConfig(List<Language> languages, GoogleSpeechSettings settings) {
+        Validate.notEmpty(languages);
+        Objects.requireNonNull(settings);
 
-    private static RecognitionConfig newRecognitionConfig(List<Language> languages) {
         var recognitionFeatures = RecognitionFeatures.newBuilder()
-                .setEnableAutomaticPunctuation(true)
+                .setEnableAutomaticPunctuation(settings.isEnableAutomaticPunctuation())
                 .setEnableWordTimeOffsets(true)
                 .build();
 
         return RecognitionConfig.newBuilder()
                 .setAutoDecodingConfig(AutoDetectDecodingConfig.newBuilder().build())
                 .addAllLanguageCodes(MoreLists.collect(languages, Language::getBcp47))
-                .setModel("chirp")
+                .setModel(settings.getModel())
                 .setFeatures(recognitionFeatures)
                 .build();
     }
 
     @SneakyThrows
-    private static SpeechClient newSpeechClient(GoogleCloudProperties properties, ExecutorService executorService) {
+    private static SpeechClient newSpeechClient(GoogleCloudProperties properties,
+                                                ExecutorService executorService,
+                                                GoogleSpeechSettings settings) {
+        Objects.requireNonNull(properties);
+        Objects.requireNonNull(executorService);
+        Objects.requireNonNull(settings);
+
         @Cleanup
         var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);
         var credentials = GoogleCredentials.fromStream(privateKeyStream).createScoped(SpeechSettings.getDefaultServiceScopes());
 
         var retrySettings = RetrySettings.newBuilder()
-                .setInitialRetryDelayDuration(Duration.ofSeconds(30))
-                .setRetryDelayMultiplier(1.5)
-                .setMaxRetryDelayDuration(Duration.ofMinutes(1))
-                .setTotalTimeoutDuration(Duration.ofMinutes(60))
+                .setInitialRetryDelayDuration(Duration.ofSeconds(settings.getInitialRetryDelayDurationSeconds()))
+                .setRetryDelayMultiplier(settings.getRetryDelayMultiplier())
+                .setMaxRetryDelayDuration(Duration.ofSeconds(settings.getMaxRetryDelayDurationSeconds()))
+                .setTotalTimeoutDuration(Duration.ofMinutes(settings.getTotalTimeoutDurationMinutes()))
                 .build();
 
         var grpcChannelProvider = InstantiatingGrpcChannelProvider.newBuilder()

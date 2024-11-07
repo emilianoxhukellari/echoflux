@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -59,6 +60,18 @@ public final class FunctionUtils {
                 .result(result)
                 .duration(Duration.ofNanos(System.nanoTime() - start))
                 .build();
+    }
+
+    public static void runSynchronized(Runnable runnable, ReentrantLock lock) {
+        Objects.requireNonNull(runnable, "Runnable must not be null");
+        Objects.requireNonNull(lock, "Lock must not be null");
+
+        lock.lock();
+        try {
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
     }
 
 }

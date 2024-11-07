@@ -2,10 +2,7 @@ package transcribe.domain.completion.service;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import transcribe.core.core.constraint.float_range.FloatRange;
 import transcribe.domain.completion.data.CompletionStatus;
 
@@ -16,8 +13,10 @@ import transcribe.domain.completion.data.CompletionStatus;
 public class UpdateCompletionCommand {
 
     @NotNull
+    @With
     private Long id;
 
+    @With
     private CompletionStatus status;
 
     private String output;
@@ -37,6 +36,7 @@ public class UpdateCompletionCommand {
     private Float topP;
 
     @Min(0)
+    @With
     private Long durationMillis;
 
     private String error;

@@ -14,7 +14,7 @@ import transcribe.core.core.initialize.Initialize;
 import transcribe.core.core.initialize.InitializeOrder;
 import transcribe.core.function.FunctionUtils;
 import transcribe.core.settings.Settings;
-import transcribe.domain.core.bean.BeanUtils;
+import transcribe.core.core.bean.BeanUtils;
 import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.service.CreateSettingsCommand;
 import transcribe.domain.settings.service.SettingsService;

@@ -9,6 +9,7 @@ import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.dialog.bound_field.BoundFieldCreator;
+import transcribe.core.core.utils.MoreEnums;
 
 @SpringComponent
 public class EnumBoundFieldCreator implements BoundFieldCreator {
@@ -17,8 +18,11 @@ public class EnumBoundFieldCreator implements BoundFieldCreator {
     @SuppressWarnings("unchecked")
     public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
         var comboBox = new ComboBox<Enum<?>>(property.getCaption());
+        comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
+
         var enumType = (Class<Enum<?>>) property.getType();
         comboBox.setItems(enumType.getEnumConstants());
+
         var getter = (ValueProvider<T, Enum<?>>) property.getGetter();
         var setter = (Setter<T, Enum<?>>) property.getSetter().orElseThrow();
         var builder = binder.forField(comboBox);

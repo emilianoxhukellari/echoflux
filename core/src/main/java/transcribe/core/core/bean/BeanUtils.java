@@ -1,6 +1,5 @@
-package transcribe.domain.core.bean;
+package transcribe.core.core.bean;
 
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -49,25 +48,48 @@ public final class BeanUtils {
     }
 
     public static <T> boolean isFieldRequired(Class<T> beanType, String fieldName) {
-        Objects.requireNonNull(beanType, "Bean type must not be null");
-        Validate.notBlank(fieldName, "Field name must not be blank");
-
-        var field = FieldUtils.getField(beanType, fieldName, true);
+        var field = getFieldRequired(beanType, fieldName);
 
         return REQUIRED_FIELD_ANNOTATIONS.stream()
                 .anyMatch(field::isAnnotationPresent);
     }
 
-    public static <T> Optional<Field> findIdField(Class<T> beanType) {
-        var fields = FieldUtils.getFieldsListWithAnnotation(beanType, Id.class);
-        Validate.inclusiveBetween(0, 1, fields.size(), "Only one field can be annotated with @Id");
+    public static <T extends Annotation> Optional<T> findAnnotation(Class<?> beanType,
+                                                                    String fieldName,
+                                                                    Class<T> annotationType) {
+        Objects.requireNonNull(annotationType, "Annotation type must not be null");
+
+        var field = getFieldRequired(beanType, fieldName);
+        var annotation = field.getAnnotation(annotationType);
+
+        return Optional.ofNullable(annotation);
+    }
+
+    public static <T> boolean isAnnotationPresent(Class<T> beanType,
+                                                  String fieldName,
+                                                  Class<? extends Annotation> annotationType) {
+        return findAnnotation(beanType, fieldName, annotationType).isPresent();
+    }
+
+    public static <T> Optional<Field> findOneFieldWithAnnotation(Class<T> beanType,
+                                                                 Class<? extends Annotation> annotationType) {
+        Objects.requireNonNull(annotationType, "Annotation type must not be null");
+        Objects.requireNonNull(beanType, "Bean type must not be null");
+
+        var fields = FieldUtils.getFieldsListWithAnnotation(beanType, annotationType);
+        Validate.inclusiveBetween(0, 1, fields.size(),
+                "Only one field can be annotated with %s", annotationType.getSimpleName());
 
         return fields.stream().findFirst();
     }
 
-    public static <T> Field getIdField(Class<T> beanType) {
-        return findIdField(beanType)
-                .orElseThrow(() -> new IllegalArgumentException("Bean does not have an @Id field"));
+    public static <T> Field getSingleFieldWithAnnotation(Class<T> beanType,
+                                                         Class<? extends Annotation> annotationType) {
+        return findOneFieldWithAnnotation(beanType, annotationType)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Bean does not have a field annotated with %s"
+                                .formatted(annotationType.getSimpleName()))
+                );
     }
 
     public static <T> List<String> getFieldNames(Class<T> beanType) {
@@ -84,6 +106,15 @@ public final class BeanUtils {
         Objects.requireNonNull(field, "Field must not be null");
 
         return FieldUtils.readField(field, bean, true);
+    }
+
+    public static Field getFieldRequired(Class<?> beanType, String fieldName) {
+        Objects.requireNonNull(beanType, "Bean type must not be null");
+        Validate.notBlank(fieldName, "Field name must not be blank");
+
+        var field = FieldUtils.getField(beanType, fieldName, true);
+
+        return Objects.requireNonNull(field, "Field not found: " + fieldName);
     }
 
     public static <T> String getDisplayName(Class<T> beanType) {
