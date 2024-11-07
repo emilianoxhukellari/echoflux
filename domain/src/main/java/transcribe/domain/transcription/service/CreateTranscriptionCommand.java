@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import transcribe.core.transcribe.common.Language;
 
+import java.net.URI;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -22,5 +24,8 @@ public class CreateTranscriptionCommand {
 
     @NotNull
     private Long applicationUserId;
+
+    @NotNull
+    private URI sourceUri;
 
 }

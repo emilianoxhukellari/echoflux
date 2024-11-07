@@ -9,6 +9,8 @@ import transcribe.domain.template.service.TemplateService;
 import transcribe.template.renderer.RenderTemplateFromStringCommand;
 import transcribe.template.renderer.TemplateRenderer;
 
+import java.util.NoSuchElementException;
+
 @Service
 @RequiredArgsConstructor
 public class TemplateServiceImpl implements TemplateService {
@@ -19,7 +21,7 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public TemplateEntity get(String name) {
         return repository.findByName(name)
-                .orElseThrow();
+                .orElseThrow(() -> new NoSuchElementException("Template not found"));
     }
 
     @Override

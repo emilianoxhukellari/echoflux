@@ -27,6 +27,6 @@ public interface TranscriptionMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     TranscriptionEntity asEntity(@MappingTarget TranscriptionEntity entity, UpdateTranscriptionCommand command);
 
-    CreateTranscriptionCommand toCreateCommand(TranscriptionPipelineCommand command);
+    CreateTranscriptionCommand toCommand(TranscriptionPipelineCommand command);
 
 }

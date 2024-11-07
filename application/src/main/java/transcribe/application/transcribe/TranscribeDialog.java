@@ -23,9 +23,9 @@ import transcribe.application.core.field.MediaField;
 import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.core.utils.MoreEnums;
 import transcribe.core.transcribe.common.Language;
-import transcribe.core.transcribe.common.TranscribeResult;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.operation.data.OperationType;
+import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 
@@ -92,13 +92,13 @@ public class TranscribeDialog extends EnhancedDialog {
     private void startTranscribe(Command command) {
         var pipelineCommand = TranscriptionPipelineCommand.builder()
                 .name(command.getMediaValue().name())
-                .mediaUri(command.getMediaValue().uri())
+                .sourceUri(command.getMediaValue().uri())
                 .mediaOrigin(command.getMediaValue().mediaOrigin())
                 .language(command.getLanguage())
                 .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElse(null))
                 .build();
 
-        var operation = Operation.<Optional<TranscribeResult>>builder()
+        var operation = Operation.<Optional<TranscriptionEntity>>builder()
                 .name(String.format("Transcribing \"%s\"", command.getMediaValue().name()))
                 .beforeCall(this::close)
                 .type(OperationType.NON_BLOCKING)

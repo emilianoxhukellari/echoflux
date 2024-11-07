@@ -46,6 +46,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         } catch (Throwable e) {
             service.update(
                     UpdateCompletionCommand.builder()
+                            .id(entity.getId())
                             .error(e.getMessage())
                             .status(CompletionStatus.FAILED)
                             .build()

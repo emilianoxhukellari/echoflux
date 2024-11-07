@@ -108,6 +108,7 @@
             (
                 id                         bigserial primary key,
                 status                     varchar(255)                            not null,
+                source_uri                 varchar(1024)                           not null,
                 cloud_uri                  varchar(1024),
                 language                   varchar(255)                            not null,
                 name                       varchar(1024)                           not null,

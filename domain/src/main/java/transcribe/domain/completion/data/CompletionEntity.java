@@ -72,6 +72,7 @@ public class CompletionEntity extends AuditEntity {
     private Long durationMillis;
 
     @Column(name = "error")
+    @BigText
     private String error;
 
 }

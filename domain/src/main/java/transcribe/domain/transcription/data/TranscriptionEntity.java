@@ -42,6 +42,9 @@ public class TranscriptionEntity extends AuditEntity {
     @Enumerated(EnumType.STRING)
     private TranscriptionStatus status;
 
+    @Column(name = "source_uri")
+    private URI sourceUri;
+
     @Column(name = "cloud_uri")
     private URI cloudUri;
 
@@ -87,6 +90,7 @@ public class TranscriptionEntity extends AuditEntity {
     private Long transcribeDurationMillis;
 
     @Column(name = "error")
+    @BigText
     private String error;
 
 }

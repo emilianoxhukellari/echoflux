@@ -8,6 +8,8 @@ import transcribe.domain.transcription.data.TranscriptionEntity;
 @Validated
 public interface TranscriptionService {
 
+    TranscriptionEntity get(Long id);
+
     TranscriptionEntity create(@Valid @NotNull CreateTranscriptionCommand command);
 
     TranscriptionEntity update(@Valid @NotNull UpdateTranscriptionCommand command);

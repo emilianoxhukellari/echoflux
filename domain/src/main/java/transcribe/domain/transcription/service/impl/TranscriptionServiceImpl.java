@@ -12,6 +12,8 @@ import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
 import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
+import java.util.NoSuchElementException;
+
 @Service
 @RequiredArgsConstructor
 public class TranscriptionServiceImpl implements TranscriptionService {
@@ -19,6 +21,12 @@ public class TranscriptionServiceImpl implements TranscriptionService {
     private final TranscriptionRepository repository;
     private final TranscriptionMapper mapper;
     private final SettingsLoader settingsLoader;
+
+    @Override
+    public TranscriptionEntity get(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Transcription not found"));
+    }
 
     @Override
     @Transactional

@@ -9,9 +9,6 @@ import java.nio.file.Path;
 @Validated
 public interface CloudStorage {
 
-    /**
-     * @return resource name
-     * */
     ResourceInfo upload(@NotNull Path path);
 
     boolean delete(@NotBlank String resourceName);

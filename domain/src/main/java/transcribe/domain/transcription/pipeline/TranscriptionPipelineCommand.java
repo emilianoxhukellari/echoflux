@@ -27,7 +27,7 @@ public class TranscriptionPipelineCommand {
     private Long applicationUserId;
 
     @NotNull
-    private URI mediaUri;
+    private URI sourceUri;
 
     @NotNull
     private MediaOrigin mediaOrigin;
