@@ -3,6 +3,7 @@ package transcribe.application.transcribe;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
@@ -10,8 +11,10 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.notification.Notifications;
@@ -43,7 +46,10 @@ public class TranscribeDialog extends EnhancedDialog {
         this.authenticatedUser = SpringContext.getBean(AuthenticatedUser.class);
 
         var binder = new Binder<Command>();
-        binder.setBean(new Command());
+        binder.setBean(
+                Command.builder()
+                        .build()
+        );
 
         var mediaProviderField = new MediaField();
         binder.forField(mediaProviderField)
@@ -57,9 +63,14 @@ public class TranscribeDialog extends EnhancedDialog {
                 .asRequired("Language is required")
                 .bind(Command::getLanguage, Command::setLanguage);
 
+        var enhanced = new Checkbox("Enhance with AI");
+        binder.forField(enhanced)
+                .bind(Command::getEnhanced, Command::setEnhanced);
+
         var form = new FormLayout();
         form.add(mediaProviderField, 2);
         form.add(language, 2);
+        form.add(enhanced, 2);
 
         var transcribeButton = newTranscribeButton();
         transcribeButton.addClickListener(_ -> {
@@ -96,6 +107,7 @@ public class TranscribeDialog extends EnhancedDialog {
                 .mediaOrigin(command.getMediaValue().mediaOrigin())
                 .language(command.getLanguage())
                 .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElse(null))
+                .enhanced(command.getEnhanced())
                 .build();
 
         var operation = Operation.<Optional<TranscriptionEntity>>builder()
@@ -146,11 +158,19 @@ public class TranscribeDialog extends EnhancedDialog {
     }
 
     @Data
-    @Accessors(chain = true)
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     private static class Command {
 
         private MediaValue mediaValue;
+
+        // todo: make it dependant on user profile
         private Language language;
+
+        @Builder.Default
+        // todo: make it dependant on user profile
+        private Boolean enhanced = true;
 
     }
 

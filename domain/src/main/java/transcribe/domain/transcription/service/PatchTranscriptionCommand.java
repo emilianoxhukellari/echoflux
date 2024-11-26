@@ -15,7 +15,7 @@ import java.net.URI;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateTranscriptionCommand {
+public class PatchTranscriptionCommand {
 
     @NotNull
     private Long id;
@@ -25,8 +25,6 @@ public class UpdateTranscriptionCommand {
     private URI cloudUri;
 
     private String name;
-
-    private String transcript;
 
     private Long completionId;
 

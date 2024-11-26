@@ -7,8 +7,8 @@ import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.data.SettingsRepository;
 import transcribe.domain.settings.mapper.SettingsMapper;
 import transcribe.domain.settings.service.CreateSettingsCommand;
+import transcribe.domain.settings.service.PatchSettingsCommand;
 import transcribe.domain.settings.service.SettingsService;
-import transcribe.domain.settings.service.UpdateSettingsCommand;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,14 +34,14 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Override
     @Transactional
-    public List<SettingsEntity> updateAll(Collection<UpdateSettingsCommand> commandCollection) {
+    public List<SettingsEntity> patchAll(Collection<PatchSettingsCommand> commandCollection) {
         var commandMap = commandCollection.stream()
-                .collect(Collectors.toMap(UpdateSettingsCommand::getId, Function.identity()));
+                .collect(Collectors.toMap(PatchSettingsCommand::getId, Function.identity()));
 
         var current = repository.findAllById(commandMap.keySet());
 
         var updated = current.stream()
-                .map(e -> mapper.asEntity(e, commandMap.get(e.getId())))
+                .map(e -> mapper.patch(e, commandMap.get(e.getId())))
                 .toList();
 
         return repository.saveAllAndFlush(updated);
@@ -49,10 +49,10 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Override
     @Transactional
-    public SettingsEntity update(UpdateSettingsCommand command) {
+    public SettingsEntity patch(PatchSettingsCommand command) {
         var entity = repository.getReferenceById(command.getId());
 
-        return repository.saveAndFlush(mapper.asEntity(entity, command));
+        return repository.saveAndFlush(mapper.patch(entity, command));
     }
 
     @Override

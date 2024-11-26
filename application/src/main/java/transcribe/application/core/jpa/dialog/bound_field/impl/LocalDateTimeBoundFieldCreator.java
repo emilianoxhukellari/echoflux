@@ -1,6 +1,6 @@
 package transcribe.application.core.jpa.dialog.bound_field.impl;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -17,10 +17,12 @@ public class LocalDateTimeBoundFieldCreator implements BoundFieldCreator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
+    public <T, V> AbstractField<DateTimePicker, LocalDateTime> newBoundField(PropertyDefinition<T, V> property,
+                                                                             Binder<T> binder,
+                                                                             boolean required) {
         var field = new DateTimePicker(property.getCaption());
         var getter = (ValueProvider<T, LocalDateTime>) property.getGetter();
-        var setter = (Setter<T, LocalDateTime>) property.getSetter().orElseThrow();
+        var setter = (Setter<T, LocalDateTime>) property.getSetter().orElse(null);
         var builder = binder.forField(field);
         if (required) {
             builder.asRequired();

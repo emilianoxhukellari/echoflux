@@ -13,7 +13,7 @@ import transcribe.core.completions.CompletionResult;
 import transcribe.domain.completion.data.CompletionEntity;
 import transcribe.domain.completion.pipeline.CompletionsPipelineResult;
 import transcribe.domain.completion.service.CreateCompletionCommand;
-import transcribe.domain.completion.service.UpdateCompletionCommand;
+import transcribe.domain.completion.service.PatchCompletionCommand;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -26,9 +26,9 @@ public interface CompletionMapper {
 
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    CompletionEntity asEntity(@MappingTarget CompletionEntity entity, UpdateCompletionCommand command);
+    CompletionEntity patch(@MappingTarget CompletionEntity entity, PatchCompletionCommand command);
 
-    UpdateCompletionCommand toCommand(CompletionResult result);
+    PatchCompletionCommand toCommand(CompletionResult result);
 
     @Mapping(target = "completionId", source = "id")
     CompletionsPipelineResult toResult(CompletionEntity entity);

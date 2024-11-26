@@ -3,11 +3,14 @@ package transcribe.core.core.json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import org.springframework.stereotype.Component;
+import org.mapstruct.*;
 
 import java.util.Optional;
 
-@Component
+@Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
+        componentModel = MappingConstants.ComponentModel.SPRING)
 public interface JsonMapper {
 
     ObjectMapper objectMapper = new ObjectMapper();

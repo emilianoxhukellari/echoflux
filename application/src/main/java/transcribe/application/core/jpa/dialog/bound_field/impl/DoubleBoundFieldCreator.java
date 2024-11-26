@@ -1,6 +1,6 @@
 package transcribe.application.core.jpa.dialog.bound_field.impl;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -15,10 +15,12 @@ public class DoubleBoundFieldCreator implements BoundFieldCreator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
+    public <T, V> AbstractField<NumberField, Double> newBoundField(PropertyDefinition<T, V> property,
+                                                                   Binder<T> binder,
+                                                                   boolean required) {
         var field = new NumberField(property.getCaption());
         var getter = (ValueProvider<T, Double>) property.getGetter();
-        var setter = (Setter<T, Double>) property.getSetter().orElseThrow();
+        var setter = (Setter<T, Double>) property.getSetter().orElse(null);
         var builder = binder.forField(field);
         if (required) {
             builder.asRequired();

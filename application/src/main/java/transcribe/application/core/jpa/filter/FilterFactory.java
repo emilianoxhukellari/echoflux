@@ -43,7 +43,7 @@ public final class FilterFactory {
                 if (asCollection) {
                     throw new UnsupportedOperationException("Collection filter does not support nested collections");
                 }
-                var genericType = BeanUtils.getGenericType(propertyHolderType, propertyName);
+                var genericType = BeanUtils.getGenericTypeNested(propertyHolderType, propertyName);
 
                 yield newFilter(propertyName, genericType, propertyHolderType, true);
             }

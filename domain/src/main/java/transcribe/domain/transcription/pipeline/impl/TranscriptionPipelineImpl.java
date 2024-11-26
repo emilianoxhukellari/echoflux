@@ -1,6 +1,7 @@
 package transcribe.domain.transcription.pipeline.impl;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import transcribe.core.audio.common.AudioContainer;
 import transcribe.core.audio.ffmpeg.FFprobeWrapper;
@@ -18,6 +19,8 @@ import transcribe.core.function.FunctionUtils;
 import transcribe.core.transcribe.SpeechToText;
 import transcribe.domain.template.service.RenderTemplateCommand;
 import transcribe.domain.template.service.TemplateService;
+import transcribe.domain.transcript.transcript_manager.SaveAsPartsCommand;
+import transcribe.domain.transcript.transcript_manager.TranscriptManager;
 import transcribe.domain.transcription.data.MediaOrigin;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionStatus;
@@ -27,8 +30,8 @@ import transcribe.domain.transcription.mapper.TranscriptionMapper;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineSettings;
+import transcribe.domain.transcription.service.PatchTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
-import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -37,6 +40,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
     private final MediaDownloader mediaDownloader;
@@ -45,6 +49,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private final SpeechToText speechToText;
     private final TranscriptionMapper mapper;
     private final TranscriptionService transcriptionService;
+    private final TranscriptManager transcriptManager;
     private final CompletionsPipeline completionsPipeline;
     private final Broadcaster broadcaster;
     private final FFprobeWrapper ffprobeWrapper;
@@ -66,8 +71,10 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         try {
             return Optional.of(transcribeCreated(entity, command));
         } catch (Throwable e) {
-            var withError = transcriptionService.update(
-                    UpdateTranscriptionCommand.builder()
+            log.error("Transcription failed", e);
+
+            var withError = transcriptionService.patch(
+                    PatchTranscriptionCommand.builder()
                             .id(entity.getId())
                             .status(TranscriptionStatus.FAILED)
                             .error(e.getMessage())
@@ -96,9 +103,11 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
         var transcribed = transcribe(processed);
 
-        var enhanced = enhance(transcribed);
+        if (command.getEnhanced()) {
+            enhance(transcribed);
+        }
 
-        return updateStatusAndPublish(enhanced.getId(), enhanced.getApplicationUserId(), TranscriptionStatus.COMPLETED);
+        return updateStatusAndPublish(entity.getId(), entity.getApplicationUserId(), TranscriptionStatus.COMPLETED);
     }
 
     private Path resolveOriginalMedia(TranscriptionEntity entity, MediaOrigin mediaOrigin, URI sourceUri) {
@@ -108,8 +117,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 updateStatusAndPublish(entity.getId(), entity.getApplicationUserId(), TranscriptionStatus.DOWNLOADING_PUBLIC);
                 var downloadedTimed = FunctionUtils.getTimed(() -> mediaDownloader.download(sourceUri));
 
-                transcriptionService.update(
-                        UpdateTranscriptionCommand.builder()
+                transcriptionService.patch(
+                        PatchTranscriptionCommand.builder()
                                 .id(entity.getId())
                                 .downloadDurationMillis(downloadedTimed.getDuration().toMillis())
                                 .build()
@@ -126,8 +135,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
         var result = ffprobeWrapper.ffprobe().probe(originalMedia.toAbsolutePath().toString());
         var lengthMillis = (long) (result.getFormat().duration * 1000);
-        var withLengthEntity = transcriptionService.update(
-                UpdateTranscriptionCommand.builder()
+        var withLengthEntity = transcriptionService.patch(
+                PatchTranscriptionCommand.builder()
                         .id(entity.getId())
                         .lengthMillis(lengthMillis)
                         .build()
@@ -157,8 +166,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var resourceInfo = cloudStorage.upload(ogg);
         FileUtils.deleteIfExists(ogg);
 
-        return transcriptionService.update(
-                UpdateTranscriptionCommand.builder()
+        return transcriptionService.patch(
+                PatchTranscriptionCommand.builder()
                         .id(entity.getId())
                         .cloudUri(resourceInfo.getUri())
                         .processDurationMillis((System.nanoTime() - processStart) / 1_000_000)
@@ -172,7 +181,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var progressTrigger = new ProgressTrigger(
                 Math.round(entity.getLengthMillis() * transcriptionService.getRealTimeFactor()),
                 2000,
-                90,
+                95,
                 p -> updateTranscribeProgressAndPublish(
                         entity.getId(),
                         entity.getApplicationUserId(),
@@ -183,14 +192,19 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var timedTranscribeResult = FunctionUtils.getTimed(
                 () -> speechToText.transcribe(entity.getCloudUri(), entity.getLanguage())
         );
-
-        var transcribeResult = timedTranscribeResult.getResult();
         FunctionUtils.runQuietly(progressTrigger::stop);
 
-        return transcriptionService.update(
-                UpdateTranscriptionCommand.builder()
+        var words = timedTranscribeResult.getResult();
+        transcriptManager.saveAsParts(
+                SaveAsPartsCommand.builder()
+                        .words(words)
+                        .transcriptionId(entity.getId())
+                        .build()
+        );
+
+        return transcriptionService.patch(
+                PatchTranscriptionCommand.builder()
                         .id(entity.getId())
-                        .transcript(transcribeResult.getTranscript())
                         .transcribeDurationMillis(timedTranscribeResult.getDuration().toMillis())
                         .build()
         );
@@ -199,10 +213,12 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private TranscriptionEntity enhance(TranscriptionEntity entity) {
         updateStatusAndPublish(entity.getId(), entity.getApplicationUserId(), TranscriptionStatus.ENHANCING);
 
+        var transcriptWithTimestamps = transcriptManager.getTranscriptWithTimestamps(entity.getId());
+
         var settings = settingsLoader.load(TranscriptionPipelineSettings.class);
         var dataModel = Map.<String, Object>of(
                 settings.getEnhanceCompletionTextDataModelKey(),
-                entity.getTranscript()
+                transcriptWithTimestamps
         );
         var completionInput = templateService.render(
                 RenderTemplateCommand.builder()
@@ -213,8 +229,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var completionResult = completionsPipeline.complete(completionInput);
 
         if (completionResult.isPresent()) {
-            return transcriptionService.update(
-                    UpdateTranscriptionCommand.builder()
+            return transcriptionService.patch(
+                    PatchTranscriptionCommand.builder()
                             .id(entity.getId())
                             .completionId(completionResult.get().getCompletionId())
                             .build()
@@ -225,8 +241,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     }
 
     private TranscriptionEntity updateStatusAndPublish(Long transcriptionId, Long applicationUserId, TranscriptionStatus status) {
-        var updatedEntity = transcriptionService.update(
-                UpdateTranscriptionCommand.builder()
+        var updatedEntity = transcriptionService.patch(
+                PatchTranscriptionCommand.builder()
                         .id(transcriptionId)
                         .status(status)
                         .build()
@@ -244,8 +260,8 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private void updateTranscribeProgressAndPublish(Long transcriptionId,
                                                     Long applicationUserId,
                                                     int progress) {
-        var updatedEntity = transcriptionService.update(
-                UpdateTranscriptionCommand.builder()
+        var updatedEntity = transcriptionService.patch(
+                PatchTranscriptionCommand.builder()
                         .id(transcriptionId)
                         .transcribeProgress(progress)
                         .build()

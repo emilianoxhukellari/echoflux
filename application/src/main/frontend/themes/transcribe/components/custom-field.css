@@ -1,0 +1,3 @@
+vaadin-custom-field.custom-field::part(error-message)::before {
+    height: 0.4em;
+}

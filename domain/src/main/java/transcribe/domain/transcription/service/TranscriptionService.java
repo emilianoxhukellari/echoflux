@@ -12,7 +12,9 @@ public interface TranscriptionService {
 
     TranscriptionEntity create(@Valid @NotNull CreateTranscriptionCommand command);
 
-    TranscriptionEntity update(@Valid @NotNull UpdateTranscriptionCommand command);
+    TranscriptionEntity patch(@Valid @NotNull PatchTranscriptionCommand command);
+
+    TranscriptionEntity rename(@Valid @NotNull RenameTranscriptionCommand command);
 
     double getRealTimeFactor();
 

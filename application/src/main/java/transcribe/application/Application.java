@@ -18,7 +18,7 @@ import transcribe.core.core.initialize.Initialize;
 import java.util.Comparator;
 import java.util.List;
 
-@Theme(value = "transcribe", variant = Lumo.LIGHT)
+@Theme(value = "transcribe", variant = Lumo.DARK)
 @Push
 @SpringBootApplication
 @ComponentScan({

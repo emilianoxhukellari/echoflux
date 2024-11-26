@@ -1,21 +1,22 @@
 package transcribe.application.core.jpa.grid;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
-import com.vaadin.flow.component.icon.AbstractIcon;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
+import com.vaadin.flow.shared.util.SharedUtil;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import jakarta.persistence.Id;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -41,13 +42,15 @@ import transcribe.domain.operation.data.OperationType;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor<T>> extends Grid<T> {
 
     private static final int DEFAULT_PAGE_SIZE = 30;
@@ -132,8 +135,13 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
 
         return JpaSupportedType.ofBeanType(propertyDefinition.getType())
                 .findCustomRendererFactory()
-                .map(f -> addColumn(propertyName, (Function<PropertyDefinition<T, ?>, Renderer<T>>) (Function<?, ?>) f))
-                .orElseGet(() -> super.addColumn(propertyName));
+                .map(f ->
+                        addColumn(propertyName, (Function<PropertyDefinition<T, ?>, Renderer<T>>) (Function<?, ?>) f)
+                )
+                .orElseGet(() ->
+                        super.addColumn(propertyName)
+                                .setHeader(propertyNameToHumanFriendly(propertyName))
+                );
     }
 
     @Override
@@ -145,7 +153,9 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     public Column<T> addColumn(String propertyName, Function<PropertyDefinition<T, ?>, Renderer<T>> rendererFactory) {
         var propertyDefinition = getPropertyDefinitionRequired(propertyName);
 
-        return super.addColumn(propertyName).setRenderer(rendererFactory.apply(propertyDefinition));
+        return super.addColumn(propertyName)
+                .setRenderer(rendererFactory.apply(propertyDefinition))
+                .setHeader(propertyNameToHumanFriendly(propertyName));
     }
 
     public void setAllColumnsResizable() {
@@ -254,11 +264,11 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         addContextMenuItem(
                 "Edit",
                 v -> new JpaSaveCorePropertiesDialog<>(v, beanType, repository, excludedPropertiesList)
-                        .setSaveListener(this::refreshAll)
+                        .setSaveListener(this::refreshItem)
                         .open()
         );
         addItemDoubleClickListener(v -> new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, repository, excludedPropertiesList)
-                .setSaveListener(this::refreshAll)
+                .setSaveListener(this::refreshItem)
                 .open()
         );
         addConfirmedContextMenuItem("Delete", e -> {
@@ -281,11 +291,6 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                 .withCrudActions(true)
                 .excludedPropertiesList(excludedPropertiesList)
                 .build();
-    }
-
-    public <I extends AbstractIcon<I>> Column<T> addIconActionColumn(Supplier<AbstractIcon<I>> iconSupplier, Consumer<T> onClick) {
-        return addComponentColumn(v -> new Button(iconSupplier.get(), _ -> onClick.accept(v)))
-                .setWidth("4.8rem");
     }
 
     private PropertyDefinition<T, ?> getPropertyDefinitionRequired(String property) {
@@ -326,6 +331,16 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         return sort.isSorted()
                 ? sort
                 : Sort.by(Sort.Direction.DESC, idField.getName());
+    }
+
+    private static String propertyNameToHumanFriendly(String propertyName) {
+        Objects.requireNonNull(propertyName, "Property name cannot be null");
+
+        var parts = propertyName.split("\\.");
+
+        return Arrays.stream(parts)
+                .map(SharedUtil::camelCaseToHumanFriendly)
+                .collect(Collectors.joining(StringUtils.SPACE));
     }
 
 }

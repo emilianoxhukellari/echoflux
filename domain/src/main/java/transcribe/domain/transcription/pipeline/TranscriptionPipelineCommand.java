@@ -27,6 +27,9 @@ public class TranscriptionPipelineCommand {
     private Long applicationUserId;
 
     @NotNull
+    private Boolean enhanced;
+
+    @NotNull
     private URI sourceUri;
 
     @NotNull

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateSettingsCommand {
+public class PatchSettingsCommand {
 
     @NotNull
     private Long id;

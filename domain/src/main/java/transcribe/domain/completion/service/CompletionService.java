@@ -10,6 +10,6 @@ public interface CompletionService {
 
     CompletionEntity create(@Valid @NotNull CreateCompletionCommand command);
 
-    CompletionEntity update(UpdateCompletionCommand command);
+    CompletionEntity patch(PatchCompletionCommand command);
 
 }

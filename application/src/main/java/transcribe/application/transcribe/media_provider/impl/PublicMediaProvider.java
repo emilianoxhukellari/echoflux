@@ -82,7 +82,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 .callable(() -> mediaDownloader.find(UriUtils.newUri(searchUri.getValue())))
                 .onSuccess(r -> {
                     if (r.isEmpty()) {
-                        Dialogs.info("Media not found", "Make sure the URL is correct.");
+                        Dialogs.info("Media not found", "Please make sure the URL is correct.");
                     } else {
                         setMediaResult(r.get());
                         FunctionUtils.consumeIfPresent(
@@ -91,7 +91,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                         );
                     }
                 })
-                .onError(_ -> Dialogs.info("Media not found", "Make sure the URL is correct."))
+                .onError(_ -> Dialogs.info("Media not found", "Please make sure the URL is correct."))
                 .onErrorNotify(false)
                 .onSuccessNotify(false)
                 .build();

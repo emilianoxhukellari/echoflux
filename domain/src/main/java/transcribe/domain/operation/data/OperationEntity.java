@@ -17,6 +17,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Formula;
 import transcribe.domain.audit.data.AuditEntity;
+import transcribe.core.core.annotation.BigText;
 
 import java.time.LocalDateTime;
 
@@ -49,6 +50,7 @@ public class OperationEntity extends AuditEntity {
     private OperationStatus status;
 
     @Column(name = "error")
+    @BigText
     private String error;
 
     @Column(name = "started_at")
@@ -62,6 +64,7 @@ public class OperationEntity extends AuditEntity {
     private Double durationSeconds;
 
     @Column(name = "description")
+    @BigText
     private String description;
 
 }

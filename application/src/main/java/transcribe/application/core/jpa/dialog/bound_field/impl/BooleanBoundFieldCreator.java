@@ -1,6 +1,6 @@
 package transcribe.application.core.jpa.dialog.bound_field.impl;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -15,10 +15,12 @@ public class BooleanBoundFieldCreator implements BoundFieldCreator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
+    public <T, V> AbstractField<Checkbox, Boolean> newBoundField(PropertyDefinition<T, V> property,
+                                                                 Binder<T> binder,
+                                                                 boolean required) {
         var field = new Checkbox(property.getCaption());
         var getter = (ValueProvider<T, Boolean>) property.getGetter();
-        var setter = (Setter<T, Boolean>) property.getSetter().orElseThrow();
+        var setter = (Setter<T, Boolean>) property.getSetter().orElse(null);
         binder.forField(field)
                 .bind(getter, setter);
 

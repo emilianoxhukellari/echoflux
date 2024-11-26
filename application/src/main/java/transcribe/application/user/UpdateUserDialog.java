@@ -51,8 +51,8 @@ public class UpdateUserDialog extends JpaSaveDialog<ApplicationUserEntity> {
     }
 
     @Override
-    protected void save() {
-        service.update(binder.getBean());
+    protected ApplicationUserEntity save() {
+        return service.update(binder.getBean());
     }
 
     @Override

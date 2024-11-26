@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -57,7 +58,7 @@ public class ApplicationUserEntity extends AuditEntity {
 
     @CollectionTable(
             name = "application_user_role",
-            joinColumns = @jakarta.persistence.JoinColumn(name = "application_user_id")
+            joinColumns = @JoinColumn(name = "application_user_id")
     )
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)

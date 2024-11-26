@@ -40,11 +40,11 @@ public final class FunctionUtils {
 
         var start = System.nanoTime();
         runnable.run();
+
         return Duration.ofNanos(System.nanoTime() - start);
     }
 
     public static void runTimed(Runnable runnable, Consumer<Duration> consumer) {
-        Objects.requireNonNull(runnable, "Runnable must not be null");
         Objects.requireNonNull(consumer, "Consumer must not be null");
 
         consumer.accept(runTimed(runnable));

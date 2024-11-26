@@ -13,7 +13,7 @@ import transcribe.domain.completion.pipeline.CompletionsPipeline;
 import transcribe.domain.completion.pipeline.CompletionsPipelineResult;
 import transcribe.domain.completion.service.CompletionService;
 import transcribe.domain.completion.service.CreateCompletionCommand;
-import transcribe.domain.completion.service.UpdateCompletionCommand;
+import transcribe.domain.completion.service.PatchCompletionCommand;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -44,8 +44,10 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         try {
             return Optional.of(completeCreated(entity));
         } catch (Throwable e) {
-            service.update(
-                    UpdateCompletionCommand.builder()
+            log.error("Completion failed", e);
+
+            service.patch(
+                    PatchCompletionCommand.builder()
                             .id(entity.getId())
                             .error(e.getMessage())
                             .status(CompletionStatus.FAILED)
@@ -59,8 +61,8 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
     private CompletionsPipelineResult completeCreated(CompletionEntity entity) {
         Objects.requireNonNull(entity, "Entity cannot be null");
 
-        service.update(
-                UpdateCompletionCommand.builder()
+        service.patch(
+                PatchCompletionCommand.builder()
                         .id(entity.getId())
                         .status(CompletionStatus.PROCESSING)
                         .build()
@@ -69,7 +71,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         var timedResult = FunctionUtils.getTimed(() -> completions.complete(entity.getInput()));
         var completionResult = timedResult.getResult();
 
-        var completedEntity = service.update(
+        var completedEntity = service.patch(
                 mapper.toCommand(completionResult)
                         .withId(entity.getId())
                         .withStatus(CompletionStatus.COMPLETED)

@@ -9,6 +9,8 @@ import com.google.cloud.speech.v2.*;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +23,7 @@ import transcribe.core.settings.SettingsLoader;
 import transcribe.core.transcribe.GoogleSpeechSettings;
 import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.transcribe.common.Language;
-import transcribe.core.transcribe.common.TranscribeResult;
+import transcribe.core.transcribe.common.Word;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +52,7 @@ public class GoogleSpeechToText implements SpeechToText {
 
     @SneakyThrows
     @LoggedMethodExecution(logReturn = false)
-    public TranscribeResult transcribe(URI cloudUri, List<Language> languages) {
+    public List<Word> transcribe(URI cloudUri, List<Language> languages) {
         var settings = settingsLoader.load(GoogleSpeechSettings.class);
 
         var recognitionConfig = newRecognitionConfig(languages, settings);
@@ -77,7 +79,22 @@ public class GoogleSpeechToText implements SpeechToText {
         var singleResponse = response.getResultsMap().get(uri);
         var resultsList = singleResponse.getInlineResult().getTranscript().getResultsList();
 
-        return GoogleSpeechToTextUtils.toTranscribeResult(resultsList);
+        var recognitionParts = ListUtils.emptyIfNull(resultsList)
+                .stream()
+                .map(SpeechRecognitionResult::getAlternativesList)
+                .filter(CollectionUtils::isNotEmpty)
+                .map(List::getFirst)
+                .toList();
+
+        return recognitionParts.stream()
+                .map(SpeechRecognitionAlternative::getWordsList)
+                .flatMap(List::stream)
+                .map(w -> Word.builder()
+                                .startOffsetMillis(protobufDurationToMillis(w.getStartOffset()))
+                                .endOffsetMillis(protobufDurationToMillis(w.getEndOffset()))
+                                .text(w.getWord())
+                                .build())
+                .toList();
     }
 
     private static RecognitionConfig newRecognitionConfig(List<Language> languages, GoogleSpeechSettings settings) {
@@ -133,6 +150,10 @@ public class GoogleSpeechToText implements SpeechToText {
 
     private static String newImplicitRecognizer(GoogleCloudProperties properties) {
         return RecognizerName.of(properties.getProjectId(), properties.getLocation(), "_").toString();
+    }
+
+    private static long protobufDurationToMillis(com.google.protobuf.Duration duration) {
+        return duration.getSeconds() * 1_000L + duration.getNanos() / 1_000_000L;
     }
 
 }

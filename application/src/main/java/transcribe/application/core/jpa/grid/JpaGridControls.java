@@ -74,7 +74,7 @@ public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecification
                             grid.getRepository(),
                             grid.getCrudActionsData().getExcludedPropertiesList()
                     )
-                            .setSaveListener(grid::refreshAll)
+                            .setSaveListener(_ -> grid.refreshAll())
                             .open()
             );
         }

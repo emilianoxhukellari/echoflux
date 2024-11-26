@@ -56,11 +56,11 @@ public class SettingsView extends Composite<VerticalLayout> {
         grid.addCrudActions();
 
         grid.addConfirmedContextMenuItem("Reset", item -> {
-            var operation = Operation.builder()
+            var operation = Operation.<SettingsEntity>builder()
                     .name("Resetting settings")
-                    .callable(OperationCallable.ofRunnable(() -> synchronizer.reset(item.getKey())))
+                    .callable(() -> synchronizer.reset(item.getKey()))
                     .type(OperationType.NON_BLOCKING)
-                    .onFinally(grid::refreshAll)
+                    .onSuccess(grid::refreshItem)
                     .build();
 
             operationRunner.run(operation, UI.getCurrent());

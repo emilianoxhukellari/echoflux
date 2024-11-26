@@ -1,19 +1,21 @@
 package transcribe.core.core.utils;
 
 import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 import java.nio.file.Path;
 
 public final class UriUtils {
 
-    public static @Nullable URI newUri(@Nullable String uri) {
+    @Nullable
+    public static URI newUri(@Nullable String uri) {
         if (uri == null) {
             return null;
         }
 
         try {
-            return URI.create(uri);
+            return URI.create(StringUtils.stripToEmpty(uri));
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("The provided URI is invalid");
         } catch (Throwable e) {
@@ -21,7 +23,8 @@ public final class UriUtils {
         }
     }
 
-    public static @Nullable URI toUri(@Nullable Path path) {
+    @Nullable
+    public static URI toUri(@Nullable Path path) {
         if (path == null) {
             return null;
         }

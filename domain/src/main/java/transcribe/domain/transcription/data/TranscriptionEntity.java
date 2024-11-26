@@ -1,25 +1,14 @@
 package transcribe.domain.transcription.data;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import transcribe.core.transcribe.common.Language;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.core.annotation.BigText;
+import transcribe.core.core.annotation.BigText;
 
 import java.net.URI;
 
@@ -57,13 +46,13 @@ public class TranscriptionEntity extends AuditEntity {
     @NotBlank
     private String name;
 
-    @Column(name = "transcript")
-    @BigText
-    private String transcript;
-
     @Column(name = "application_user_id")
     @NotNull
     private Long applicationUserId;
+
+    @Column(name = "enhanced")
+    @NotNull
+    private Boolean enhanced;
 
     @Column(name = "completion_id")
     private Long completionId;

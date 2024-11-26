@@ -8,7 +8,7 @@ import transcribe.domain.completion.data.CompletionRepository;
 import transcribe.domain.completion.mapper.CompletionMapper;
 import transcribe.domain.completion.service.CompletionService;
 import transcribe.domain.completion.service.CreateCompletionCommand;
-import transcribe.domain.completion.service.UpdateCompletionCommand;
+import transcribe.domain.completion.service.PatchCompletionCommand;
 
 @Service
 @RequiredArgsConstructor
@@ -27,10 +27,11 @@ public class CompletionServiceImpl implements CompletionService {
 
     @Override
     @Transactional
-    public CompletionEntity update(UpdateCompletionCommand command) {
+    public CompletionEntity patch(PatchCompletionCommand command) {
         var entity = repository.getReferenceById(command.getId());
+        var patched = mapper.patch(entity, command);
 
-        return repository.saveAndFlush(mapper.asEntity(entity, command));
+        return repository.saveAndFlush(patched);
     }
 
 }

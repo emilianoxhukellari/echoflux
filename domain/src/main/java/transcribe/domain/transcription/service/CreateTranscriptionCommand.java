@@ -26,6 +26,9 @@ public class CreateTranscriptionCommand {
     private Long applicationUserId;
 
     @NotNull
+    private Boolean enhanced;
+
+    @NotNull
     private URI sourceUri;
 
 }

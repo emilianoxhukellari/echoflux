@@ -8,13 +8,17 @@ import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
+import transcribe.core.core.annotation.ParentProperty;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public final class BeanUtils {
 
@@ -24,8 +28,8 @@ public final class BeanUtils {
         REQUIRED_FIELD_ANNOTATIONS = List.of(NotNull.class, NotBlank.class, NotEmpty.class);
     }
 
-    public static <T> Class<?> getGenericType(Class<T> beanType, String fieldName) {
-        var field = FieldUtils.getField(beanType, fieldName, true);
+    public static <T> Class<?> getGenericTypeNested(Class<T> beanType, String fieldName) {
+        var field = getFieldRequiredNested(beanType, fieldName);
 
         return (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
     }
@@ -47,28 +51,28 @@ public final class BeanUtils {
         return beanType.cast(buildMethod.invoke(builder));
     }
 
-    public static <T> boolean isFieldRequired(Class<T> beanType, String fieldName) {
-        var field = getFieldRequired(beanType, fieldName);
+    public static <T> boolean isFieldRequiredNested(Class<T> beanType, String nestedFieldName) {
+        var field = getFieldRequiredNested(beanType, nestedFieldName);
 
         return REQUIRED_FIELD_ANNOTATIONS.stream()
                 .anyMatch(field::isAnnotationPresent);
     }
 
-    public static <T extends Annotation> Optional<T> findAnnotation(Class<?> beanType,
-                                                                    String fieldName,
-                                                                    Class<T> annotationType) {
+    public static <T extends Annotation> Optional<T> findAnnotationNested(Class<?> beanType,
+                                                                          String nestedFieldName,
+                                                                          Class<T> annotationType) {
         Objects.requireNonNull(annotationType, "Annotation type must not be null");
 
-        var field = getFieldRequired(beanType, fieldName);
+        var field = getFieldRequiredNested(beanType, nestedFieldName);
         var annotation = field.getAnnotation(annotationType);
 
         return Optional.ofNullable(annotation);
     }
 
-    public static <T> boolean isAnnotationPresent(Class<T> beanType,
-                                                  String fieldName,
-                                                  Class<? extends Annotation> annotationType) {
-        return findAnnotation(beanType, fieldName, annotationType).isPresent();
+    public static <T> boolean isAnnotationPresentNested(Class<T> beanType,
+                                                        String nestedFieldName,
+                                                        Class<? extends Annotation> annotationType) {
+        return findAnnotationNested(beanType, nestedFieldName, annotationType).isPresent();
     }
 
     public static <T> Optional<Field> findOneFieldWithAnnotation(Class<T> beanType,
@@ -108,17 +112,68 @@ public final class BeanUtils {
         return FieldUtils.readField(field, bean, true);
     }
 
-    public static Field getFieldRequired(Class<?> beanType, String fieldName) {
+    public static Field getFieldRequiredNested(Class<?> beanType, String fieldName) {
         Objects.requireNonNull(beanType, "Bean type must not be null");
         Validate.notBlank(fieldName, "Field name must not be blank");
 
-        var field = FieldUtils.getField(beanType, fieldName, true);
+        var fieldParts = fieldName.split("\\.");
+        var currentType = beanType;
+        Field field = null;
 
-        return Objects.requireNonNull(field, "Field not found: " + fieldName);
+        for (var part : fieldParts) {
+            field = FieldUtils.getField(currentType, part, true);
+            if (field == null) {
+                throw new IllegalArgumentException("Field not found: %s".formatted(part));
+            }
+            currentType = field.getType();
+        }
+
+        return Objects.requireNonNull(field, "Field not found: %s".formatted(fieldName));
     }
 
     public static <T> String getDisplayName(Class<T> beanType) {
         return beanType.getSimpleName().replaceAll("([a-z])([A-Z])", "$1 $2");
+    }
+
+    public static <T> List<FieldProperty> getFieldPropertiesNested(Class<T> beanType) {
+        return getFieldPropertiesNested(beanType, new HashSet<>());
+    }
+
+    private static List<FieldProperty> getFieldPropertiesNested(Class<?> beanType, Set<Class<?>> visitedTypes) {
+        Objects.requireNonNull(beanType, "Bean type must not be null");
+        Objects.requireNonNull(visitedTypes, "Visited types must not be null");
+
+        if (visitedTypes.contains(beanType)) {
+            return List.of();
+        }
+        visitedTypes.add(beanType);
+
+        var fieldResults = new ArrayList<FieldProperty>();
+
+        for (var field : FieldUtils.getAllFieldsList(beanType)) {
+            fieldResults.add(
+                    FieldProperty.builder()
+                            .field(field)
+                            .name(field.getName())
+                            .build()
+            );
+            if (field.isAnnotationPresent(ParentProperty.class)) {
+                var parentType = field.getType();
+                var children = getFieldPropertiesNested(parentType, visitedTypes);
+
+                for (var child : children) {
+                    fieldResults.add(
+                            FieldProperty.builder()
+                                    .field(child.getField())
+                                    .parentField(field)
+                                    .name("%s.%s".formatted(field.getName(), child.getName()))
+                                    .build()
+                    );
+                }
+            }
+        }
+
+        return fieldResults;
     }
 
 }

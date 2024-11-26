@@ -14,9 +14,9 @@ public interface SettingsService {
 
     List<SettingsEntity> createAll(@NotNull Collection<@Valid @NotNull CreateSettingsCommand> commandCollection);
 
-    List<SettingsEntity> updateAll(@NotNull Collection<@Valid @NotNull UpdateSettingsCommand> commandCollection);
+    List<SettingsEntity> patchAll(@NotNull Collection<@Valid @NotNull PatchSettingsCommand> commandCollection);
 
-    SettingsEntity update(@Valid @NotNull UpdateSettingsCommand command);
+    SettingsEntity patch(@Valid @NotNull PatchSettingsCommand command);
 
     void deleteAll(@NotNull Collection<@NotNull Long> idCollection);
 

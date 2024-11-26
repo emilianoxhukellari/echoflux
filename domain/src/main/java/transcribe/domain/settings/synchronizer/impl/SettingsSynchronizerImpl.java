@@ -17,8 +17,8 @@ import transcribe.core.settings.Settings;
 import transcribe.core.core.bean.BeanUtils;
 import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.service.CreateSettingsCommand;
+import transcribe.domain.settings.service.PatchSettingsCommand;
 import transcribe.domain.settings.service.SettingsService;
-import transcribe.domain.settings.service.UpdateSettingsCommand;
 import transcribe.domain.settings.synchronizer.SettingsSynchronizer;
 import transcribe.domain.settings.schema_processor.SettingsSchemaProcessor;
 
@@ -53,16 +53,16 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     }
 
     @Override
-    public void reset(String key) {
+    public SettingsEntity reset(String key) {
         var entity = service.get(key);
 
-        var command = UpdateSettingsCommand.builder()
+        var command = PatchSettingsCommand.builder()
                 .id(entity.getId())
                 .name(BeanUtils.getDisplayName(keyBeanTypeMap.get(key)))
                 .value(schemaProcessor.create(keyBeanTypeMap.get(key)))
                 .build();
 
-        service.update(command);
+        return service.patch(command);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     private void update() {
         var existingEntities = service.getAllByKeys(keyBeanTypeMap.keySet());
 
-        var commands = new ArrayList<UpdateSettingsCommand>();
+        var commands = new ArrayList<PatchSettingsCommand>();
 
         for (var entity : existingEntities) {
             var dbName = entity.getName();
@@ -103,7 +103,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
             var mergedValue = schemaProcessor.adaptToSchema(keyBeanTypeMap.get(entity.getKey()), dbValue);
             if (!StringUtils.equals(dbName, codeName) || !Objects.equals(dbValue, mergedValue)) {
                 commands.add(
-                        UpdateSettingsCommand.builder()
+                        PatchSettingsCommand.builder()
                                 .id(entity.getId())
                                 .name(codeName)
                                 .value(mergedValue)
@@ -112,7 +112,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
             }
         }
 
-        var entities = service.updateAll(commands);
+        var entities = service.patchAll(commands);
         logActionOnEntities("Updated", entities);
     }
 

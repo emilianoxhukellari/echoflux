@@ -62,8 +62,8 @@ public class CreateUserDialog extends JpaSaveDialog<ApplicationUserEntity> {
     }
 
     @Override
-    protected void save() {
-        service.create(binder.getBean());
+    protected ApplicationUserEntity save() {
+        return service.create(binder.getBean());
     }
 
     @Override

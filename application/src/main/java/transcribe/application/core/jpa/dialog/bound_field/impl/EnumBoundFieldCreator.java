@@ -1,6 +1,6 @@
 package transcribe.application.core.jpa.dialog.bound_field.impl;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -16,7 +16,9 @@ public class EnumBoundFieldCreator implements BoundFieldCreator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
+    public <T, V> AbstractField<ComboBox<Enum<?>>, Enum<?>> newBoundField(PropertyDefinition<T, V> property,
+                                                                          Binder<T> binder,
+                                                                          boolean required) {
         var comboBox = new ComboBox<Enum<?>>(property.getCaption());
         comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
 
@@ -24,7 +26,7 @@ public class EnumBoundFieldCreator implements BoundFieldCreator {
         comboBox.setItems(enumType.getEnumConstants());
 
         var getter = (ValueProvider<T, Enum<?>>) property.getGetter();
-        var setter = (Setter<T, Enum<?>>) property.getSetter().orElseThrow();
+        var setter = (Setter<T, Enum<?>>) property.getSetter().orElse(null);
         var builder = binder.forField(comboBox);
         if (required) {
             builder.asRequired();

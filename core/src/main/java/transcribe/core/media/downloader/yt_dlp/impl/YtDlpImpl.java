@@ -1,5 +1,6 @@
 package transcribe.core.media.downloader.yt_dlp.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
@@ -16,13 +17,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class YtDlpImpl implements YtDlp {
 
     private final YtDlpProperties ytDlpProperties;
-
-    public YtDlpImpl(YtDlpProperties ytDlpProperties) {
-        this.ytDlpProperties = ytDlpProperties;
-    }
 
     @Override
     public YtDlpResponse execute(YtDlpRequest request) throws YtDlpMediaUnavailableException {

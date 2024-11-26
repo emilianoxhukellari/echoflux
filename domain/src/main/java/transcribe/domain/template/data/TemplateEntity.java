@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.core.annotation.BigText;
+import transcribe.core.core.annotation.BigText;
 
 @Entity
 @Table(name = "template")

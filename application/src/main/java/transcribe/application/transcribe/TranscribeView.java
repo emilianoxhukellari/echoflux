@@ -7,12 +7,12 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -49,14 +49,17 @@ public class TranscribeView extends Composite<VerticalLayout> {
     private final JpaGrid<TranscriptionEntity, TranscriptionRepository> grid;
     private final Long applicationUserId;
 
-    public TranscribeView(Broadcaster broadcaster, AuthenticatedUser authenticatedUser, TranscriptionRepository repository) {
+    public TranscribeView(Broadcaster broadcaster,
+                          AuthenticatedUser authenticatedUser,
+                          TranscriptionRepository repository) {
         this.broadcaster = broadcaster;
         this.applicationUserId = authenticatedUser.get().getId();
 
         this.grid = new JpaGrid<>(
                 TranscriptionEntity.class,
                 repository,
-                (root, _, criteriaBuilder) -> criteriaBuilder.equal(root.get("applicationUserId"), applicationUserId)
+                (root, _, criteriaBuilder)
+                        -> criteriaBuilder.equal(root.get("applicationUserId"), applicationUserId)
         );
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
@@ -64,8 +67,10 @@ public class TranscribeView extends Composite<VerticalLayout> {
         grid.addColumn("lengthMillis")
                 .setRenderer(new TextRenderer<>(TranscribeView::newDuration))
                 .setHeader("Duration");
-        grid.addColumn(new ComponentRenderer<>(TranscribeView::newStatus))
+        grid.addComponentColumn(TranscribeView::newStatus)
                 .setHeader("Status");
+        grid.addComponentColumn(this::newActions)
+                .setHeader("Actions");
 
         grid.setAllColumnsResizable();
         grid.addFilters("name", "language", "status", "createdAt");
@@ -96,9 +101,10 @@ public class TranscribeView extends Composite<VerticalLayout> {
         layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
         switch (status) {
-            case FAILED -> layout.add(IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem",  "Error"));
-            case COMPLETED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Success"));
-            case CREATED -> {}
+            case FAILED -> layout.add(IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem", "Error"));
+            case COMPLETED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem", "Success"));
+            case CREATED -> {
+            }
             case DOWNLOADING_PUBLIC, PROCESSING, ENHANCING -> {
                 var progress = new BallClipRotatePulseProgress();
                 layout.add(progress);
@@ -110,6 +116,20 @@ public class TranscribeView extends Composite<VerticalLayout> {
         }
 
         return layout;
+    }
+
+    private Button newActions(TranscriptionEntity entity) {
+        var button = new Button(LineAwesomeIcon.ELLIPSIS_V_SOLID.create());
+
+        var contextMenu = new ContextMenu(button);
+        contextMenu.setOpenOnClick(true);
+
+        var renameHl = new HorizontalLayout(LineAwesomeIcon.EDIT_SOLID.create(), new Text("Rename"));
+        contextMenu.addItem(renameHl, _ -> new RenameTranscriptionDialog(entity)
+                .setSaveListener(grid::refreshItem)
+                .open());
+
+        return button;
     }
 
     @Override

@@ -52,6 +52,7 @@ public class MediaField extends CustomField<MediaValue> {
         tabSheet.add(newLocalTab(), localMedia);
 
         add(tabSheet);
+        addClassName("custom-field");
     }
 
     public void clearAndCleanup() {

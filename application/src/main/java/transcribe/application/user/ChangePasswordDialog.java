@@ -44,8 +44,8 @@ public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserEntity> {
     }
 
     @Override
-    protected void save() {
-        service.changePassword(binder.getBean());
+    protected ApplicationUserEntity save() {
+        return service.changePassword(binder.getBean());
     }
 
     @Override

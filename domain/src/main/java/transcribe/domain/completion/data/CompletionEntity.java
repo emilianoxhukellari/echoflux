@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import transcribe.core.core.constraint.float_range.FloatRange;
 import transcribe.domain.audit.data.AuditEntity;
-import transcribe.domain.core.annotation.BigText;
+import transcribe.core.core.annotation.BigText;
 
 @Entity
 @Table(name = "completion")

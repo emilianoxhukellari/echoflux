@@ -11,7 +11,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.service.CreateSettingsCommand;
-import transcribe.domain.settings.service.UpdateSettingsCommand;
+import transcribe.domain.settings.service.PatchSettingsCommand;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -23,6 +23,6 @@ public interface SettingsMapper {
 
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    SettingsEntity asEntity(@MappingTarget SettingsEntity entity, UpdateSettingsCommand command);
+    SettingsEntity patch(@MappingTarget SettingsEntity entity, PatchSettingsCommand command);
 
 }

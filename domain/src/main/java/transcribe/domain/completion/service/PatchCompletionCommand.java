@@ -10,7 +10,7 @@ import transcribe.domain.completion.data.CompletionStatus;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateCompletionCommand {
+public class PatchCompletionCommand {
 
     @NotNull
     @With

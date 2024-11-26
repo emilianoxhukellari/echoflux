@@ -39,12 +39,12 @@ public class UsersView extends Composite<VerticalLayout> {
         grid.addContextMenuItem(
                 "Edit",
                 e -> new UpdateUserDialog(e)
-                        .setSaveListener(grid::refreshAll)
+                        .setSaveListener(_ -> grid.refreshAll())
                         .open()
         );
         grid.addItemDoubleClickListener(
                 e -> new UpdateUserDialog(e.getItem())
-                        .setSaveListener(grid::refreshAll)
+                        .setSaveListener(grid::refreshItem)
                         .open()
         );
         grid.addConfirmedContextMenuItem("Delete", e -> {
@@ -63,7 +63,7 @@ public class UsersView extends Composite<VerticalLayout> {
         var jpaGridControls = new JpaGridControls<>(grid);
         jpaGridControls.addCreateEntityButton(
                 () -> new CreateUserDialog()
-                        .setSaveListener(grid::refreshAll)
+                        .setSaveListener(_ -> grid.refreshAll())
                         .open()
         );
 

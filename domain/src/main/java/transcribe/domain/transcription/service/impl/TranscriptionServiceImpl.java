@@ -6,11 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import transcribe.core.settings.SettingsLoader;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionRepository;
-import transcribe.domain.transcription.service.TranscriptionSettings;
+import transcribe.domain.transcription.service.*;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
-import transcribe.domain.transcription.service.CreateTranscriptionCommand;
-import transcribe.domain.transcription.service.TranscriptionService;
-import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
 
 import java.util.NoSuchElementException;
 
@@ -38,10 +35,22 @@ public class TranscriptionServiceImpl implements TranscriptionService {
 
     @Override
     @Transactional
-    public TranscriptionEntity update(UpdateTranscriptionCommand command) {
+    public TranscriptionEntity patch(PatchTranscriptionCommand command) {
         var entity = repository.getReferenceById(command.getId());
+        var patched = mapper.patch(entity, command);
 
-        return repository.saveAndFlush(mapper.asEntity(entity, command));
+        return repository.saveAndFlush(patched);
+    }
+
+    @Override
+    @Transactional
+    public TranscriptionEntity rename(RenameTranscriptionCommand command) {
+        return patch(
+                PatchTranscriptionCommand.builder()
+                        .id(command.getId())
+                        .name(command.getName())
+                        .build()
+        );
     }
 
     @Override

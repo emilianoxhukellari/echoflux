@@ -1,6 +1,6 @@
 package transcribe.application.core.jpa.dialog.bound_field.impl;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -22,10 +22,12 @@ public class UriBoundFieldCreator implements BoundFieldCreator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
+    public <T, V> AbstractField<TextField, String> newBoundField(PropertyDefinition<T, V> property,
+                                                                 Binder<T> binder,
+                                                                 boolean required) {
         var field = new TextField(property.getCaption());
         var getter = (ValueProvider<T, URI>) property.getGetter();
-        var setter = (Setter<T, URI>) property.getSetter().orElseThrow();
+        var setter = (Setter<T, URI>) property.getSetter().orElse(null);
         var builder = binder.forField(field).withConverter(
                 Converter.from(
                         v -> Result.ok(UriUtils.newUri(v)),

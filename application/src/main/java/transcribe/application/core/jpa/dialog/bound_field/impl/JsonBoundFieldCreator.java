@@ -2,7 +2,7 @@ package transcribe.application.core.jpa.dialog.bound_field.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertyDefinition;
@@ -24,11 +24,13 @@ public class JsonBoundFieldCreator implements BoundFieldCreator {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T, V> Component newBoundField(PropertyDefinition<T, V> property, Binder<T> binder, boolean required) {
+    public <T, V> AbstractField<TextArea, String> newBoundField(PropertyDefinition<T, V> property,
+                                                                Binder<T> binder,
+                                                                boolean required) {
         var field = new TextArea(property.getCaption());
         field.setMaxHeight("400px");
         var getter = (ValueProvider<T, JsonNode>) property.getGetter();
-        var setter = (Setter<T, JsonNode>) property.getSetter().orElseThrow();
+        var setter = (Setter<T, JsonNode>) property.getSetter().orElse(null);
         var builder = binder.forField(field)
                 .withConverter(Converter.from(
                         this::toModel,

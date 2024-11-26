@@ -2,6 +2,7 @@ package transcribe.domain.core.broadcaster;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.collections4.PredicateUtils;
 import org.springframework.validation.annotation.Validated;
 import transcribe.core.function.FunctionUtils;
 
@@ -14,7 +15,7 @@ public interface Broadcaster {
     <T> Subscription subscribe(@NotNull Class<T> event, @NotNull Consumer<T> consumer, @NotNull Predicate<T> condition);
 
     default <T> Subscription subscribe(@NotNull Class<T> event, @NotNull Consumer<T> consumer) {
-        return subscribe(event, consumer, _ -> true);
+        return subscribe(event, consumer, PredicateUtils.truePredicate());
     }
 
     <T> void publish(@Valid @NotNull T event);

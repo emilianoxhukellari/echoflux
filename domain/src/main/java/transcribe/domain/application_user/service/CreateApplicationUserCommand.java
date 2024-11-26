@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import transcribe.domain.application_user.data.Role;
 import transcribe.domain.application_user.service.impl.HasPassword;
 import transcribe.domain.core.password.Password;
+import transcribe.domain.core.password.PasswordMatch;
 
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
+@PasswordMatch
 public class CreateApplicationUserCommand implements HasPassword {
 
     @NotBlank

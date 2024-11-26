@@ -112,8 +112,8 @@
                 cloud_uri                  varchar(1024),
                 language                   varchar(255)                            not null,
                 name                       varchar(1024)                           not null,
-                transcript                 text,
                 application_user_id        bigint references application_user (id) not null,
+                enhanced                   boolean                                 not null,
                 completion_id              bigint references completion (id),
                 length_millis              bigint,
                 download_duration_millis   bigint,
@@ -127,6 +127,52 @@
                 updated_at                 timestamp,
                 updated_by                 varchar(255)
             );
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcript_part_table" author="emiliano">
+        <sql>
+            create table transcript_part
+            (
+                id                  bigserial primary key,
+                transcription_id    bigint references transcription (id) not null,
+                start_offset_millis bigint                               not null,
+                end_offset_millis   bigint                               not null,
+                sequence            integer                              not null,
+
+                created_at          timestamp,
+                created_by          varchar(255),
+                updated_at          timestamp,
+                updated_by          varchar(255),
+
+                unique (transcription_id, sequence)
+            );
+            create index transcript_part_transcription_id_index on transcript_part (transcription_id);
+            create index transcript_part_sequence_index on transcript_part (sequence);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcript_part_text" author="emiliano">
+        <sql>
+            create table transcript_part_text
+            (
+                id                 bigserial primary key,
+                transcript_part_id bigint references transcript_part (id) not null,
+                content            text                                   not null,
+                version            integer                                not null,
+                type               varchar(255)                           not null,
+
+                created_at         timestamp,
+                created_by         varchar(255),
+                updated_at         timestamp,
+                updated_by         varchar(255),
+
+                unique (transcript_part_id, version)
+            );
+            create index transcript_part_text_transcript_part_id_version_index
+                on transcript_part_text (transcript_part_id, version);
+            create index transcript_part_text_transcript_part_id_type_index
+                on transcript_part_text (transcript_part_id, type);
         </sql>
     </changeSet>
 

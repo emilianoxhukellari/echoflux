@@ -12,7 +12,7 @@ import org.mapstruct.ReportingPolicy;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
-import transcribe.domain.transcription.service.UpdateTranscriptionCommand;
+import transcribe.domain.transcription.service.PatchTranscriptionCommand;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -25,7 +25,7 @@ public interface TranscriptionMapper {
 
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    TranscriptionEntity asEntity(@MappingTarget TranscriptionEntity entity, UpdateTranscriptionCommand command);
+    TranscriptionEntity patch(@MappingTarget TranscriptionEntity entity, PatchTranscriptionCommand command);
 
     CreateTranscriptionCommand toCommand(TranscriptionPipelineCommand command);
 

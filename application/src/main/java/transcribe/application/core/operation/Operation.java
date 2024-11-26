@@ -2,10 +2,7 @@ package transcribe.application.core.operation;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import transcribe.core.core.no_op.NoOp;
 import transcribe.domain.operation.data.OperationType;
@@ -16,6 +13,7 @@ import java.util.function.Consumer;
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
+@With
 public class Operation<T> {
 
     @NotBlank

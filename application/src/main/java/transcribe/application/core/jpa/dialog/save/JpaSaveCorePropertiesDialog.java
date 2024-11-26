@@ -32,8 +32,8 @@ public class JpaSaveCorePropertiesDialog<T> extends JpaSaveDialog<T> {
     }
 
     @Override
-    protected void save() {
-        repository.saveAndFlush(binder.getBean());
+    protected T save() {
+        return repository.saveAndFlush(binder.getBean());
     }
 
     @Override
