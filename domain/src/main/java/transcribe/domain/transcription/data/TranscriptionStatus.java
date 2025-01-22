@@ -8,6 +8,7 @@ public enum TranscriptionStatus {
     PROCESSING,
     TRANSCRIBING,
     ENHANCING,
+    ENHANCING_FAILED,
     COMPLETED,
     FAILED
 

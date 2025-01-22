@@ -47,8 +47,19 @@ public class Operation<T> {
     @Builder.Default
     private Consumer<Throwable> onError = NoOp.consumer();
 
+    @NotNull
+    @Builder.Default
+    private OperationErrorImportance errorImportance = OperationErrorImportance.NORMAL;
+
+    @NotNull
+    @Builder.Default
+    private String customErrorMessage = StringUtils.EMPTY;
+
     @Builder.Default
     private boolean onErrorNotify = true;
+
+    @Builder.Default
+    private boolean onErrorLog = true;
 
     @NotNull
     @Builder.Default

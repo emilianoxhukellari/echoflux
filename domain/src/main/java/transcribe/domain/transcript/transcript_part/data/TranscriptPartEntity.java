@@ -1,7 +1,9 @@
 package transcribe.domain.transcript.transcript_part.data;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,8 +17,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JoinFormula;
-import transcribe.domain.audit.data.AuditEntity;
-import transcribe.core.core.annotation.ParentProperty;
+import transcribe.domain.audit.data.BaseEntity;
 import transcribe.domain.transcript.transcript_part_text.data.TranscriptPartTextEntity;
 
 @Entity
@@ -26,7 +27,7 @@ import transcribe.domain.transcript.transcript_part_text.data.TranscriptPartText
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class TranscriptPartEntity extends AuditEntity {
+public class TranscriptPartEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +51,11 @@ public class TranscriptPartEntity extends AuditEntity {
     @Min(0)
     private Integer sequence;
 
-    @ManyToOne
+    @NotNull
+    @Column(name = "end_of_partition")
+    private Boolean endOfPartition;
+
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinFormula("""
             (SELECT tpt.id
             FROM transcript_part_text tpt
@@ -58,7 +63,6 @@ public class TranscriptPartEntity extends AuditEntity {
             ORDER BY tpt.version DESC
             LIMIT 1)
             """)
-    @ParentProperty
     private TranscriptPartTextEntity latestTextEntity;
 
 }

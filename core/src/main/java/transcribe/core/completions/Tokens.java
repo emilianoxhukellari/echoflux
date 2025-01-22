@@ -1,8 +1,10 @@
 package transcribe.core.completions;
 
 import jakarta.validation.constraints.Min;
+import lombok.Builder;
 
-public record Tokens(@Min(0) int in, @Min(0) int out) {
+@Builder
+public record Tokens(@Min(0) long in, @Min(0) long out) {
 
     public static Tokens empty() {
         return new Tokens(0, 0);

@@ -20,7 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import transcribe.domain.audit.data.AuditEntity;
+import transcribe.domain.audit.data.BaseEntity;
 
 import java.util.Set;
 
@@ -31,7 +31,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class ApplicationUserEntity extends AuditEntity {
+public class ApplicationUserEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -19,10 +19,15 @@ import transcribe.core.cloud_storage.ResourceInfo;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.properties.GoogleCloudProperties;
 
+import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class GoogleCloudStorage implements CloudStorage, DisposableBean {
@@ -36,11 +41,29 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
     }
 
     @Override
+    @LoggedMethodExecution
+    public URL getSignedUrl(URI cloudUri, Duration duration, boolean temp) {
+        var blobId = BlobId.fromGsUtilUri(cloudUri.toString());
+
+        return getSignedUrl(blobId, duration);
+    }
+
+    @Override
+    @LoggedMethodExecution
+    public URL getSignedUrl(String resourceName, Duration duration, boolean temp) {
+        var bucketName = resolveBucketName(temp);
+        var blobId = BlobId.of(bucketName, resourceName);
+
+        return getSignedUrl(blobId, duration);
+    }
+
+    @Override
     @SneakyThrows
     @LoggedMethodExecution
-    public ResourceInfo upload(Path path) {
+    public ResourceInfo upload(Path path, boolean temp) {
         var name = String.format("%s.%s", UlidCreator.getUlid().toString(), PathUtils.getExtension(path));
-        var blobId = BlobId.of(googleCloudProperties.getBucketName(), name);
+        var bucketName = resolveBucketName(temp);
+        var blobId = BlobId.of(bucketName, name);
         var contentType = Files.probeContentType(path);
 
         var blobInfo = BlobInfo.newBuilder(blobId)
@@ -60,13 +83,26 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
 
     @Override
     @LoggedMethodExecution
-    public boolean delete(String resourceName) {
-        return googleStorage.delete(BlobId.of(googleCloudProperties.getBucketName(), resourceName));
+    public boolean delete(String resourceName, boolean temp) {
+        var bucketName = resolveBucketName(temp);
+
+        return googleStorage.delete(BlobId.of(bucketName, resourceName));
     }
 
     @Override
     public void destroy() throws Exception {
         googleStorage.close();
+    }
+
+    private URL getSignedUrl(BlobId blobId, Duration duration) {
+        Objects.requireNonNull(blobId, "blobId cannot be null");
+
+        return googleStorage.signUrl(
+                BlobInfo.newBuilder(blobId).build(),
+                duration.toSeconds(),
+                TimeUnit.SECONDS,
+                Storage.SignUrlOption.withV4Signature()
+        );
     }
 
     @SneakyThrows
@@ -81,6 +117,10 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
                 .build();
 
         return storageSettings.getService();
+    }
+
+    private String resolveBucketName(boolean temp) {
+        return temp ? googleCloudProperties.getTempBucketName() : googleCloudProperties.getBucketName();
     }
 
 }

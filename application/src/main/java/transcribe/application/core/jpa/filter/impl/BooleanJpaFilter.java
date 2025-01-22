@@ -6,13 +6,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
+import transcribe.application.core.jpa.filter.JpaFilterUtils;
 
-public class BooleanJpaFilter<T> extends JpaFilter<T> {
+public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
     private final ComboBox<BooleanState> comboBox;
 
-    public BooleanJpaFilter(String property, boolean asCollection) {
-        super(property, asCollection);
+    public BooleanJpaFilter(String attribute, String property, boolean asCollection) {
+        super(attribute, property, asCollection);
 
         this.comboBox = new ComboBox<>();
         comboBox.setItems(BooleanState.values());
@@ -23,14 +24,16 @@ public class BooleanJpaFilter<T> extends JpaFilter<T> {
     }
 
     @Override
-    public Specification<T> getSpecification() {
+    public Specification<ENTITY> getSpecification() {
         if (comboBox.isEmpty()) {
             return (_, _, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
 
         return asCollection
-                ? (root, _, criteriaBuilder) -> criteriaBuilder.isMember(comboBox.getValue().getBooleanValue(), root.get(property))
-                : (root, _, criteriaBuilder) -> criteriaBuilder.equal(root.get(property), comboBox.getValue().getBooleanValue());
+                ? (root, _, criteriaBuilder)
+                -> criteriaBuilder.isMember(comboBox.getValue().getBooleanValue(), JpaFilterUtils.get(root, attribute))
+                : (root, _, criteriaBuilder)
+                -> criteriaBuilder.equal(JpaFilterUtils.get(root, attribute), comboBox.getValue().getBooleanValue());
     }
 
     @Override

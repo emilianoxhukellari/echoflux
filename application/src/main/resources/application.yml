@@ -4,8 +4,8 @@ server:
 
 logging:
   level:
-    org:
-      atmosphere: warn
+    root: warn
+    transcribe: debug
 
 vaadin:
   launch-browser: true
@@ -16,11 +16,29 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/vaadinstart
+    url: jdbc:postgresql://localhost:5432/vaadinstart?reWriteBatchedInserts=true
     username: vaadinstart
     password: vaadinstart
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      auto-commit: false
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 10000
   jpa:
+    open-in-view: false
     defer-datasource-initialization: false
+    properties:
+      hibernate:
+        order_updates: true
+        order_inserts: true
+        jdbc:
+          batch_size: 30
+        default_batch_fetch_size: 30
+        show_sql: true
+        format_sql: true
+
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
   servlet:
@@ -37,9 +55,13 @@ gcloud:
   project-id: ${GCLOUD_PROJECT_ID}
   private-key: ${GCLOUD_KEY}
   bucket-name: ${GCLOUD_BUCKET_NAME}
+  temp-bucket-name: ${GCLOUD_TEMP_BUCKET_NAME}
   speech-endpoint: 'europe-west4-speech.googleapis.com:443'
   ai-platform-endpoint: 'europe-west4-aiplatform.googleapis.com:443'
   location: 'europe-west4'
+
+openai:
+  api-key: ${OPENAI_API_KEY}
 
 yt-dlp:
   execution-path: ${YT_DLP_EXECUTION_PATH}

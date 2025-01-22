@@ -3,10 +3,9 @@ package transcribe.domain.settings.schema_processor.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.json.JsonMapper;
-import transcribe.core.core.bean.BeanUtils;
+import transcribe.core.core.bean.utils.MoreBeans;
 import transcribe.domain.settings.schema_processor.SettingsSchemaProcessor;
 
 @Component
@@ -17,9 +16,7 @@ public class SettingsSchemaProcessorImpl implements SettingsSchemaProcessor {
 
     @Override
     public <T> JsonNode create(Class<T> beanType) {
-        var object = MethodUtils.getAccessibleMethod(beanType, "builder") != null
-                ? BeanUtils.invokeEmptyBuilder(beanType)
-                : BeanUtils.invokeNoArgsConstructor(beanType);
+        var object = MoreBeans.invokeBuilderOrNoArgsConstructor(beanType);
 
         return jsonMapper.toNode(object);
     }

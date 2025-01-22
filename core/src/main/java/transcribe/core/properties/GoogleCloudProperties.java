@@ -14,14 +14,22 @@ public class GoogleCloudProperties {
 
     @NotBlank
     private String projectId;
+
     @NotBlank
     private String privateKey;
+
     @NotBlank
     private String bucketName;
+
+    @NotBlank
+    private String tempBucketName;
+
     @NotBlank
     private String speechEndpoint;
+
     @NotBlank
     private String aiPlatformEndpoint;
+
     @NotBlank
     private String location;
 

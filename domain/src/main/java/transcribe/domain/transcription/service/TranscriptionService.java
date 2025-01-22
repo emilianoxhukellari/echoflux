@@ -16,6 +16,4 @@ public interface TranscriptionService {
 
     TranscriptionEntity rename(@Valid @NotNull RenameTranscriptionCommand command);
 
-    double getRealTimeFactor();
-
 }

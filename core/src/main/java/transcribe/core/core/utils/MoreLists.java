@@ -49,4 +49,9 @@ public final class MoreLists {
                 .toList();
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T[] toArray(@Nullable List<T> list) {
+        return (T[]) ListUtils.emptyIfNull(list).toArray();
+    }
+
 }

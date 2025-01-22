@@ -6,24 +6,22 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.Query;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.icon.CustomizedIcon;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import transcribe.core.core.bean.BeanUtils;
+import transcribe.core.core.bean.utils.MoreBeans;
 
 import java.util.Objects;
 
-public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor<T>> extends VerticalLayout {
+public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
 
-    private final JpaGrid<T, R> grid;
+    private final JpaGrid<DTO, ENTITY, ID> grid;
 
     private final HorizontalLayout topLeft;
     private final HorizontalLayout topRight;
 
-    public JpaGridControls(JpaGrid<T, R> grid) {
+    public JpaGridControls(JpaGrid<DTO, ENTITY, ID> grid) {
         this.grid = grid;
         grid.setSizeFull();
 
@@ -69,9 +67,9 @@ public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecification
         if (grid.getCrudActionsData() != null && grid.getCrudActionsData().isWithCrudActions()) {
             addCreateEntityButton(
                     () -> new JpaSaveCorePropertiesDialog<>(
-                            BeanUtils.invokeNoArgsConstructor(grid.getBeanType()),
+                            MoreBeans.invokeBuilderOrNoArgsConstructorNested(grid.getBeanType()),
                             grid.getBeanType(),
-                            grid.getRepository(),
+                            grid.getService(),
                             grid.getCrudActionsData().getExcludedPropertiesList()
                     )
                             .setSaveListener(_ -> grid.refreshAll())
@@ -80,24 +78,24 @@ public class JpaGridControls<T, R extends JpaRepository<T, ?> & JpaSpecification
         }
     }
 
-    public JpaGridControls<T, R> addCreateEntityButton(Runnable onClick) {
+    public JpaGridControls<DTO, ENTITY, ID> addCreateEntityButton(Runnable onClick) {
         Objects.requireNonNull(onClick, "On click action must not be null");
 
         var button = new Button(LineAwesomeIcon.PLUS_SOLID.create(), _ -> onClick.run());
-        button.setTooltipText("Create new entity");
+        button.setTooltipText("Create new entityBeanType");
 
         addTopRight(button);
 
         return this;
     }
 
-    public JpaGridControls<T, R> addTopLeft(Component component) {
+    public JpaGridControls<DTO, ENTITY, ID> addTopLeft(Component component) {
         topLeft.add(component);
 
         return this;
     }
 
-    public JpaGridControls<T, R> addTopRight(Component component) {
+    public JpaGridControls<DTO, ENTITY, ID> addTopRight(Component component) {
         topRight.addComponentAsFirst(component);
 
         return this;

@@ -1,6 +1,7 @@
 package transcribe.core.transcribe;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,22 +21,27 @@ public class GoogleSpeechSettings {
     private String model = "chirp";
 
     @Builder.Default
-    private boolean enableAutomaticPunctuation = true;
+    @NotNull
+    private Boolean enableAutomaticPunctuation = true;
 
     @Builder.Default
     @Positive
-    private int initialRetryDelayDurationSeconds = 30;
+    @NotNull
+    private Integer initialRetryDelayDurationSeconds = 30;
 
     @Builder.Default
     @Positive
-    private float retryDelayMultiplier = 1.5f;
+    @NotNull
+    private Float retryDelayMultiplier = 1.5f;
 
     @Builder.Default
     @Positive
-    private int maxRetryDelayDurationSeconds = 60;
+    @NotNull
+    private Integer maxRetryDelayDurationSeconds = 60;
 
     @Builder.Default
     @Positive
-    private int totalTimeoutDurationMinutes = 60;
+    @NotNull
+    private Integer totalTimeoutDurationMinutes = 60;
 
 }

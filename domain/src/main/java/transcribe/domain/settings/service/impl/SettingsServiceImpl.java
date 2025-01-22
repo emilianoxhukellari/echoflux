@@ -29,7 +29,7 @@ public class SettingsServiceImpl implements SettingsService {
                 .map(mapper::toEntity)
                 .toList();
 
-        return repository.saveAllAndFlush(entities);
+        return repository.saveAll(entities);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class SettingsServiceImpl implements SettingsService {
                 .map(e -> mapper.patch(e, commandMap.get(e.getId())))
                 .toList();
 
-        return repository.saveAllAndFlush(updated);
+        return repository.saveAll(updated);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class SettingsServiceImpl implements SettingsService {
     public SettingsEntity patch(PatchSettingsCommand command) {
         var entity = repository.getReferenceById(command.getId());
 
-        return repository.saveAndFlush(mapper.patch(entity, command));
+        return repository.save(mapper.patch(entity, command));
     }
 
     @Override

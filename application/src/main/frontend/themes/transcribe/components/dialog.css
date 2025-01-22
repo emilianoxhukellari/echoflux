@@ -1,0 +1,8 @@
+vaadin-dialog-overlay.padding-s::part(content) {
+    padding: 10px;
+}
+
+vaadin-dialog-overlay.padding-v-s::part(content) {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}

@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.collections4.PredicateUtils;
 import org.springframework.validation.annotation.Validated;
-import transcribe.core.function.FunctionUtils;
+import transcribe.core.core.utils.MoreFunctions;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -21,7 +21,7 @@ public interface Broadcaster {
     <T> void publish(@Valid @NotNull T event);
 
     default <T> void publishQuietly(@Valid @NotNull T event) {
-        FunctionUtils.runQuietly(() -> publish(event));
+        MoreFunctions.runQuietly(() -> publish(event));
     }
 
 }

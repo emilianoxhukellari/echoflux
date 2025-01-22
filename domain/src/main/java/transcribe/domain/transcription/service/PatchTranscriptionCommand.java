@@ -26,12 +26,6 @@ public class PatchTranscriptionCommand {
 
     private String name;
 
-    private Long completionId;
-
-    @Min(0)
-    @Max(100)
-    private Integer transcribeProgress;
-
     @Min(0)
     private Long lengthMillis;
 

@@ -1,6 +1,7 @@
 package transcribe.application.core.scheduler;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class TempFileCleanupSettings {
 
     @Builder.Default
     @Min(0)
-    private int deleteAfterMinutes = 30;
+    @NotNull
+    private Integer deleteAfterMinutes = 30;
 
 }

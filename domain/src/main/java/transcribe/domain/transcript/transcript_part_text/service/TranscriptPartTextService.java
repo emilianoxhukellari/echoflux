@@ -3,6 +3,8 @@ package transcribe.domain.transcript.transcript_part_text.service;
 import org.springframework.validation.annotation.Validated;
 import transcribe.domain.transcript.transcript_part_text.data.TranscriptPartTextEntity;
 
+import java.util.List;
+
 @Validated
 public interface TranscriptPartTextService {
 
@@ -12,5 +14,7 @@ public interface TranscriptPartTextService {
      * </p>
      */
     TranscriptPartTextEntity add(AddTranscriptPartTextCommand command);
+
+    List<TranscriptPartTextEntity> getAllRollbacksForTranscriptPart(Long transcriptPartId);
 
 }

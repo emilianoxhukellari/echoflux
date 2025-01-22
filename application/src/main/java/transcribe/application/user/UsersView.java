@@ -12,8 +12,6 @@ import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.main.MainLayout;
 import transcribe.application.core.jpa.grid.JpaGrid;
-import transcribe.domain.application_user.data.ApplicationUserEntity;
-import transcribe.domain.application_user.data.ApplicationUserRepository;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.operation.data.OperationType;
 
@@ -22,23 +20,16 @@ import transcribe.domain.operation.data.OperationType;
 @RolesAllowed("ADMIN")
 public class UsersView extends Composite<VerticalLayout> {
 
-    public UsersView(ApplicationUserRepository repository,
-                     ApplicationUserService service,
+    public UsersView(ApplicationUserService service,
                      OperationRunner operationRunner) {
-        var grid = new JpaGrid<>(ApplicationUserEntity.class, repository);
-
-        grid.addCoreAttributeColumnsExcluding("password");
-        grid.addAuditColumns();
-        grid.addIdColumn();
+        var grid = new JpaGrid<>(ApplicationUserJpaDto.class);
+        grid.addAllColumns();
         grid.setAllColumnsResizable();
-
-        grid.addCoreAttributeFiltersExcluding("password");
-        grid.addAuditFilters();
-        grid.addIdFilter();
+        grid.addAllFilters();
 
         grid.addContextMenuItem(
                 "Edit",
-                e -> new UpdateUserDialog(e)
+                dto -> new UpdateUserDialog(dto)
                         .setSaveListener(_ -> grid.refreshAll())
                         .open()
         );
@@ -58,7 +49,7 @@ public class UsersView extends Composite<VerticalLayout> {
 
             operationRunner.run(operation, UI.getCurrent());
         });
-        grid.addContextMenuItem("Change password", e -> new ChangePasswordDialog(e).open());
+        grid.addContextMenuItem("Change password", dto -> new ChangePasswordDialog(dto).open());
 
         var jpaGridControls = new JpaGridControls<>(grid);
         jpaGridControls.addCreateEntityButton(

@@ -2,6 +2,7 @@ package transcribe.domain.transcript.transcript_part.mapper;
 
 import org.mapstruct.*;
 import transcribe.domain.transcript.transcript_part.data.TranscriptPartEntity;
+import transcribe.domain.transcript.transcript_part.part.PartModel;
 import transcribe.domain.transcript.transcript_part.service.CreateTranscriptPartCommand;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
@@ -11,5 +12,10 @@ import transcribe.domain.transcript.transcript_part.service.CreateTranscriptPart
 public interface TranscriptPartMapper {
 
     TranscriptPartEntity toEntity(CreateTranscriptPartCommand command);
+
+    @Mapping(target = "text", source = "latestTextEntity.content")
+    PartModel toModel(TranscriptPartEntity entity);
+
+    CreateTranscriptPartCommand toCommand(PartModel partModel, Long transcriptionId);
 
 }

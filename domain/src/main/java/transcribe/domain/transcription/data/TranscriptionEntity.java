@@ -1,14 +1,12 @@
 package transcribe.domain.transcription.data;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import transcribe.core.transcribe.common.Language;
-import transcribe.domain.audit.data.AuditEntity;
-import transcribe.core.core.annotation.BigText;
+import transcribe.domain.audit.data.BaseEntity;
 
 import java.net.URI;
 
@@ -19,7 +17,7 @@ import java.net.URI;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class TranscriptionEntity extends AuditEntity {
+public class TranscriptionEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,21 +44,13 @@ public class TranscriptionEntity extends AuditEntity {
     @NotBlank
     private String name;
 
-    @Column(name = "application_user_id")
+    @JoinColumn(name = "application_user_id")
     @NotNull
     private Long applicationUserId;
 
     @Column(name = "enhanced")
     @NotNull
     private Boolean enhanced;
-
-    @Column(name = "completion_id")
-    private Long completionId;
-
-    @Column(name = "transcribe_progress")
-    @Min(0)
-    @Max(100)
-    private Integer transcribeProgress;
 
     @Column(name = "length_millis")
     @Min(0)
@@ -79,7 +69,6 @@ public class TranscriptionEntity extends AuditEntity {
     private Long transcribeDurationMillis;
 
     @Column(name = "error")
-    @BigText
     private String error;
 
 }

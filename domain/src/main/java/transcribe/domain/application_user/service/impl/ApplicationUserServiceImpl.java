@@ -14,7 +14,6 @@ import transcribe.domain.application_user.service.UpdateApplicationUserCommand;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ApplicationUserServiceImpl implements ApplicationUserService {
 
     private final PasswordEncoder passwordEncoder;
@@ -22,28 +21,35 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
     private final ApplicationUserMapper mapper;
 
     @Override
+    @Transactional
     public ApplicationUserEntity create(CreateApplicationUserCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
+        var user = mapper.toEntity(command, hashedPassword);
 
-        return repository.saveAndFlush(mapper.toEntity(command, hashedPassword));
+        return repository.save(user);
     }
 
     @Override
+    @Transactional
     public ApplicationUserEntity update(UpdateApplicationUserCommand command) {
         var user = repository.getReferenceById(command.getId());
+        var patched = mapper.patch(user, command);
 
-        return repository.saveAndFlush(mapper.asEntity(user, command));
+        return repository.save(patched);
     }
 
     @Override
+    @Transactional
     public ApplicationUserEntity changePassword(ChangePasswordCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
         var user = repository.getReferenceById(command.getId());
+        var patched = mapper.patch(user, hashedPassword);
 
-        return repository.saveAndFlush(mapper.asEntity(user, hashedPassword));
+        return repository.save(patched);
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         repository.deleteById(id);
     }

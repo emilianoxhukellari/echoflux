@@ -2,38 +2,40 @@ package transcribe.application.core.jpa.dialog.save;
 
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
-import org.springframework.data.jpa.repository.JpaRepository;
-import transcribe.application.core.jpa.core.CoreAttributePropertySet;
+import transcribe.application.core.jpa.core.JpaPropertyCache;
 import transcribe.application.core.jpa.dialog.bound_field.JpaSaveDialogFieldFactory;
+import transcribe.application.core.jpa.dto.JpaDtoService;
 
 import java.util.List;
 import java.util.Objects;
 
-public class JpaSaveCorePropertiesDialog<T> extends JpaSaveDialog<T> {
+public class JpaSaveCorePropertiesDialog<DTO> extends JpaSaveDialog<DTO> {
 
-    private final Binder<T> binder;
-    private final JpaRepository<T, ?> repository;
+    private final Binder<DTO> binder;
+    private final JpaDtoService<DTO, ?, ?> service;
 
-    public JpaSaveCorePropertiesDialog(T entity,
-                                       Class<T> beanType,
-                                       JpaRepository<T, ?> repository,
+    public JpaSaveCorePropertiesDialog(DTO dto,
+                                       Class<DTO> beanType,
+                                       JpaDtoService<DTO, ?, ?> service,
                                        List<String> excludedProperties) {
         super(beanType);
-        this.repository = Objects.requireNonNull(repository, "Repository must not be null");
+        this.service = Objects.requireNonNull(service, "Service must not be null");
         this.binder = new Binder<>(beanType);
-        this.binder.setBean(entity);
+        this.binder.setBean(dto);
 
         var form = new FormLayout();
-        CoreAttributePropertySet.getExcluding(beanType, excludedProperties)
-                .getProperties()
-                .forEach(p -> form.add(JpaSaveDialogFieldFactory.newBoundField(p, binder), 2));
+
+        for (var p : JpaPropertyCache.getCorePropertiesExcluding(beanType, excludedProperties)) {
+            form.add(JpaSaveDialogFieldFactory.newBoundField(p, binder, beanType), 2);
+        }
 
         add(form);
     }
 
     @Override
-    protected T save() {
-        return repository.saveAndFlush(binder.getBean());
+    protected DTO save() {
+        //todo: fix bug where entityBeanType is updated in UI
+        return service.save(binder.getBean());
     }
 
     @Override

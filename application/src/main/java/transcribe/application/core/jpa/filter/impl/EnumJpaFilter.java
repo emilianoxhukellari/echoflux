@@ -5,15 +5,16 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
+import transcribe.application.core.jpa.filter.JpaFilterUtils;
 import transcribe.core.core.utils.MoreArrays;
 import transcribe.core.core.utils.MoreEnums;
 
-public class EnumJpaFilter<T> extends JpaFilter<T> {
+public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
     private final ComboBox<Enum<?>> comboBox;
 
-    public EnumJpaFilter(String property, Class<?> enumClass, boolean asCollection) {
-        super(property, asCollection);
+    public EnumJpaFilter(String attribute, String property, Class<?> enumClass, boolean asCollection) {
+        super(attribute, property, asCollection);
         Validate.isTrue(enumClass.isEnum(), "Class must be an enum");
 
         this.comboBox = new ComboBox<>();
@@ -25,14 +26,16 @@ public class EnumJpaFilter<T> extends JpaFilter<T> {
     }
 
     @Override
-    public Specification<T> getSpecification() {
+    public Specification<ENTITY> getSpecification() {
         if (comboBox.isEmpty()) {
             return (_, _, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
 
         return asCollection
-                ? (root, _, criteriaBuilder) -> criteriaBuilder.isMember(comboBox.getValue(), root.get(property))
-                : (root, _, criteriaBuilder) -> criteriaBuilder.equal(root.get(property), comboBox.getValue());
+                ? (root, _, criteriaBuilder)
+                -> criteriaBuilder.isMember(comboBox.getValue(), JpaFilterUtils.get(root, attribute))
+                : (root, _, criteriaBuilder)
+                -> criteriaBuilder.equal(JpaFilterUtils.get(root, attribute), comboBox.getValue());
     }
 
     @Override

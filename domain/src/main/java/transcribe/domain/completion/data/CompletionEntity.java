@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,9 +17,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import transcribe.core.core.constraint.float_range.FloatRange;
-import transcribe.domain.audit.data.AuditEntity;
-import transcribe.core.core.annotation.BigText;
+import transcribe.core.core.validate.constraint.double_range.DoubleRange;
+import transcribe.domain.audit.data.BaseEntity;
 
 @Entity
 @Table(name = "completion")
@@ -27,20 +27,22 @@ import transcribe.core.core.annotation.BigText;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CompletionEntity extends AuditEntity {
+public class CompletionEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
+    @JoinColumn(name = "transcription_id")
+    @NotNull
+    private Long transcriptionId;
+
     @Column(name = "input")
     @NotEmpty
-    @BigText
     private String input;
 
     @Column(name = "output")
-    @BigText
     private String output;
 
     @Column(name = "input_tokens")
@@ -55,12 +57,12 @@ public class CompletionEntity extends AuditEntity {
     private String model;
 
     @Column(name = "temperature")
-    @FloatRange(min = 0.1f, max = 2.0f)
-    private Float temperature;
+    @DoubleRange(min = 0.1d, max = 2.0d)
+    private Double temperature;
 
     @Column(name = "top_p")
-    @FloatRange(min = 0.1f, max = 1.0f)
-    private Float topP;
+    @DoubleRange(min = 0.1d, max = 1.0d)
+    private Double topP;
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
@@ -72,7 +74,6 @@ public class CompletionEntity extends AuditEntity {
     private Long durationMillis;
 
     @Column(name = "error")
-    @BigText
     private String error;
 
 }

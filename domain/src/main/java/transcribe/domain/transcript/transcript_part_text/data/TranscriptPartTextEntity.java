@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import transcribe.domain.audit.data.AuditEntity;
-import transcribe.core.core.annotation.BigText;
 
 @Entity
 @Table(name = "transcript_part_text")
@@ -13,8 +11,7 @@ import transcribe.core.core.annotation.BigText;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class TranscriptPartTextEntity extends AuditEntity {
+public class TranscriptPartTextEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +24,6 @@ public class TranscriptPartTextEntity extends AuditEntity {
 
     @NotNull
     @Column(name = "content")
-    @BigText
     private String content;
 
     @NotNull

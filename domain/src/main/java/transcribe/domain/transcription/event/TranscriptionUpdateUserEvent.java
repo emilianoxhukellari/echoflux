@@ -6,18 +6,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import transcribe.domain.application_user.event.ApplicationUserEvent;
-import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.domain.application_user.event.TranscriptionEvent;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TranscriptionUpdateUserEvent implements ApplicationUserEvent {
+public class TranscriptionUpdateUserEvent implements TranscriptionEvent, ApplicationUserEvent {
 
     @NotNull
     private Long applicationUserId;
 
     @NotNull
-    private TranscriptionEntity entity;
+    private Long transcriptionId;
 
 }

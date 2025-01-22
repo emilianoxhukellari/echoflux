@@ -5,14 +5,14 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 
-public class NumberJpaFilter<T> extends BetweenJpaFilter<T, Double> {
+public class NumberJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Double> {
 
     private final NumberField from;
     private final NumberField to;
     private final HorizontalLayout layout;
 
-    public NumberJpaFilter(String property, boolean asCollection) {
-        super(property, asCollection);
+    public NumberJpaFilter(String attribute, String property, boolean asCollection) {
+        super(attribute, property, asCollection);
 
         this.from = new NumberField();
         from.setPlaceholder("From");

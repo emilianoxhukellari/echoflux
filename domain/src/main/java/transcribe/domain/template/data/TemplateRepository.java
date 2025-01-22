@@ -1,13 +1,16 @@
 package transcribe.domain.template.data;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import transcribe.domain.core.repository.EnhancedJpaRepository;
 
 import java.util.Optional;
 
-public interface TemplateRepository extends JpaRepository<TemplateEntity, Long>,
-        JpaSpecificationExecutor<TemplateEntity> {
+public interface TemplateRepository extends EnhancedJpaRepository<TemplateEntity, Long> {
 
     Optional<TemplateEntity> findByName(String name);
+
+    @Override
+    default Class<TemplateEntity> getBeanType() {
+        return TemplateEntity.class;
+    }
 
 }

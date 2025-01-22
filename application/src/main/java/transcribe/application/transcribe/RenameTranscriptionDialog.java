@@ -4,26 +4,29 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
+import org.apache.commons.lang3.StringUtils;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
+import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.spring.SpringContext;
-import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.application.transcription.TranscriptionJpaDto;
+import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.transcription.service.RenameTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
 
-public class RenameTranscriptionDialog extends JpaSaveDialog<TranscriptionEntity> {
+public class RenameTranscriptionDialog extends JpaSaveDialog<TranscriptionJpaDto> {
 
     private final TranscriptionService service;
     private final Binder<RenameTranscriptionCommand> binder;
 
-    public RenameTranscriptionDialog(TranscriptionEntity entity) {
-        super(TranscriptionEntity.class);
+    public RenameTranscriptionDialog(TranscriptionJpaDto transcription) {
+        super(TranscriptionJpaDto.class);
         this.service = SpringContext.getBean(TranscriptionService.class);
-        this.binder = new Binder<>(RenameTranscriptionCommand.class);
+        this.binder = new Binder<>();
 
         this.binder.setBean(
                 RenameTranscriptionCommand.builder()
-                        .id(entity.getId())
-                        .name(entity.getName())
+                        .id(transcription.getId())
+                        .name(transcription.getName())
                         .build()
         );
 
@@ -32,7 +35,7 @@ public class RenameTranscriptionDialog extends JpaSaveDialog<TranscriptionEntity
                 .asRequired("Name must not be blank")
                 .withValidator(
                         Validator.from(
-                                v -> !v.isEmpty(),
+                                StringUtils::isNotBlank,
                                 "Name must have at least one non-whitespace character"
                         )
                 )
@@ -47,16 +50,21 @@ public class RenameTranscriptionDialog extends JpaSaveDialog<TranscriptionEntity
         var form = new FormLayout();
         form.add(nameField, 2);
 
-        add(form);
-
-        setHeaderTitle("Rename transcription");
+        withContent(form);
+        withTitle("Rename transcription");
+        setModal(true);
         setHeight("270px");
-        setOperationCustomizer(o -> o.withName("Renaming transcription"));
+        setOperationCustomizer(o -> o
+                .withName("Renaming transcription")
+                .withCustomSuccessMessage("Transcription renamed")
+                .withType(OperationType.BLOCKING)
+        );
     }
 
     @Override
-    protected TranscriptionEntity save() {
-        return service.rename(binder.getBean());
+    protected TranscriptionJpaDto save() {
+        return SimpleJpaDtoService.ofBeanType(TranscriptionJpaDto.class)
+                .perform(() -> service.rename(binder.getBean()));
     }
 
     @Override

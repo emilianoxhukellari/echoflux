@@ -15,6 +15,6 @@ public @interface LoggedMethodExecution {
 
     boolean logExecutionTime() default true;
 
-    boolean logException() default true;
+    boolean logError() default true;
 
 }

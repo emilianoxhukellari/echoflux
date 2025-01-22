@@ -1,12 +1,13 @@
 package transcribe.domain.completion.pipeline;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
-
-import java.util.Optional;
+import transcribe.domain.completion.data.CompletionEntity;
 
 @Validated
 public interface CompletionsPipeline {
 
-    Optional<CompletionsPipelineResult> complete(String input);
+    CompletionEntity complete(@Valid @NotNull CompleteCommand command);
 
 }

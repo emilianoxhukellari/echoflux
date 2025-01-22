@@ -1,8 +1,12 @@
 package transcribe.domain.completion.data;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import transcribe.domain.core.repository.EnhancedJpaRepository;
 
-public interface CompletionRepository extends JpaRepository<CompletionEntity, Long>,
-        JpaSpecificationExecutor<CompletionEntity> {
+public interface CompletionRepository extends EnhancedJpaRepository<CompletionEntity, Long> {
+
+    @Override
+    default Class<CompletionEntity> getBeanType() {
+        return CompletionEntity.class;
+    }
+
 }

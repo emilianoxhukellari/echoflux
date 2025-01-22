@@ -1,7 +1,6 @@
 package transcribe.application.core.jpa.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.renderer.Renderer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public enum JpaSupportedType {
 
-    STRING(String.class,null),
+    STRING(String.class, null),
     BOOLEAN(Boolean.class, JpaGridRendererFactory::newBooleanRenderer),
     ENUM(Enum.class, JpaGridRendererFactory::newEnumRenderer),
     LOCAL_DATE_TIME(LocalDateTime.class, JpaGridRendererFactory::newLocalDateTimeRenderer),
@@ -32,7 +31,7 @@ public enum JpaSupportedType {
 
     @Getter
     private final Class<?> type;
-    private final Function<PropertyDefinition<?, ?>, Renderer<?>> customRendererFactory;
+    private final Function<JpaPropertyDefinition<?, ?>, Renderer<?>> customRendererFactory;
 
     /**
      * @throws NoSuchElementException if the given type is not supported
@@ -45,7 +44,7 @@ public enum JpaSupportedType {
 
     }
 
-    public Optional<Function<PropertyDefinition<?, ?>, Renderer<?>>> findCustomRendererFactory() {
+    public Optional<Function<JpaPropertyDefinition<?, ?>, Renderer<?>>> findCustomRendererFactory() {
         return Optional.ofNullable(customRendererFactory);
     }
 

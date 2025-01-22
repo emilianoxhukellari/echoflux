@@ -30,7 +30,7 @@ public class OperationServiceImpl implements OperationService {
                 .startedAt(LocalDateTime.now())
                 .build();
 
-        return repository.saveAndFlush(entity);
+        return repository.save(entity);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class OperationServiceImpl implements OperationService {
         var operation = repository.getReferenceById(id);
         var updated = mapper.asEntity(operation, LocalDateTime.now(), OperationStatus.SUCCESS);
 
-        return repository.saveAndFlush(updated);
+        return repository.save(updated);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class OperationServiceImpl implements OperationService {
         var operation = repository.getReferenceById(id);
         var updated = mapper.asEntity(operation, LocalDateTime.now(), OperationStatus.FAILURE, error.getMessage());
 
-        return repository.saveAndFlush(updated);
+        return repository.save(updated);
     }
 
 }

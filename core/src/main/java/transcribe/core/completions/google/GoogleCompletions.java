@@ -6,6 +6,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.vertexai.Transport;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.Candidate;
+import com.google.cloud.vertexai.api.GenerateContentResponse;
 import com.google.cloud.vertexai.api.GenerationConfig;
 import com.google.cloud.vertexai.api.LlmUtilityServiceClient;
 import com.google.cloud.vertexai.api.LlmUtilityServiceSettings;
@@ -19,31 +20,29 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import transcribe.core.completions.CompletionResult;
 import transcribe.core.completions.Completions;
-import transcribe.core.core.qualifier.Qualifiers;
+import transcribe.core.completions.Tokens;
+import transcribe.core.core.executor.MoreExecutors;
+import transcribe.core.core.provider.AiProvider;
 import transcribe.core.properties.GoogleCloudProperties;
 import transcribe.core.settings.SettingsLoader;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class GoogleCompletions implements Completions, DisposableBean {
 
     private final VertexAI vertexAI;
-    private final GoogleCompletionsMapper mapper;
     private final SettingsLoader settingsLoader;
 
     public GoogleCompletions(GoogleCloudProperties properties,
-                             @Qualifier(Qualifiers.VIRTUAL_THREAD_EXECUTOR) ExecutorService executorService,
-                             GoogleCompletionsMapper mapper,
                              SettingsLoader settingsLoader) {
-        this.vertexAI = newVertexAI(properties, executorService);
-        this.mapper = mapper;
+        this.vertexAI = newVertexAI(properties);
         this.settingsLoader = settingsLoader;
     }
 
@@ -53,8 +52,8 @@ public class GoogleCompletions implements Completions, DisposableBean {
         var settings = settingsLoader.load(GoogleCompletionsSettings.class);
 
         var generationConfig = GenerationConfig.newBuilder()
-                .setTemperature(settings.getTemperature())
-                .setTopP(settings.getTopP())
+                .setTemperature(settings.getTemperature().floatValue())
+                .setTopP(settings.getTopP().floatValue())
                 .build();
 
         var chatSession = new GenerativeModel(settings.getModel(), vertexAI)
@@ -64,15 +63,23 @@ public class GoogleCompletions implements Completions, DisposableBean {
         var currentResponse = chatSession.sendMessage(input);
         var responseList = Lists.newArrayList(currentResponse);
 
+        int p = 1;
         while (Candidate.FinishReason.MAX_TOKENS == ResponseHandler.getFinishReason(currentResponse)) {
-            log.info("Max tokens reached, requesting next part");
+            log.info("Max tokens reached, requesting part [{}]", ++p);
 
             currentResponse = chatSession.sendMessage(settings.getContinuePhrase());
             responseList.add(currentResponse);
         }
 
-        var output = mapper.toOutput(responseList);
-        var tokens = mapper.toTokens(responseList);
+        var output = responseList.stream()
+                .map(ResponseHandler::getText)
+                .collect(Collectors.joining());
+
+        var tokens = responseList
+                .stream()
+                .map(GoogleCompletions::toTokens)
+                .reduce(Tokens::add)
+                .orElseGet(Tokens::empty);
 
         return CompletionResult.builder()
                 .output(output)
@@ -89,10 +96,15 @@ public class GoogleCompletions implements Completions, DisposableBean {
         vertexAI.close();
     }
 
-    private static VertexAI newVertexAI(GoogleCloudProperties properties, ExecutorService executorService) {
+    @Override
+    public AiProvider getProvider() {
+        return AiProvider.GOOGLE;
+    }
+
+    private static VertexAI newVertexAI(GoogleCloudProperties properties) {
         var credentials = newCredentials(properties);
         var grpcChannelProvider = InstantiatingGrpcChannelProvider.newBuilder()
-                .setExecutor(executorService)
+                .setExecutor(MoreExecutors.virtualThreadExecutor())
                 .build();
 
         return new VertexAI.Builder()
@@ -147,6 +159,13 @@ public class GoogleCompletions implements Completions, DisposableBean {
 
         return GoogleCredentials.fromStream(privateKeyStream)
                 .createScoped(PredictionServiceSettings.getDefaultServiceScopes());
+    }
+
+    private static Tokens toTokens(GenerateContentResponse response) {
+        return Optional.ofNullable(response)
+                .map(GenerateContentResponse::getUsageMetadata)
+                .map(usage -> new Tokens(usage.getPromptTokenCount(), usage.getCandidatesTokenCount()))
+                .orElse(Tokens.empty());
     }
 
 }

@@ -7,7 +7,9 @@ import org.apache.commons.io.filefilter.AgeFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import transcribe.core.audio.transcoder.temp_file.TranscoderTempDirectory;
+import transcribe.core.audio.splitter.temp_file.AudioSplitterTempDirectory;
+import transcribe.core.audio.transcoder.temp_file.AudioTranscoderTempDirectory;
+import transcribe.core.document.spi.DocumentTempDirectory;
 import transcribe.core.media.temp_file.MediaTempDirectory;
 import transcribe.core.settings.SettingsLoader;
 
@@ -23,7 +25,9 @@ public class TempFileCleanupScheduler {
 
     private final static List<File> DIRECTORIES = List.of(
             MediaTempDirectory.INSTANCE.locationFile(),
-            TranscoderTempDirectory.INSTANCE.locationFile()
+            AudioTranscoderTempDirectory.INSTANCE.locationFile(),
+            AudioSplitterTempDirectory.INSTANCE.locationFile(),
+            DocumentTempDirectory.INSTANCE.locationFile()
     );
 
     private final SettingsLoader settingsLoader;
@@ -39,8 +43,10 @@ public class TempFileCleanupScheduler {
                 .filter(File::exists)
                 .filter(File::isDirectory)
                 .flatMap(d -> FileUtils.listFiles(d, ageFilter, TrueFileFilter.TRUE).stream())
-                .peek(FileUtils::deleteQuietly)
-                .forEach(f -> log.warn("Deleted old temp file: {}", f));
+                .forEach(f -> {
+                    FileUtils.deleteQuietly(f);
+                    log.warn("Deleted old temp file: {}", f);
+                });
     }
 
 }

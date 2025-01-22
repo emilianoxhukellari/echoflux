@@ -7,8 +7,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.data.domain.Sort;
 import org.vaadin.lineawesome.LineAwesomeIcon;
+import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.jpa.grid.JpaGrid;
+import transcribe.application.core.jpa.grid.JpaGridConfiguration;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
@@ -16,7 +19,6 @@ import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.main.MainLayout;
 import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.settings.data.SettingsEntity;
-import transcribe.domain.settings.data.SettingsRepository;
 import transcribe.domain.settings.synchronizer.SettingsSynchronizer;
 
 @PageTitle("Settings")
@@ -24,14 +26,12 @@ import transcribe.domain.settings.synchronizer.SettingsSynchronizer;
 @RolesAllowed("ADMIN")
 public class SettingsView extends Composite<VerticalLayout> {
 
-    private final SettingsRepository repository;
     private final SettingsSynchronizer synchronizer;
     private final OperationRunner operationRunner;
+    private final SimpleJpaDtoService<SettingsJpaDto, SettingsEntity, Long> jpaDtoService;
 
-    public SettingsView(SettingsRepository repository,
-                        SettingsSynchronizer synchronizer,
-                        OperationRunner operationRunner) {
-        this.repository = repository;
+    public SettingsView(SettingsSynchronizer synchronizer, OperationRunner operationRunner) {
+        this.jpaDtoService = SimpleJpaDtoService.ofBeanType(SettingsJpaDto.class);
         this.synchronizer = synchronizer;
         this.operationRunner = operationRunner;
 
@@ -41,8 +41,15 @@ public class SettingsView extends Composite<VerticalLayout> {
         getContent().addAndExpand(controls);
     }
 
-    private JpaGrid<SettingsEntity, SettingsRepository> newGrid() {
-        var grid = new JpaGrid<>(SettingsEntity.class, repository);
+    private JpaGrid<SettingsJpaDto, SettingsEntity, Long> newGrid() {
+        var grid = new JpaGrid<>(
+                JpaGridConfiguration.<SettingsJpaDto, SettingsEntity, Long>builder()
+                        .beanType(SettingsJpaDto.class)
+                        .service(jpaDtoService)
+                        .defaultSortAttribute("name")
+                        .defaultSortDirection(Sort.Direction.ASC)
+                        .build()
+        );
 
         grid.addCoreAttributeColumnsExcluding("value");
         grid.addAuditColumns();
@@ -56,9 +63,9 @@ public class SettingsView extends Composite<VerticalLayout> {
         grid.addCrudActions();
 
         grid.addConfirmedContextMenuItem("Reset", item -> {
-            var operation = Operation.<SettingsEntity>builder()
+            var operation = Operation.<SettingsJpaDto>builder()
                     .name("Resetting settings")
-                    .callable(() -> synchronizer.reset(item.getKey()))
+                    .callable(() -> jpaDtoService.perform(() -> synchronizer.reset(item.getKey())))
                     .type(OperationType.NON_BLOCKING)
                     .onSuccess(grid::refreshItem)
                     .build();
@@ -69,7 +76,7 @@ public class SettingsView extends Composite<VerticalLayout> {
         return grid;
     }
 
-    private JpaGridControls<SettingsEntity, SettingsRepository> newGridControls(JpaGrid<SettingsEntity, SettingsRepository> grid) {
+    private JpaGridControls<SettingsJpaDto, SettingsEntity, Long> newGridControls(JpaGrid<SettingsJpaDto, SettingsEntity, Long> grid) {
         var synchronizeButton = new Button(
                 LineAwesomeIcon.SYNC_ALT_SOLID.create(),
                 _ -> {

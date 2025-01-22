@@ -28,4 +28,7 @@ public class CreateTranscriptPartCommand {
     @Min(0)
     private Integer sequence;
 
+    @NotNull
+    private Boolean endOfPartition;
+
 }

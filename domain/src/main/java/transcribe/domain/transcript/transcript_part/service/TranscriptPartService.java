@@ -10,7 +10,9 @@ import java.util.List;
 @Validated
 public interface TranscriptPartService {
 
-    List<TranscriptPartEntity> getAllForTranscription(Long transcriptionId);
+    TranscriptPartEntity getForTranscriptionAndSequence(@NotNull Long transcriptionId, @NotNull Integer sequence);
+
+    List<TranscriptPartEntity> getAllForTranscription(@NotNull Long transcriptionId);
 
     TranscriptPartEntity create(@Valid @NotNull CreateTranscriptPartCommand command);
 

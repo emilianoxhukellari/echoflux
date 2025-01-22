@@ -1,8 +1,12 @@
 package transcribe.domain.operation.data;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import transcribe.domain.core.repository.EnhancedJpaRepository;
 
-public interface OperationRepository
-        extends JpaRepository<OperationEntity, Long>, JpaSpecificationExecutor<OperationEntity> {
+public interface OperationRepository extends EnhancedJpaRepository<OperationEntity, Long> {
+
+    @Override
+    default Class<OperationEntity> getBeanType() {
+        return OperationEntity.class;
+    }
+
 }

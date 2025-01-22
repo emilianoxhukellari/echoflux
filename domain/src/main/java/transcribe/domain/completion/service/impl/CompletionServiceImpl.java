@@ -10,6 +10,8 @@ import transcribe.domain.completion.service.CompletionService;
 import transcribe.domain.completion.service.CreateCompletionCommand;
 import transcribe.domain.completion.service.PatchCompletionCommand;
 
+import java.util.NoSuchElementException;
+
 @Service
 @RequiredArgsConstructor
 public class CompletionServiceImpl implements CompletionService {
@@ -18,11 +20,18 @@ public class CompletionServiceImpl implements CompletionService {
     private final CompletionMapper mapper;
 
     @Override
+    @Transactional(readOnly = true)
+    public CompletionEntity get(Long completionId) {
+        return repository.findById(completionId)
+                .orElseThrow(() -> new NoSuchElementException("Completion not found"));
+    }
+
+    @Override
     @Transactional
     public CompletionEntity create(CreateCompletionCommand command) {
         var entity = mapper.toEntity(command);
 
-        return repository.saveAndFlush(entity);
+        return repository.save(entity);
     }
 
     @Override
@@ -31,7 +40,7 @@ public class CompletionServiceImpl implements CompletionService {
         var entity = repository.getReferenceById(command.getId());
         var patched = mapper.patch(entity, command);
 
-        return repository.saveAndFlush(patched);
+        return repository.save(patched);
     }
 
 }

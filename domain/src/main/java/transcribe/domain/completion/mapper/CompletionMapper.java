@@ -11,7 +11,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.core.completions.CompletionResult;
 import transcribe.domain.completion.data.CompletionEntity;
-import transcribe.domain.completion.pipeline.CompletionsPipelineResult;
 import transcribe.domain.completion.service.CreateCompletionCommand;
 import transcribe.domain.completion.service.PatchCompletionCommand;
 
@@ -29,8 +28,5 @@ public interface CompletionMapper {
     CompletionEntity patch(@MappingTarget CompletionEntity entity, PatchCompletionCommand command);
 
     PatchCompletionCommand toCommand(CompletionResult result);
-
-    @Mapping(target = "completionId", source = "id")
-    CompletionsPipelineResult toResult(CompletionEntity entity);
 
 }

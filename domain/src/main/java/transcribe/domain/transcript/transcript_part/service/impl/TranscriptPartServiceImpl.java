@@ -10,6 +10,7 @@ import transcribe.domain.transcript.transcript_part.service.CreateTranscriptPart
 import transcribe.domain.transcript.transcript_part.service.TranscriptPartService;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +25,17 @@ public class TranscriptPartServiceImpl implements TranscriptPartService {
     }
 
     @Override
+    public TranscriptPartEntity getForTranscriptionAndSequence(Long transcriptionId, Integer sequence) {
+        return repository.findByTranscriptionIdAndSequence(transcriptionId, sequence)
+                .orElseThrow(() -> new NoSuchElementException("Transcript part not found"));
+    }
+
+    @Override
     @Transactional
     public TranscriptPartEntity create(CreateTranscriptPartCommand command) {
         var entity = mapper.toEntity(command);
 
-        return repository.saveAndFlush(entity);
+        return repository.save(entity);
     }
 
 }

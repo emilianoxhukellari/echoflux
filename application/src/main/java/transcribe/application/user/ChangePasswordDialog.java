@@ -5,23 +5,22 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.data.binder.Binder;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
 import transcribe.application.core.spring.SpringContext;
-import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.application_user.service.ChangePasswordCommand;
 
-public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserEntity> {
+public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
     private final ApplicationUserService service;
     private final Binder<ChangePasswordCommand> binder;
 
-    public ChangePasswordDialog(ApplicationUserEntity entity) {
-        super(ApplicationUserEntity.class);
+    public ChangePasswordDialog(ApplicationUserJpaDto applicationUser) {
+        super(ApplicationUserJpaDto.class);
         this.service = SpringContext.getBean(ApplicationUserService.class);
         this.binder = new Binder<>(ChangePasswordCommand.class);
 
         this.binder.setBean(
                 ChangePasswordCommand.builder()
-                        .id(entity.getId())
+                        .id(applicationUser.getId())
                         .build()
         );
 
@@ -44,8 +43,13 @@ public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserEntity> {
     }
 
     @Override
-    protected ApplicationUserEntity save() {
-        return service.changePassword(binder.getBean());
+    protected ApplicationUserJpaDto save() {
+        return SpringContext.getTransactional(() -> {
+            var updatedEntity = service.changePassword(binder.getBean());
+
+            return SpringContext.getBean(ApplicationUserJpaDtoMapper.class)
+                    .toDto(updatedEntity);
+        });
     }
 
     @Override

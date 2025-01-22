@@ -16,7 +16,7 @@ public class TranscodeParameters {
 
     @NotNull
     @Builder.Default
-    private AudioContainer audioContainer = AudioContainer.OGG;
+    private AudioContainer audioContainer = AudioContainer.WEBM;
 
     @Min(1)
     @Builder.Default

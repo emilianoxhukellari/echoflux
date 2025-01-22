@@ -19,10 +19,10 @@ import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.transcribe.media_provider.MediaProvider;
 import transcribe.application.transcribe.media_provider.MediaValue;
-import transcribe.core.core.utils.UriUtils;
+import transcribe.core.core.utils.MoreUris;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
-import transcribe.core.function.FunctionUtils;
+import transcribe.core.core.utils.MoreFunctions;
 import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.util.Optional;
@@ -68,6 +68,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
 
         this.searchContainer = new HorizontalLayout();
         searchContainer.setPadding(false);
+        searchContainer.getThemeList().set("spacing-s", true);
         searchContainer.addAndExpand(searchUri, searchButton);
         searchContainer.setAlignItems(Alignment.BASELINE);
 
@@ -79,13 +80,13 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     private void findAndSetMedia() {
         var operation = Operation.<Optional<MediaFindResult>>builder()
                 .name("Finding public media")
-                .callable(() -> mediaDownloader.find(UriUtils.newUri(searchUri.getValue())))
+                .callable(() -> mediaDownloader.find(MoreUris.newUri(searchUri.getValue())))
                 .onSuccess(r -> {
                     if (r.isEmpty()) {
                         Dialogs.info("Media not found", "Please make sure the URL is correct.");
                     } else {
                         setMediaResult(r.get());
-                        FunctionUtils.consumeIfPresent(
+                        MoreFunctions.consumeIfPresent(
                                 onReady,
                                 new MediaValue(r.get().getUri(), r.get().getTitle(), MediaOrigin.PUBLIC)
                         );
@@ -124,7 +125,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         closeButton.addClickListener(_ -> {
             clearAndCleanup();
-            FunctionUtils.runIfPresent(onClientCleared);
+            MoreFunctions.runIfPresent(onClientCleared);
         });
 
         container.add(closeButton);

@@ -25,9 +25,9 @@ import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.settings.SettingsView;
 import transcribe.application.template.TemplatesView;
 import transcribe.application.transcribe.TranscribeView;
-import transcribe.application.transcript_part.TranscriptPartsView;
-import transcribe.application.transcript_part_text.TranscriptPartTextsView;
 import transcribe.application.transcription.TranscriptionsView;
+import transcribe.application.transcription_speaker.TranscriptionSpeakersView;
+import transcribe.application.transcription_word.TranscriptionWordsView;
 import transcribe.application.user.UsersView;
 
 public class MainLayout extends AppLayout {
@@ -57,7 +57,7 @@ public class MainLayout extends AppLayout {
     }
 
     private void addDrawerContent() {
-        var appName = new Span("transcribee.");
+        var appName = new Span("Transcribe");
         appName.addClassNames(LumoUtility.FontWeight.EXTRABOLD, LumoUtility.FontSize.XXLARGE);
         var header = new Header(appName);
         var scroller = new Scroller(newSideNav());
@@ -72,8 +72,8 @@ public class MainLayout extends AppLayout {
         addIfHasAccess(nav, TranscribeView.class, "Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
         addIfHasAccess(nav, TranscriptionsView.class, "Transcriptions", LineAwesomeIcon.FILE_AUDIO_SOLID.create());
         addIfHasAccess(nav, CompletionsView.class, "Completions", LineAwesomeIcon.CHECK_CIRCLE_SOLID.create());
-        addIfHasAccess(nav, TranscriptPartsView.class, "Transcript Parts", LineAwesomeIcon.PARAGRAPH_SOLID.create());
-        addIfHasAccess(nav, TranscriptPartTextsView.class, "Transcript Part Texts", LineAwesomeIcon.PARAGRAPH_SOLID.create());
+        addIfHasAccess(nav, TranscriptionWordsView.class, "Transcription Words", LineAwesomeIcon.FONT_SOLID.create());
+        addIfHasAccess(nav, TranscriptionSpeakersView.class, "Transcription Speakers", LineAwesomeIcon.MICROPHONE_SOLID.create());
         addIfHasAccess(nav, TemplatesView.class, "Templates", LineAwesomeIcon.FILE_CODE_SOLID.create());
         addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
         addIfHasAccess(nav, OperationsView.class, "Operations", LineAwesomeIcon.PLAY_SOLID.create());

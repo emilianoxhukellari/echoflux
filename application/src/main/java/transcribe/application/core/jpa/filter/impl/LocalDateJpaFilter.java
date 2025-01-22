@@ -7,14 +7,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import java.time.LocalDate;
 
-public class LocalDateJpaFilter<T> extends BetweenJpaFilter<T, LocalDate> {
+public class LocalDateJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, LocalDate> {
 
     private final VerticalLayout layout;
     private final DatePicker from;
     private final DatePicker to;
 
-    public LocalDateJpaFilter(String property, boolean asCollection) {
-        super(property, asCollection);
+    public LocalDateJpaFilter(String attribute, String property, boolean asCollection) {
+        super(attribute, property, asCollection);
 
         this.from = new DatePicker();
         from.addThemeVariants(DatePickerVariant.LUMO_SMALL);

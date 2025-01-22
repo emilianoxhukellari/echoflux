@@ -7,14 +7,15 @@ import jakarta.persistence.criteria.JoinType;
 import lombok.Getter;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
+import transcribe.application.core.jpa.filter.JpaFilterUtils;
 
 @Getter
-public class TextJpaFilter<T> extends JpaFilter<T> {
+public class TextJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
     private final TextField textField;
 
-    public TextJpaFilter(String property, boolean asCollection) {
-        super(property, asCollection);
+    public TextJpaFilter(String attribute, String property, boolean asCollection) {
+        super(attribute, property, asCollection);
         this.textField = new TextField();
 
         textField.setPlaceholder("Filter");
@@ -24,7 +25,7 @@ public class TextJpaFilter<T> extends JpaFilter<T> {
     }
 
     @Override
-    public Specification<T> getSpecification() {
+    public Specification<ENTITY> getSpecification() {
         if (textField.isEmpty()) {
             return (_, _, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
@@ -32,9 +33,9 @@ public class TextJpaFilter<T> extends JpaFilter<T> {
 
         return asCollection
                 ? (root, _, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.join(property, JoinType.LEFT).as(String.class)), pattern)
+                criteriaBuilder.like(criteriaBuilder.lower(root.join(attribute, JoinType.LEFT).as(String.class)), pattern)
                 : (root, _, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get(property).as(String.class)), pattern);
+                criteriaBuilder.like(criteriaBuilder.lower(JpaFilterUtils.get(root, attribute).as(String.class)), pattern);
     }
 
     @Override

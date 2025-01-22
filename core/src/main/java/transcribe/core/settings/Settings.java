@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  *
  * <p>
  * For specifying default values, it is recommended to use {@link Builder} with {@link Builder.Default}
- * annotation on the fields that should have default values.
+ * annotation on the fields that should have default values. Otherwise, the no args constructor will be used.
  * </p>
  *
  * <p>

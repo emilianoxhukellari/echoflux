@@ -6,8 +6,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
@@ -17,9 +15,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.EnhancedDialog;
-import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
+import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
+import transcribe.application.core.operation.OperationSuccessImportance;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.core.field.MediaField;
@@ -31,8 +30,6 @@ import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
-
-import java.util.Optional;
 
 public class TranscribeDialog extends EnhancedDialog {
 
@@ -97,7 +94,8 @@ public class TranscribeDialog extends EnhancedDialog {
         setResizable(false);
         setCloseOnEsc(false);
         setWidth("500px");
-        setHeight("560px");
+        setHeight("584px");
+        setMaxWidth("95vw");
     }
 
     private void startTranscribe(Command command) {
@@ -110,30 +108,16 @@ public class TranscribeDialog extends EnhancedDialog {
                 .enhanced(command.getEnhanced())
                 .build();
 
-        var operation = Operation.<Optional<TranscriptionEntity>>builder()
+        var operation = Operation.<TranscriptionEntity>builder()
                 .name(String.format("Transcribing \"%s\"", command.getMediaValue().name()))
                 .beforeCall(this::close)
                 .type(OperationType.NON_BLOCKING)
                 .callable(() -> transcriptionPipeline.transcribe(pipelineCommand))
-                .onSuccess(r -> {
-                    if (r.isPresent()) {
-                        Notifications.success(
-                                String.format("Transcribed \"%s\"", command.getMediaValue().name()),
-                                Notification.Position.TOP_CENTER,
-                                5000
-                        );
-                    } else {
-                        Notifications.newNotification(
-                                String.format("Transcription of \"%s\" failed", command.getMediaValue().name()),
-                                Notification.Position.TOP_END,
-                                4000,
-                                NotificationVariant.LUMO_ERROR
-                        );
-                    }
-                })
-                .onSuccessNotify(false)
+                .customSuccessMessage("Transcribed \"%s\"".formatted(command.getMediaValue().name()))
+                .successImportance(OperationSuccessImportance.HIGH)
+                .customErrorMessage("Transcription of \"%s\" failed".formatted(command.getMediaValue().name()))
+                .errorImportance(OperationErrorImportance.NORMAL)
                 .onProgressNotify(false)
-
                 .build();
 
         operationRunner.run(operation, UI.getCurrent());
@@ -165,11 +149,9 @@ public class TranscribeDialog extends EnhancedDialog {
 
         private MediaValue mediaValue;
 
-        // todo: make it dependant on user profile
         private Language language;
 
         @Builder.Default
-        // todo: make it dependant on user profile
         private Boolean enhanced = true;
 
     }

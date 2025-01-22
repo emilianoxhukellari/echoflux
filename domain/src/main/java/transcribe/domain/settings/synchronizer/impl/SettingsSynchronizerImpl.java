@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import transcribe.core.core.initialize.Initialize;
 import transcribe.core.core.initialize.InitializeOrder;
-import transcribe.core.function.FunctionUtils;
+import transcribe.core.core.utils.MoreFunctions;
 import transcribe.core.settings.Settings;
-import transcribe.core.core.bean.BeanUtils;
+import transcribe.core.core.bean.utils.MoreBeans;
 import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.service.CreateSettingsCommand;
 import transcribe.domain.settings.service.PatchSettingsCommand;
@@ -41,9 +41,9 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     @Override
     @Transactional
     public void synchronize() {
-        FunctionUtils.runTimed(this::delete, d -> log.info("Deleted settings in [{}]ms", d.toMillis()));
-        FunctionUtils.runTimed(this::update, d -> log.info("Updated settings in [{}]ms", d.toMillis()));
-        FunctionUtils.runTimed(this::create, d -> log.info("Created settings in [{}]ms", d.toMillis()));
+        MoreFunctions.runTimed(this::delete, d -> log.info("Deleted settings in [{}]ms", d.toMillis()));
+        MoreFunctions.runTimed(this::update, d -> log.info("Updated settings in [{}]ms", d.toMillis()));
+        MoreFunctions.runTimed(this::create, d -> log.info("Created settings in [{}]ms", d.toMillis()));
     }
 
     @Override
@@ -53,12 +53,13 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     }
 
     @Override
+    @Transactional
     public SettingsEntity reset(String key) {
         var entity = service.get(key);
 
         var command = PatchSettingsCommand.builder()
                 .id(entity.getId())
-                .name(BeanUtils.getDisplayName(keyBeanTypeMap.get(key)))
+                .name(MoreBeans.getDisplayName(keyBeanTypeMap.get(key)))
                 .value(schemaProcessor.create(keyBeanTypeMap.get(key)))
                 .build();
 
@@ -80,7 +81,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
                 .entrySet()
                 .stream()
                 .map(e -> CreateSettingsCommand.builder()
-                        .name(BeanUtils.getDisplayName(e.getValue()))
+                        .name(MoreBeans.getDisplayName(e.getValue()))
                         .key(e.getKey())
                         .value(schemaProcessor.create(e.getValue()))
                         .build())
@@ -97,7 +98,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
 
         for (var entity : existingEntities) {
             var dbName = entity.getName();
-            var codeName = BeanUtils.getDisplayName(keyBeanTypeMap.get(entity.getKey()));
+            var codeName = MoreBeans.getDisplayName(keyBeanTypeMap.get(entity.getKey()));
 
             var dbValue = entity.getValue();
             var mergedValue = schemaProcessor.adaptToSchema(keyBeanTypeMap.get(entity.getKey()), dbValue);
@@ -129,11 +130,12 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     private static Map<String, Class<?>> newKeyBeanTypeMap() {
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(Settings.class));
-        var timedFind = FunctionUtils.getTimed(() -> scanner.findCandidateComponents(""));
-        var candidateComponents = timedFind.getResult();
-        log.info("Scanned [{}] settings in [{}] ms", candidateComponents.size(), timedFind.getDuration().toMillis());
 
-        return candidateComponents.stream()
+        var timedFind = MoreFunctions.getTimed(() -> scanner.findCandidateComponents("transcribe"));
+        var beanDefinitions = timedFind.getResult();
+        log.info("Scanned [{}] settings in [{}] ms", beanDefinitions.size(), timedFind.getDuration().toMillis());
+
+        return beanDefinitions.stream()
                 .map(b -> Failable.get(() -> Class.forName(b.getBeanClassName())))
                 .collect(Collectors.toUnmodifiableMap(
                         beanType -> beanType.getAnnotation(Settings.class).key(),

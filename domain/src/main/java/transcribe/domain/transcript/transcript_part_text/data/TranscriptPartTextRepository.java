@@ -1,13 +1,18 @@
 package transcribe.domain.transcript.transcript_part_text.data;
+import transcribe.domain.core.repository.EnhancedJpaRepository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
+import java.util.List;
 import java.util.Optional;
 
-public interface TranscriptPartTextRepository extends JpaRepository<TranscriptPartTextEntity, Long>,
-        JpaSpecificationExecutor<TranscriptPartTextEntity> {
+public interface TranscriptPartTextRepository extends EnhancedJpaRepository<TranscriptPartTextEntity, Long> {
 
     Optional<TranscriptPartTextEntity> findFirstByTranscriptPartIdOrderByVersionDesc(Long transcriptPartId);
+
+    List<TranscriptPartTextEntity> findAllByTranscriptPartId(Long transcriptPartId);
+
+    @Override
+    default Class<TranscriptPartTextEntity> getBeanType() {
+        return TranscriptPartTextEntity.class;
+    }
 
 }

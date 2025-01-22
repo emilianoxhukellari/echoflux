@@ -3,8 +3,7 @@ package transcribe.domain.template.data;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import transcribe.domain.audit.data.AuditEntity;
-import transcribe.core.core.annotation.BigText;
+import transcribe.domain.audit.data.BaseEntity;
 
 @Entity
 @Table(name = "template")
@@ -13,7 +12,7 @@ import transcribe.core.core.annotation.BigText;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class TemplateEntity extends AuditEntity {
+public class TemplateEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +25,6 @@ public class TemplateEntity extends AuditEntity {
 
     @Column(name = "content")
     @NotBlank
-    @BigText
     private String content;
 
 }

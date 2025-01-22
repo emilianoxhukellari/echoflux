@@ -5,14 +5,11 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
-import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
-import com.vaadin.flow.shared.util.SharedUtil;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -21,12 +18,16 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import transcribe.application.core.dialog.Dialogs;
-import transcribe.application.core.jpa.core.CoreAttributePropertySet;
+import transcribe.application.core.jpa.core.JpaPropertyCache;
+import transcribe.application.core.jpa.core.JpaPropertyDefinition;
 import transcribe.application.core.jpa.core.JpaSupportedType;
+import transcribe.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
+import transcribe.application.core.jpa.dto.JpaDtoConfiguration;
+import transcribe.application.core.jpa.dto.JpaDtoMapper;
+import transcribe.application.core.jpa.dto.JpaDtoService;
+import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.jpa.filter.CombinedFilter;
 import transcribe.application.core.jpa.filter.FilterFactory;
 import transcribe.application.core.jpa.filter.JpaFilter;
@@ -36,48 +37,54 @@ import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.utils.MoreArrays;
 import transcribe.core.core.utils.MoreLists;
-import transcribe.domain.audit.data.AuditEntity;
-import transcribe.core.core.bean.BeanUtils;
+import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.domain.core.repository.EnhancedJpaRepository;
 import transcribe.domain.operation.data.OperationType;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor<T>> extends Grid<T> {
+public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
-    private static final int DEFAULT_PAGE_SIZE = 30;
-    private static final String COLUMN_WIDTH = "13rem";
+    private static final String COLUMN_WIDTH = "13.5rem";
 
     @Getter
-    private final R repository;
+    private final JpaDtoService<DTO, ENTITY, ID> service;
     @Getter
-    private final Class<T> beanType;
-    private final Field idField;
-    private final List<JpaFilter<T>> filters = new ArrayList<>();
-    private final ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> filterDataProvider;
-    private final Specification<T> defaultSpecification;
+    private final Class<DTO> beanType;
+    private final Specification<ENTITY> defaultSpecification;
+    private final JpaPropertyDefinition<DTO, ID> idPropertyDefinition;
+    private final String defaultSortProperty;
+    private final Sort.Direction defaultSortDirection;
+    private final List<JpaFilter<ENTITY>> filters = new ArrayList<>();
+    private final ConfigurableFilterDataProvider<DTO, Void, CombinedFilter<ENTITY>> filterDataProvider;
 
-    private boolean clearingFilters;
     @Getter
     private JpaGridCrudActionsData crudActionsData = JpaGridCrudActionsData.empty();
+    private boolean clearingFilters;
     private HeaderRow filterRow;
-    private GridContextMenu<T> contextMenu;
+    private GridContextMenu<DTO> contextMenu;
 
-    public JpaGrid(Class<T> beanType, R repository, Specification<T> defaultSpecification) {
-        super(DEFAULT_PAGE_SIZE);
+    public JpaGrid(Class<DTO> beanType) {
+        this(newJpaGridGenericConfiguration(beanType));
+    }
 
-        this.beanType = Objects.requireNonNull(beanType, "Jpa grid requires a bean type");
-        this.repository = Objects.requireNonNull(repository, "Jpa grid requires a JpaSpecificationExecutor");
-        this.defaultSpecification = Objects.requireNonNull(defaultSpecification, "Default specification cannot be null");
-        this.idField = BeanUtils.getSingleFieldWithAnnotation(beanType, Id.class);
+    @SuppressWarnings("unchecked")
+    public JpaGrid(JpaGridConfiguration<DTO, ENTITY, ID> configuration) {
+        super(configuration.getDefaultPageSize());
+        SpringContext.getStrictValidator().validate(configuration);
+
+        this.service = configuration.getService();
+        this.beanType = configuration.getBeanType();
+        this.defaultSpecification = configuration.getDefaultSpecification();
+        this.idPropertyDefinition = (JpaPropertyDefinition<DTO, ID>) JpaPropertyCache.getIdProperty(beanType);
+        this.defaultSortProperty = configuration.getDefaultSortAttribute();
+        this.defaultSortDirection = configuration.getDefaultSortDirection();
         this.filterDataProvider = newDataProvider();
 
         configureBeanType(beanType, false);
@@ -85,11 +92,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
     }
 
-    public JpaGrid(Class<T> beanType, R repository) {
-        this(beanType, repository, (_, _, criteriaBuilder) -> criteriaBuilder.conjunction());
-    }
-
-    public void refreshItem(T item) {
+    public void refreshItem(DTO item) {
         getDataProvider().refreshItem(item);
     }
 
@@ -100,12 +103,14 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     public void addAllColumns() {
         addCoreAttributeColumns();
         addAuditColumns();
+        addVersionColumn();
         addIdColumn();
     }
 
     public void addAllFilters() {
         addCoreAttributeFilters();
         addAuditFilters();
+        addVersionFilter();
         addIdFilter();
     }
 
@@ -115,47 +120,48 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
 
     public void addCoreAttributeColumnsExcluding(String... excludedProperties) {
         addColumns(
-                CoreAttributePropertySet.getExcluding(beanType, MoreArrays.toList(excludedProperties))
-                        .getPropertyNamesAsArray()
+                JpaPropertyCache.getCorePropertiesExcluding(beanType, MoreArrays.toList(excludedProperties))
+                        .stream()
+                        .map(JpaPropertyDefinition::getName)
+                        .toArray(String[]::new)
         );
     }
 
     public void addAuditColumns() {
-        addColumns(BeanUtils.getFieldNames(AuditEntity.class).toArray(String[]::new));
+        JpaPropertyCache.getAuditProperties(beanType)
+                .stream()
+                .map(JpaPropertyDefinition::getName)
+                .forEach(this::addColumn);
     }
 
     public void addIdColumn() {
-        addColumn(idField.getName()).setWidth(COLUMN_WIDTH);
+        addColumn(idPropertyDefinition.getName());
+    }
+
+    public void addVersionColumn() {
+        var versionProperty = JpaPropertyCache.getVersionProperty(beanType);
+        addColumn(versionProperty.getName());
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Column<T> addColumn(String propertyName) {
+    public Column<DTO> addColumn(String propertyName) {
         var propertyDefinition = getPropertyDefinitionRequired(propertyName);
 
-        return JpaSupportedType.ofBeanType(propertyDefinition.getType())
+        var column = super.addColumn(propertyName)
+                .setHeader(JpaPropertyDefinitionUtils.toDisplayName(propertyDefinition))
+                .setWidth(COLUMN_WIDTH);
+
+        JpaSupportedType.ofBeanType(propertyDefinition.getType())
                 .findCustomRendererFactory()
-                .map(f ->
-                        addColumn(propertyName, (Function<PropertyDefinition<T, ?>, Renderer<T>>) (Function<?, ?>) f)
-                )
-                .orElseGet(() ->
-                        super.addColumn(propertyName)
-                                .setHeader(propertyNameToHumanFriendly(propertyName))
-                );
+                .ifPresent(f -> column.setRenderer((Renderer<DTO>) f.apply(propertyDefinition)));
+
+        return column;
     }
 
     @Override
     public void addColumns(String... propertyNames) {
-        Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(name -> addColumn(name)
-                .setWidth(COLUMN_WIDTH));
-    }
-
-    public Column<T> addColumn(String propertyName, Function<PropertyDefinition<T, ?>, Renderer<T>> rendererFactory) {
-        var propertyDefinition = getPropertyDefinitionRequired(propertyName);
-
-        return super.addColumn(propertyName)
-                .setRenderer(rendererFactory.apply(propertyDefinition))
-                .setHeader(propertyNameToHumanFriendly(propertyName));
+        Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(this::addColumn);
     }
 
     public void setAllColumnsResizable() {
@@ -167,16 +173,22 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
     }
 
     public void addCoreAttributeFiltersExcluding(String... excludedProperties) {
-        CoreAttributePropertySet.getExcluding(beanType, MoreArrays.toList(excludedProperties)).getPropertiesAsList()
+        JpaPropertyCache.getCorePropertiesExcluding(beanType, MoreArrays.toList(excludedProperties))
                 .forEach(this::addFilter);
     }
 
     public void addAuditFilters() {
-        addFilters(BeanUtils.getFieldNames(AuditEntity.class).toArray(String[]::new));
+        JpaPropertyCache.getAuditProperties(beanType)
+                .forEach(this::addFilter);
     }
 
     public void addIdFilter() {
-        addFilter(idField.getName());
+        addFilter(idPropertyDefinition.getName());
+    }
+
+    public void addVersionFilter() {
+        var versionProperty = JpaPropertyCache.getVersionProperty(beanType);
+        addFilter(versionProperty.getName());
     }
 
     public void addFilters(String... propertyNames) {
@@ -189,13 +201,13 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         addFilter(FilterFactory.newFilter(getPropertyDefinitionRequired(propertyName)));
     }
 
-    public void addFilter(PropertyDefinition<T, ?> propertyDefinition) {
+    public void addFilter(JpaPropertyDefinition<DTO, ?> propertyDefinition) {
         Objects.requireNonNull(propertyDefinition, "Property definition cannot be null");
 
         addFilter(FilterFactory.newFilter(propertyDefinition));
     }
 
-    public void addFilter(JpaFilter<T> filter) {
+    public void addFilter(JpaFilter<ENTITY> filter) {
         Objects.requireNonNull(filter, "Filter cannot be null");
         Validate.isTrue(!MoreLists.contains(filters, filter), "Filter already added");
 
@@ -211,7 +223,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         setDataProviderFilter();
     }
 
-    private void addFilterListener(JpaFilter<T> filter) {
+    private void addFilterListener(JpaFilter<ENTITY> filter) {
         filter.addValueChangeListener(() -> {
             if (!clearingFilters) {
                 setDataProviderFilter();
@@ -219,18 +231,22 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         });
     }
 
-    private void addFilterComponent(JpaFilter<T> filter) {
-        ensureFilterRow().getCell(getColumnByKey(filter.getProperty())).setComponent(filter.getComponent());
+    private void addFilterComponent(JpaFilter<ENTITY> filter) {
+        var column = getColumnByKey(filter.getProperty());
+        var component = filter.getComponent();
+
+        ensureFilterRow().getCell(column)
+                .setComponent(component);
     }
 
-    public void addContextMenuItem(String text, Consumer<T> onClick) {
+    public void addContextMenuItem(String text, Consumer<DTO> onClick) {
         Validate.notBlank(text, "Text cannot be blank");
         Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
 
         ensureContextMenu().addItem(text, e -> e.getItem().ifPresent(onClick));
     }
 
-    public void addConfirmedContextMenuItem(String text, Consumer<T> onClick) {
+    public void addConfirmedContextMenuItem(String text, Consumer<DTO> onClick) {
         Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
 
         addContextMenuItem(text, e -> Dialogs.confirm(
@@ -247,7 +263,7 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         return filterRow;
     }
 
-    private GridContextMenu<T> ensureContextMenu() {
+    private GridContextMenu<DTO> ensureContextMenu() {
         if (contextMenu == null) {
             contextMenu = addContextMenu();
         }
@@ -263,11 +279,11 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
         var excludedPropertiesList = MoreArrays.toList(excludedProperties);
         addContextMenuItem(
                 "Edit",
-                v -> new JpaSaveCorePropertiesDialog<>(v, beanType, repository, excludedPropertiesList)
+                v -> new JpaSaveCorePropertiesDialog<>(v, beanType, service, excludedPropertiesList)
                         .setSaveListener(this::refreshItem)
                         .open()
         );
-        addItemDoubleClickListener(v -> new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, repository, excludedPropertiesList)
+        addItemDoubleClickListener(v -> new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, service, excludedPropertiesList)
                 .setSaveListener(this::refreshItem)
                 .open()
         );
@@ -275,11 +291,11 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
             var operation = Operation.builder()
                     .name("Deleting entity")
                     .description(String.format(
-                            "Entity of type [%s] with ID [%s]",
-                            BeanUtils.getDisplayName(beanType),
-                            BeanUtils.getFieldValue(e, idField)
+                            "Entity with DTO type [%s] with ID [%s]",
+                            MoreBeans.getDisplayName(beanType),
+                            idPropertyDefinition.getGetter().apply(e)
                     ))
-                    .callable(OperationCallable.ofRunnable(() -> repository.delete(e)))
+                    .callable(OperationCallable.ofRunnable(() -> service.delete(e)))
                     .onSuccess(_ -> refreshAll())
                     .type(OperationType.NON_BLOCKING)
                     .build();
@@ -293,54 +309,68 @@ public class JpaGrid<T, R extends JpaRepository<T, ?> & JpaSpecificationExecutor
                 .build();
     }
 
-    private PropertyDefinition<T, ?> getPropertyDefinitionRequired(String property) {
-        return Objects.requireNonNull(getPropertySet()).getProperty(property)
-                .orElseThrow();
+    private JpaPropertyDefinition<DTO, ?> getPropertyDefinitionRequired(String property) {
+        return JpaPropertyCache.findPropertyByName(beanType, property)
+                .orElseThrow(() -> new NoSuchElementException(String.format("Property [%s] not found", property)));
     }
 
     private void setDataProviderFilter() {
         filterDataProvider.setFilter(CombinedFilter.of(filters));
     }
 
-    private ConfigurableFilterDataProvider<T, Void, CombinedFilter<T>> newDataProvider() {
-        return new CallbackDataProvider<>(this::fetch, this::count, item -> BeanUtils.getFieldValue(item, idField))
+    private ConfigurableFilterDataProvider<DTO, Void, CombinedFilter<ENTITY>> newDataProvider() {
+        return new CallbackDataProvider<>(this::fetch, this::count, item -> idPropertyDefinition.getGetter().apply(item))
                 .withConfigurableFilter();
     }
 
-    private Stream<T> fetch(Query<T, CombinedFilter<T>> query) {
+    private Stream<DTO> fetch(Query<DTO, CombinedFilter<ENTITY>> query) {
         var specification = toSpecification(query);
         var pageRequest = PageRequest.of(query.getPage(), query.getPageSize(), toSort(query));
 
-        return repository.findAll(specification, pageRequest).stream();
+        return service.findAll(specification, pageRequest).stream();
     }
 
-    private int count(Query<T, CombinedFilter<T>> query) {
+    private int count(Query<DTO, CombinedFilter<ENTITY>> query) {
         var specification = toSpecification(query);
 
-        return Math.toIntExact(repository.count(specification));
+        return Math.toIntExact(service.count(specification));
     }
 
-    private Specification<T> toSpecification(Query<T, CombinedFilter<T>> query) {
-        return query.getFilter().orElse(CombinedFilter.empty()).specification()
+    private Specification<ENTITY> toSpecification(Query<DTO, CombinedFilter<ENTITY>> query) {
+        return query.getFilter()
+                .orElse(CombinedFilter.empty())
+                .specification()
                 .and(defaultSpecification);
     }
 
-    private Sort toSort(Query<T, CombinedFilter<T>> query) {
+    private Sort toSort(Query<DTO, CombinedFilter<ENTITY>> query) {
         var sort = VaadinSpringDataHelpers.toSpringDataSort(query);
 
         return sort.isSorted()
                 ? sort
-                : Sort.by(Sort.Direction.DESC, idField.getName());
+                : Sort.by(defaultSortDirection, StringUtils.firstNonBlank(defaultSortProperty, idPropertyDefinition.getAttributeName()));
     }
 
-    private static String propertyNameToHumanFriendly(String propertyName) {
-        Objects.requireNonNull(propertyName, "Property name cannot be null");
+    private static <DTO, ENTITY, ID> JpaGridConfiguration<DTO, ENTITY, ID> newJpaGridGenericConfiguration(Class<DTO> beanType) {
+        Objects.requireNonNull(beanType, "Bean type cannot be null");
+        var jpaDtoConfiguration = JpaDtoConfiguration.ofBeanType(beanType);
 
-        var parts = propertyName.split("\\.");
+        @SuppressWarnings("unchecked")
+        var repository = (EnhancedJpaRepository<ENTITY, ID>) SpringContext.getBeanWhen(
+                EnhancedJpaRepository.class,
+                r -> Objects.equals(jpaDtoConfiguration.entityBeanType(), r.getBeanType())
+        );
+        @SuppressWarnings("unchecked")
+        var mapper = (JpaDtoMapper<DTO, ENTITY>) SpringContext.getBeanWhen(
+                JpaDtoMapper.class,
+                m -> Objects.equals(beanType, m.getBeanType())
+        );
+        var service = new SimpleJpaDtoService<>(repository, mapper, beanType);
 
-        return Arrays.stream(parts)
-                .map(SharedUtil::camelCaseToHumanFriendly)
-                .collect(Collectors.joining(StringUtils.SPACE));
+        return JpaGridConfiguration.<DTO, ENTITY, ID>builder()
+                .service(service)
+                .beanType(beanType)
+                .build();
     }
 
 }

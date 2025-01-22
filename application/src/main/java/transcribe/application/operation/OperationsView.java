@@ -8,21 +8,18 @@ import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.main.MainLayout;
-import transcribe.domain.operation.data.OperationEntity;
-import transcribe.domain.operation.data.OperationRepository;
 
 @PageTitle("Operations")
 @Route(value = "operations", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class OperationsView extends Composite<VerticalLayout> {
 
-    public OperationsView(OperationRepository repository) {
-        var grid = new JpaGrid<>(OperationEntity.class, repository);
-
+    public OperationsView() {
+        var grid = new JpaGrid<>(OperationJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
         grid.addAllFilters();
-        grid.addCrudActionsExcluding("durationSeconds");
+        grid.addCrudActions();
 
         getContent().addAndExpand(new JpaGridControls<>(grid));
     }

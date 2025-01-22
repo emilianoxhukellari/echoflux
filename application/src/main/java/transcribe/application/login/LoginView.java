@@ -24,7 +24,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
         var i18n = LoginI18n.createDefault();
         i18n.setHeader(new LoginI18n.Header());
-        i18n.getHeader().setTitle("transcribee.");
+        i18n.getHeader().setTitle("Transcribe");
         i18n.setAdditionalInformation("If you have any issues logging in, please contact the administrator.");
         setI18n(i18n);
 

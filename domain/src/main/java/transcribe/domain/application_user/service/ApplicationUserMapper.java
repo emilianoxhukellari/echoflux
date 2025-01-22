@@ -19,12 +19,10 @@ public interface ApplicationUserMapper {
     ApplicationUserEntity toEntity(CreateApplicationUserCommand command, String hashedPassword);
 
     @Mapping(target = "id", ignore = true)
-    ApplicationUserEntity asEntity(@MappingTarget ApplicationUserEntity entity, UpdateApplicationUserCommand command);
+    ApplicationUserEntity patch(@MappingTarget ApplicationUserEntity entity, UpdateApplicationUserCommand command);
 
     @Mapping(target = "password", source = "hashedPassword")
     @Mapping(target = "id", ignore = true)
-    ApplicationUserEntity asEntity(@MappingTarget ApplicationUserEntity entity, String hashedPassword);
-
-    UpdateApplicationUserCommand toUpdateCommand(ApplicationUserEntity entity);
+    ApplicationUserEntity patch(@MappingTarget ApplicationUserEntity entity, String hashedPassword);
 
 }

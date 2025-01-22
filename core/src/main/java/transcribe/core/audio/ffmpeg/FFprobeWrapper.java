@@ -6,6 +6,10 @@ import net.bramp.ffmpeg.FFprobe;
 import org.springframework.stereotype.Component;
 import transcribe.core.properties.FFmpegProperties;
 
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Objects;
+
 @Component
 @Slf4j
 public class FFprobeWrapper {
@@ -19,6 +23,16 @@ public class FFprobeWrapper {
 
     public FFprobe ffprobe() {
         return fFprobe;
+    }
+
+    @SneakyThrows
+    public Duration getDuration(Path audio) {
+        Objects.requireNonNull(audio, "audio is required");
+
+        var seconds = ffprobe().probe(audio.toAbsolutePath().toString()).format.duration;
+        var millis = (long) (seconds * 1000);
+
+        return Duration.ofMillis(millis);
     }
 
     @SneakyThrows

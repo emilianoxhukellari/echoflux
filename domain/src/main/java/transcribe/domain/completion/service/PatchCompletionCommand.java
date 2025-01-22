@@ -3,13 +3,15 @@ package transcribe.domain.completion.service;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import transcribe.core.core.constraint.float_range.FloatRange;
+import lombok.experimental.Accessors;
+import transcribe.core.core.validate.constraint.double_range.DoubleRange;
 import transcribe.domain.completion.data.CompletionStatus;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Accessors(chain = true)
 public class PatchCompletionCommand {
 
     @NotNull
@@ -22,18 +24,18 @@ public class PatchCompletionCommand {
     private String output;
 
     @Min(0)
-    private Integer inputTokens;
+    private Long inputTokens;
 
     @Min(0)
-    private Integer outputTokens;
+    private Long outputTokens;
 
     private String model;
 
-    @FloatRange(min = 0.1f, max = 2.0f)
-    private Float temperature;
+    @DoubleRange(min = 0.1d, max = 2.0d)
+    private Double temperature;
 
-    @FloatRange(min = 0.1f, max = 1.0f)
-    private Float topP;
+    @DoubleRange(min = 0.1d, max = 1.0d)
+    private Double topP;
 
     @Min(0)
     @With

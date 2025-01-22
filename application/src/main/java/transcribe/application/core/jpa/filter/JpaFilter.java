@@ -6,18 +6,21 @@ import lombok.Getter;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
 
-public abstract class JpaFilter<T> {
+public abstract class JpaFilter<ENTITY> {
 
+    @Getter
+    protected final String attribute;
     @Getter
     protected final String property;
     protected final boolean asCollection;
 
-    public JpaFilter(String property, boolean ofCollection) {
+    public JpaFilter(String attribute, String property, boolean ofCollection) {
+        this.attribute = Validate.notBlank(attribute);
         this.property = Validate.notBlank(property);
         this.asCollection = ofCollection;
     }
 
-    public abstract Specification<T> getSpecification();
+    public abstract Specification<ENTITY> getSpecification();
 
     public abstract Component getComponent();
 

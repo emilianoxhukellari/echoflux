@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import transcribe.domain.audit.data.AuditEntity;
+import transcribe.domain.audit.data.BaseEntity;
 
 @Entity
 @Table(name = "settings")
@@ -25,7 +25,7 @@ import transcribe.domain.audit.data.AuditEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class SettingsEntity extends AuditEntity {
+public class SettingsEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

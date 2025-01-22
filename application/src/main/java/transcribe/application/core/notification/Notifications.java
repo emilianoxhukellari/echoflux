@@ -13,6 +13,10 @@ public final class Notifications {
         newNotification(message, position, durationMillis, NotificationVariant.LUMO_SUCCESS);
     }
 
+    public static void error(String message, Notification.Position position, int durationMillis) {
+        newNotification(message, position, durationMillis, NotificationVariant.LUMO_ERROR);
+    }
+
     public static void newNotification(String message,
                                        Notification.Position position,
                                        int durationMillis,

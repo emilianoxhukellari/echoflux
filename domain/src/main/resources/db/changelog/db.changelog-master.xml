@@ -10,29 +10,31 @@
             create table application_user
             (
                 id         bigserial primary key,
-                username   varchar(255) not null unique,
-                name       varchar(255) not null,
-                password   varchar(255) not null,
-                enabled    boolean      not null default true,
+                username   text    not null unique,
+                name       text    not null,
+                password   text    not null,
+                enabled    boolean not null default true,
 
+                version    integer,
                 created_at timestamp,
-                created_by varchar(255),
+                created_by text,
                 updated_at timestamp,
-                updated_by varchar(255)
+                updated_by text
             );
 
             create table application_user_role
             (
                 id                  bigserial primary key,
-                application_user_id bigint       not null references application_user (id),
-                role                varchar(255) not null,
+                application_user_id bigint not null references application_user (id),
+                role                text   not null,
 
+                version             integer,
                 created_at          timestamp,
-                created_by          varchar(255),
+                created_by          text,
                 updated_at          timestamp,
-                updated_by          varchar(255)
+                updated_by          text
             );
-
+            create index application_user_role_application_user_id_index on application_user_role (application_user_id);
 
         </sql>
     </changeSet>
@@ -62,42 +64,19 @@
             create table operation
             (
                 id          bigserial primary key,
-                name        varchar(255) not null,
-                type        varchar(255) not null,
-                status      varchar(255) not null,
+                name        text      not null,
+                type        text      not null,
+                status      text      not null,
                 error       text,
-                started_at  timestamp    not null,
+                started_at  timestamp not null,
                 ended_at    timestamp,
                 description text,
 
+                version     integer,
                 created_at  timestamp,
-                created_by  varchar(255),
+                created_by  text,
                 updated_at  timestamp,
-                updated_by  varchar(255)
-            );
-        </sql>
-    </changeSet>
-
-    <changeSet id="add_completion_table" author="emiliano">
-        <sql>
-            create table completion
-            (
-                id              bigserial primary key,
-                input           text         not null,
-                output          text,
-                input_tokens    integer,
-                output_tokens   integer,
-                model           varchar(255),
-                temperature     real,
-                top_p           real,
-                status          varchar(255) not null,
-                duration_millis bigint,
-                error           text,
-
-                created_at      timestamp,
-                created_by      varchar(255),
-                updated_at      timestamp,
-                updated_by      varchar(255)
+                updated_by  text
             );
         </sql>
     </changeSet>
@@ -107,14 +86,13 @@
             create table transcription
             (
                 id                         bigserial primary key,
-                status                     varchar(255)                            not null,
-                source_uri                 varchar(1024)                           not null,
-                cloud_uri                  varchar(1024),
-                language                   varchar(255)                            not null,
-                name                       varchar(1024)                           not null,
+                status                     text                                    not null,
+                source_uri                 text                                    not null,
+                cloud_uri                  text,
+                language                   text                                    not null,
+                name                       text                                    not null,
                 application_user_id        bigint references application_user (id) not null,
                 enhanced                   boolean                                 not null,
-                completion_id              bigint references completion (id),
                 length_millis              bigint,
                 download_duration_millis   bigint,
                 process_duration_millis    bigint,
@@ -122,11 +100,42 @@
                 transcribe_progress        integer,
                 error                      text,
 
+                version                    integer,
                 created_at                 timestamp,
-                created_by                 varchar(255),
+                created_by                 text,
                 updated_at                 timestamp,
-                updated_by                 varchar(255)
+                updated_by                 text
             );
+
+            create index transcription_application_user_id_index on transcription (application_user_id);
+
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_completion_table" author="emiliano">
+        <sql>
+            create table completion
+            (
+                id               bigserial primary key,
+                transcription_id bigint references transcription (id) not null,
+                input            text                                 not null,
+                output           text,
+                input_tokens     integer,
+                output_tokens    integer,
+                model            text,
+                temperature      double precision,
+                top_p            double precision,
+                status           text                                 not null,
+                duration_millis  bigint,
+                error            text,
+
+                version          integer,
+                created_at       timestamp,
+                created_by       text,
+                updated_at       timestamp,
+                updated_by       text
+            );
+            create index completion_transcription_id_index on completion (transcription_id);
         </sql>
     </changeSet>
 
@@ -139,11 +148,13 @@
                 start_offset_millis bigint                               not null,
                 end_offset_millis   bigint                               not null,
                 sequence            integer                              not null,
+                end_of_partition    boolean                              not null,
 
+                version             integer,
                 created_at          timestamp,
-                created_by          varchar(255),
+                created_by          text,
                 updated_at          timestamp,
-                updated_by          varchar(255),
+                updated_by          text,
 
                 unique (transcription_id, sequence)
             );
@@ -159,13 +170,14 @@
                 id                 bigserial primary key,
                 transcript_part_id bigint references transcript_part (id) not null,
                 content            text                                   not null,
-                version            integer                                not null,
-                type               varchar(255)                           not null,
+                version2            integer                                not null,
+                type               text                                   not null,
 
+                version            integer,
                 created_at         timestamp,
-                created_by         varchar(255),
+                created_by         text,
                 updated_at         timestamp,
-                updated_by         varchar(255),
+                updated_by         text,
 
                 unique (transcript_part_id, version)
             );
@@ -181,14 +193,15 @@
             create table settings
             (
                 id         bigserial primary key,
-                key        varchar(255) not null unique,
-                name       varchar(255) not null,
-                value      jsonb        not null,
+                key        text  not null unique,
+                name       text  not null,
+                value      jsonb not null,
 
+                version    integer,
                 created_at timestamp,
-                created_by varchar(255),
+                created_by text,
                 updated_at timestamp,
-                updated_by varchar(255)
+                updated_by text
             );
             create index settings_key_index on settings (key);
         </sql>
@@ -199,14 +212,63 @@
             create table template
             (
                 id         bigserial primary key,
-                name       varchar(255) not null unique,
-                content    text         not null,
+                name       text not null unique,
+                content    text not null,
 
+                version    integer,
                 created_at timestamp,
-                created_by varchar(255),
+                created_by text,
                 updated_at timestamp,
-                updated_by varchar(255)
+                updated_by text
             );
+            create index template_name_index on template (name);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcription_speaker_table" author="emiliano">
+        <sql>
+            create table transcription_speaker
+            (
+                id               bigserial primary key,
+                name             text                                 not null,
+                transcription_id bigint references transcription (id) not null,
+
+                version          integer,
+                created_at       timestamp,
+                created_by       text,
+                updated_at       timestamp,
+                updated_by       text,
+
+                unique (transcription_id, name)
+            );
+            create index transcription_speaker_transcription_id_index on transcription_speaker (transcription_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcription_word_table" author="emiliano">
+        <sql>
+            create table transcription_word
+            (
+                id                       bigserial primary key,
+                transcription_id         bigint references transcription (id)         not null,
+                transcription_speaker_id bigint references transcription_speaker (id) not null,
+                sequence                 integer                                      not null,
+                start_offset_millis      bigint                                       not null,
+                end_offset_millis        bigint                                       not null,
+                content                  text                                         not null,
+
+                version                  integer,
+                created_at               timestamp,
+                created_by               text,
+                updated_at               timestamp,
+                updated_by               text,
+
+                unique (transcription_id, sequence)
+            );
+            alter sequence transcription_word_id_seq increment by 30;
+            create index transcription_word_transcription_id_index on transcription_word (transcription_id);
+            create index transcription_word_transcription_speaker_id_index on transcription_word (transcription_speaker_id);
+            create index transcription_word_sequence_index on transcription_word (sequence);
         </sql>
     </changeSet>
 

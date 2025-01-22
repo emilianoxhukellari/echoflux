@@ -6,6 +6,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public final class MoreArrays {
@@ -27,6 +28,13 @@ public final class MoreArrays {
         return Arrays.stream(array)
                 .map(mapper)
                 .toArray(size -> (R[]) Array.newInstance(array.getClass().getComponentType(), size));
+    }
+
+    public static <T> T getFirst(@Nullable T[] array) {
+        return Optional.ofNullable(array)
+                .filter(a -> a.length > 0)
+                .map(a -> a[0])
+                .orElse(null);
     }
 
 }

@@ -5,17 +5,17 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
-public record CombinedFilter<T>(List<JpaFilter<T>> filters) {
+public record CombinedFilter<ENTITY>(List<JpaFilter<ENTITY>> filters) {
 
-    public static <T> CombinedFilter<T> empty() {
+    public static <ENTITY> CombinedFilter<ENTITY> empty() {
         return new CombinedFilter<>(List.of());
     }
 
-    public static <T> CombinedFilter<T> of(List<JpaFilter<T>> filters) {
+    public static <ENTITY> CombinedFilter<ENTITY> of(List<JpaFilter<ENTITY>> filters) {
         return new CombinedFilter<>(filters);
     }
 
-    public Specification<T> specification() {
+    public Specification<ENTITY> specification() {
         return ListUtils.emptyIfNull(filters).stream()
                 .map(JpaFilter::getSpecification)
                 .reduce(Specification::and)

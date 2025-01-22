@@ -1,14 +1,16 @@
 package transcribe.domain.application_user.data;
 
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import transcribe.domain.core.repository.EnhancedJpaRepository;
 
 import java.util.Optional;
 
-public interface ApplicationUserRepository
-        extends JpaRepository<ApplicationUserEntity, Long>, JpaSpecificationExecutor<ApplicationUserEntity> {
+public interface ApplicationUserRepository extends EnhancedJpaRepository<ApplicationUserEntity, Long> {
 
     Optional<ApplicationUserEntity> findByUsername(String username);
+
+    @Override
+    default Class<ApplicationUserEntity> getBeanType() {
+        return ApplicationUserEntity.class;
+    }
 
 }

@@ -8,14 +8,15 @@ import org.springframework.stereotype.Component;
 import transcribe.core.audio.ffmpeg.FFmpegWrapper;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
-import transcribe.core.audio.transcoder.temp_file.TranscoderTempDirectory;
+import transcribe.core.audio.transcoder.temp_file.AudioTranscoderTempDirectory;
 import transcribe.core.core.log.LoggedMethodExecution;
+import transcribe.core.core.temp_file.TempFileNameGenerator;
 
 import java.nio.file.Path;
 
 @Component
 @RequiredArgsConstructor
-public class AudioTranscoderImpl implements AudioTranscoder {
+public class AudioTranscoderImpl implements AudioTranscoder, TempFileNameGenerator {
 
     private final FFmpegWrapper fFmpegWrapper;
 
@@ -23,7 +24,7 @@ public class AudioTranscoderImpl implements AudioTranscoder {
     @LoggedMethodExecution
     public Path transcode(Path source, TranscodeParameters parameters) {
         var fileName = String.format("%s.%s", newFileName(), parameters.getAudioContainer().getContainer());
-        var outputPath = TranscoderTempDirectory.INSTANCE.locationPath().resolve(fileName).toAbsolutePath();
+        var outputPath = AudioTranscoderTempDirectory.INSTANCE.locationPath().resolve(fileName).toAbsolutePath();
 
         var outputBuilder = new FFmpegOutputBuilder()
                 .setFilename(outputPath.toString())

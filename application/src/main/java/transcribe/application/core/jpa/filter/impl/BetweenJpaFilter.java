@@ -3,11 +3,12 @@ package transcribe.application.core.jpa.filter.impl;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
+import transcribe.application.core.jpa.filter.JpaFilterUtils;
 
-public abstract class BetweenJpaFilter<T, V extends Comparable<? super V>> extends JpaFilter<T> {
+public abstract class BetweenJpaFilter<ENTITY, V extends Comparable<? super V>> extends JpaFilter<ENTITY> {
 
-    public BetweenJpaFilter(String property, boolean asCollection) {
-        super(property, asCollection);
+    public BetweenJpaFilter(String attribute, String property, boolean asCollection) {
+        super(attribute, property, asCollection);
     }
 
     protected abstract V getFrom();
@@ -15,25 +16,25 @@ public abstract class BetweenJpaFilter<T, V extends Comparable<? super V>> exten
     protected abstract V getTo();
 
     @Override
-    public Specification<T> getSpecification() {
-        Specification<T> fromSpecification = (root, _, criteriaBuilder) -> {
+    public Specification<ENTITY> getSpecification() {
+        Specification<ENTITY> fromSpecification = (root, _, criteriaBuilder) -> {
             if (getFrom() == null) {
                 return criteriaBuilder.conjunction();
             }
 
             return asCollection
-                    ? criteriaBuilder.greaterThanOrEqualTo(root.join(property, JoinType.LEFT), getFrom())
-                    : criteriaBuilder.greaterThanOrEqualTo(root.get(property), getFrom());
+                    ? criteriaBuilder.greaterThanOrEqualTo(root.join(attribute, JoinType.LEFT), getFrom())
+                    : criteriaBuilder.greaterThanOrEqualTo(JpaFilterUtils.get(root, attribute), getFrom());
         };
 
-        Specification<T> toSpecification = (root, _, criteriaBuilder) -> {
+        Specification<ENTITY> toSpecification = (root, _, criteriaBuilder) -> {
             if (getTo() == null) {
                 return criteriaBuilder.conjunction();
             }
 
             return asCollection
-                    ? criteriaBuilder.lessThanOrEqualTo(root.join(property, JoinType.LEFT), getTo())
-                    : criteriaBuilder.lessThanOrEqualTo(root.get(property), getTo());
+                    ? criteriaBuilder.lessThanOrEqualTo(root.join(attribute, JoinType.LEFT), getTo())
+                    : criteriaBuilder.lessThanOrEqualTo(JpaFilterUtils.get(root, attribute), getTo());
         };
 
         return fromSpecification.and(toSpecification);

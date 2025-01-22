@@ -9,10 +9,11 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
+import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.no_op.NoOp;
-import transcribe.core.core.bean.BeanUtils;
+import transcribe.core.core.bean.utils.MoreBeans;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.Objects;
@@ -22,7 +23,7 @@ import java.util.function.Function;
 public abstract class JpaSaveDialog<T> extends EnhancedDialog {
 
     protected final OperationRunner operationRunner = SpringContext.getBean(OperationRunner.class);
-    protected final Class<T> entityBeanType;
+    protected final Class<T> beanType;
 
     @Setter
     @Accessors(chain = true)
@@ -32,12 +33,13 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
     @Accessors(chain = true)
     protected Function<Operation<T>, Operation<T>> operationCustomizer = Function.identity();
 
-    public JpaSaveDialog(Class<T> entityBeanType) {
-        this.entityBeanType = Objects.requireNonNull(entityBeanType, "Entity bean type must not be null");
+    public JpaSaveDialog(Class<T> beanType) {
+        this.beanType = Objects.requireNonNull(beanType, "Bean bean type must not be null");
 
-        setHeaderTitle(String.format("Save %s", BeanUtils.getDisplayName(entityBeanType)));
+        setHeaderTitle(String.format("Save %s", MoreBeans.getDisplayName(beanType)));
         getFooter().add(newFooterContent());
         setWidth("600px");
+        setMaxWidth("95vw");
     }
 
     protected abstract T save();
@@ -57,18 +59,15 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
         var button = new Button("Save", _ -> {
             if (validate()) {
                 var operation = Operation.<T>builder()
-                        .name("Saving entity")
-                        .description(String.format("Entity of type [%s]", BeanUtils.getDisplayName(entityBeanType)))
+                        .name("Saving [%s]".formatted(MoreBeans.getDisplayName(beanType)))
                         .beforeCall(this::close)
                         .callable(this::save)
                         .onSuccess(saveListener)
                         .type(OperationType.NON_BLOCKING)
+                        .errorImportance(OperationErrorImportance.HIGH)
                         .build();
 
-                operationRunner.run(
-                        operationCustomizer.apply(operation),
-                        UI.getCurrent()
-                );
+                operationRunner.run(operationCustomizer.apply(operation), UI.getCurrent());
             }
         });
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

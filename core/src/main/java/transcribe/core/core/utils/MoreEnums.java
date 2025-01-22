@@ -3,7 +3,7 @@ package transcribe.core.core.utils;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
-import transcribe.core.core.bean.BeanUtils;
+import transcribe.core.core.bean.utils.MoreBeans;
 import transcribe.core.core.display_name.DisplayName;
 
 public final class MoreEnums {
@@ -13,7 +13,7 @@ public final class MoreEnums {
             return null;
         }
 
-        var displayNameAnnotation = BeanUtils.findAnnotationNested(
+        var displayNameAnnotation = MoreBeans.findAnnotationNested(
                 enumValue.getDeclaringClass(),
                 enumValue.name(),
                 DisplayName.class

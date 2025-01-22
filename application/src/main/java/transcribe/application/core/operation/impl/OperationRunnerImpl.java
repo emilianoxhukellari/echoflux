@@ -2,28 +2,27 @@ package transcribe.application.core.operation.impl;
 
 import com.vaadin.flow.component.UI;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Component;
 import transcribe.application.core.dialog.Dialogs;
+import transcribe.application.core.error.MoreErrors;
 import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
+import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.ui.UiUtils;
-import transcribe.core.core.qualifier.Qualifiers;
+import transcribe.core.core.executor.MoreExecutors;
 import transcribe.domain.operation.service.OperationService;
 
 import java.util.concurrent.CompletableFuture;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OperationRunnerImpl implements OperationRunner {
 
     private final OperationService operationService;
-
-    @Qualifier(Qualifiers.DELEGATING_SECURITY_VIRTUAL_THREAD_EXECUTOR)
-    private final DelegatingSecurityContextExecutorService executor;
 
     @Override
     public <T> void run(Operation<T> operation, UI ui) {
@@ -43,7 +42,7 @@ public class OperationRunnerImpl implements OperationRunner {
         CompletableFuture.runAsync(() -> UiUtils.safeAccess(ui, () -> {
                     progress.open();
                     operation.getBeforeCall().run();
-                }), executor)
+                }), MoreExecutors.virtualThreadExecutor())
                 .thenApply(_ -> operation.getCallable().call())
                 .thenAccept(result -> {
                     UiUtils.safeAccess(ui, () -> {
@@ -64,11 +63,30 @@ public class OperationRunnerImpl implements OperationRunner {
 
                     operationService.updateSuccess(operationEntity.getId());
                 }).exceptionally(e -> {
+                    if (operation.isOnErrorLog()) {
+                        log.error("Operation failed: {}", operation.getName(), e);
+                    }
                     UiUtils.safeAccess(ui, () -> {
                         progress.close();
                         operation.getOnError().accept(e);
                         if (operation.isOnErrorNotify()) {
-                            Dialogs.error(e);
+                            if (OperationErrorImportance.HIGH.equals(operation.getErrorImportance())) {
+                                if (StringUtils.isNotBlank(operation.getCustomErrorMessage())) {
+                                    Dialogs.error(operation.getCustomErrorMessage());
+                                } else {
+                                    Dialogs.error(e);
+                                }
+                            } else {
+                                var message = StringUtils.defaultIfBlank(
+                                        operation.getCustomErrorMessage(),
+                                        MoreErrors.resolveErrorMessage(e)
+                                );
+                                Notifications.error(
+                                        message,
+                                        operation.getErrorImportance().getNotificationPosition(),
+                                        operation.getErrorImportance().getDurationMillis()
+                                );
+                            }
                         }
                     });
 

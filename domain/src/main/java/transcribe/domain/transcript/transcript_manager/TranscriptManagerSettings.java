@@ -16,6 +16,6 @@ public class TranscriptManagerSettings {
 
     @Builder.Default
     @NotNull
-    private Integer maxWordsPerPart = 30;
+    private Integer maxWordsPerPart = 40;
 
 }

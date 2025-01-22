@@ -2,11 +2,12 @@ package transcribe.core.completions;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.core.core.constraint.float_range.FloatRange;
+import transcribe.core.core.validate.constraint.double_range.DoubleRange;
 
 @Data
 @Builder
@@ -17,18 +18,22 @@ public class CompletionResult {
     private String output;
 
     @Min(0)
-    private int inputTokens;
+    @NotNull
+    private Long inputTokens;
 
     @Min(0)
-    private int outputTokens;
+    @NotNull
+    private Long outputTokens;
 
     @NotBlank
     private String model;
 
-    @FloatRange(min = 0.1f, max = 2.0f)
-    private float temperature;
+    @DoubleRange(min = 0.1d, max = 2.0d)
+    @NotNull
+    private Double temperature;
 
-    @FloatRange(min = 0.1f, max = 1.0f)
-    private float topP;
+    @DoubleRange(min = 0.1d, max = 1.0d)
+    @NotNull
+    private Double topP;
 
 }

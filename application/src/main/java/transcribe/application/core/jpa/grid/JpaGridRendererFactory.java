@@ -2,7 +2,6 @@ package transcribe.application.core.jpa.grid;
 
 import com.vaadin.flow.component.icon.AbstractIcon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
@@ -11,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import transcribe.application.core.icon.IconFactory;
+import transcribe.application.core.jpa.core.JpaPropertyDefinition;
 import transcribe.core.core.utils.MoreEnums;
 
 import java.time.LocalDateTime;
@@ -23,7 +23,7 @@ public class JpaGridRendererFactory {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.MEDIUM);
 
-    public static <T> LocalDateTimeRenderer<T> newLocalDateTimeRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+    public static <T> LocalDateTimeRenderer<T> newLocalDateTimeRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
         Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(LocalDateTime.class.isAssignableFrom(propertyDefinition.getType()),
                 "Property definition must be of assignable to LocalDateTime");
@@ -34,7 +34,7 @@ public class JpaGridRendererFactory {
         );
     }
 
-    public static <T> ComponentRenderer<AbstractIcon<?>, T> newBooleanRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+    public static <T> ComponentRenderer<AbstractIcon<?>, T> newBooleanRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
         Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(Boolean.class.isAssignableFrom(propertyDefinition.getType()),
                 "Property definition must be of assignable to Boolean");
@@ -53,7 +53,7 @@ public class JpaGridRendererFactory {
         );
     }
 
-    public static <T> TextRenderer<T> newCollectionRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+    public static <T> TextRenderer<T> newCollectionRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
         Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(Collection.class.isAssignableFrom(propertyDefinition.getType()),
                 "Property definition must be of assignable to Collection");
@@ -68,7 +68,7 @@ public class JpaGridRendererFactory {
         });
     }
 
-    public static <T> TextRenderer<T> newEnumRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+    public static <T> TextRenderer<T> newEnumRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
         Objects.requireNonNull(propertyDefinition, "Property definition is required");
         Validate.isTrue(Enum.class.isAssignableFrom(propertyDefinition.getType()),
                 "Property definition must be of assignable to Enum");
