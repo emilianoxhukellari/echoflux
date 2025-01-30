@@ -34,7 +34,6 @@ public class JpaSaveCorePropertiesDialog<DTO> extends JpaSaveDialog<DTO> {
 
     @Override
     protected DTO save() {
-        //todo: fix bug where entityBeanType is updated in UI
         return service.save(binder.getBean());
     }
 

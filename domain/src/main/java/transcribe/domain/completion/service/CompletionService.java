@@ -8,7 +8,7 @@ import transcribe.domain.completion.data.CompletionEntity;
 @Validated
 public interface CompletionService {
 
-    CompletionEntity get(@NotNull Long completionId);
+    CompletionEntity getById(@NotNull Long completionId);
 
     CompletionEntity create(@Valid @NotNull CreateCompletionCommand command);
 

@@ -1,5 +1,6 @@
 package transcribe.core.core.iterable;
 
+import jakarta.annotation.Nullable;
 import lombok.NonNull;
 
 import java.util.Iterator;
@@ -38,12 +39,14 @@ public class DoublyLinkedIterable<T> implements Iterable<DoublyLinkedNode<T>> {
         tail = newNode;
     }
 
+    @Nullable
     public T getFirst() {
         return head != null
                 ? head.getValue()
                 : null;
     }
 
+    @Nullable
     public T getLast() {
         return tail != null
                 ? tail.getValue()

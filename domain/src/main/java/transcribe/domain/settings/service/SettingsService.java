@@ -20,7 +20,7 @@ public interface SettingsService {
 
     void deleteAll(@NotNull Collection<@NotNull Long> idCollection);
 
-    SettingsEntity get(@NotBlank String key);
+    SettingsEntity getByKey(@NotBlank String key);
 
     List<SettingsEntity> getAllByKeys(@NotNull Collection<@NotBlank String> keys);
 

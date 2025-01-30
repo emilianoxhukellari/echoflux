@@ -48,7 +48,7 @@ public class TranscriptionManagerImpl implements TranscriptionManager {
 
             var createCommand = CreateTranscriptionWordCommand.builder()
                     .transcriptionId(command.getTranscriptionId())
-                    .transcriptionSpeakerEntity(speakerEntity)
+                    .transcriptionSpeaker(speakerEntity)
                     .sequence(i)
                     .startOffsetMillis(word.getStartOffsetMillis())
                     .endOffsetMillis(word.getEndOffsetMillis())

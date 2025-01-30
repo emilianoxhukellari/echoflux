@@ -46,7 +46,7 @@ public class CompletionJpaDto {
 
     private Long durationMillis;
 
-    @Required
+    @BigText
     private String error;
 
     private Integer version;

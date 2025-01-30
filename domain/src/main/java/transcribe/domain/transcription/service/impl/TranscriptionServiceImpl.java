@@ -19,7 +19,7 @@ public class TranscriptionServiceImpl implements TranscriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public TranscriptionEntity get(Long id) {
+    public TranscriptionEntity getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Transcription not found"));
     }

@@ -61,7 +61,7 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
-    public SettingsEntity get(String key) {
+    public SettingsEntity getByKey(String key) {
         return repository.findByKey(key)
                 .orElseThrow();
     }

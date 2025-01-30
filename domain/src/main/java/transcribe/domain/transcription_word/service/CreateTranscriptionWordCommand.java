@@ -19,7 +19,7 @@ public class CreateTranscriptionWordCommand {
     private Long transcriptionId;
 
     @NotNull
-    private TranscriptionSpeakerEntity transcriptionSpeakerEntity;
+    private TranscriptionSpeakerEntity transcriptionSpeaker;
 
     @NotNull
     @Min(0)

@@ -24,7 +24,7 @@ public class TranscriptionWordServiceImpl implements TranscriptionWordService {
 
     @Override
     @Transactional(readOnly = true)
-    public TranscriptionWordEntity get(Long id) {
+    public TranscriptionWordEntity getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Transcription word not found"));
     }
@@ -48,7 +48,7 @@ public class TranscriptionWordServiceImpl implements TranscriptionWordService {
     @Override
     @Transactional
     public TranscriptionWordEntity patch(PatchTranscriptionWordCommand command) {
-        var entity = get(command.getId());
+        var entity = getById(command.getId());
         var patched = mapper.patch(entity, command);
 
         return repository.save(patched);

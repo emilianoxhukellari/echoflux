@@ -21,8 +21,8 @@ public class CompletionServiceImpl implements CompletionService {
 
     @Override
     @Transactional(readOnly = true)
-    public CompletionEntity get(Long completionId) {
-        return repository.findById(completionId)
+    public CompletionEntity getById(Long id) {
+        return repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Completion not found"));
     }
 

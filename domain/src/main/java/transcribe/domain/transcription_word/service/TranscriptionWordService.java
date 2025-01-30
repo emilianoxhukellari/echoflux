@@ -10,7 +10,7 @@ import java.util.List;
 @Validated
 public interface TranscriptionWordService {
 
-    TranscriptionWordEntity get(@NotNull Long id);
+    TranscriptionWordEntity getById(@NotNull Long id);
 
     TranscriptionWordEntity create(@Valid @NotNull CreateTranscriptionWordCommand command);
 

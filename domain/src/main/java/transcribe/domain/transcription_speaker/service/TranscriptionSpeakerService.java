@@ -8,7 +8,7 @@ import transcribe.domain.transcription_speaker.data.TranscriptionSpeakerEntity;
 @Validated
 public interface TranscriptionSpeakerService {
 
-    TranscriptionSpeakerEntity get(@NotNull Long id);
+    TranscriptionSpeakerEntity getById(@NotNull Long id);
 
     TranscriptionSpeakerEntity create(@Valid @NotNull CreateTranscriptionSpeakerCommand command);
 

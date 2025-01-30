@@ -25,7 +25,7 @@ public class SettingsLoaderImpl implements SettingsLoader {
                 "Settings annotation not found"
         );
         var key = Validate.notBlank(annotation.key(), "Settings annotation key is blank");
-        var entity = service.get(key);
+        var entity = service.getByKey(key);
 
         return mapper.toValue(entity.getValue(), type);
     }

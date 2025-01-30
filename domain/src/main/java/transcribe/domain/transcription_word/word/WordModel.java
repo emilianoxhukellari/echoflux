@@ -1,4 +1,5 @@
-package transcribe.core.transcribe.common;
+package transcribe.domain.transcription_word.word;
+
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -7,20 +8,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Accessors(chain = true)
-public class SpeechToTextWord {
+public class WordModel {
 
     @NotBlank
     private String content;
-
-    @NotBlank
-    private String speakerName;
 
     @Min(0)
     @NotNull
@@ -29,5 +25,9 @@ public class SpeechToTextWord {
     @Min(0)
     @NotNull
     private Long endOffsetMillis;
+
+    @Min(0)
+    @NotNull
+    private Integer sequence;
 
 }

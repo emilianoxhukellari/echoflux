@@ -55,7 +55,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     @Override
     @Transactional
     public SettingsEntity reset(String key) {
-        var entity = service.get(key);
+        var entity = service.getByKey(key);
 
         var command = PatchSettingsCommand.builder()
                 .id(entity.getId())

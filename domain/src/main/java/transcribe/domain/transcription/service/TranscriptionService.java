@@ -8,7 +8,7 @@ import transcribe.domain.transcription.data.TranscriptionEntity;
 @Validated
 public interface TranscriptionService {
 
-    TranscriptionEntity get(Long id);
+    TranscriptionEntity getById(Long id);
 
     TranscriptionEntity create(@Valid @NotNull CreateTranscriptionCommand command);
 

@@ -23,7 +23,7 @@ public class TranscriptionSpeakerServiceImpl implements TranscriptionSpeakerServ
 
     @Override
     @Transactional(readOnly = true)
-    public TranscriptionSpeakerEntity get(Long id) {
+    public TranscriptionSpeakerEntity getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Transcription speaker not found"));
     }
@@ -39,7 +39,7 @@ public class TranscriptionSpeakerServiceImpl implements TranscriptionSpeakerServ
     @Override
     @Transactional
     public TranscriptionSpeakerEntity rename(RenameTranscriptionSpeakerCommand command) {
-        var entity = get(command.getId());
+        var entity = getById(command.getId());
         entity.setName(command.getName());
 
         return repository.save(entity);
