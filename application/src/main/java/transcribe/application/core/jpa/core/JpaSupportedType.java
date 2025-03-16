@@ -40,7 +40,12 @@ public enum JpaSupportedType {
         return Arrays.stream(values())
                 .filter(t -> t.getType().isAssignableFrom(beanType))
                 .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("Unsupported jpa type: " + beanType));
+                .orElseThrow(() -> new NoSuchElementException("""
+                                Unsupported jpa type [%s]. If you intend to read the
+                                internal fields of this type, use @ParentProperty.
+                                """.formatted(beanType)
+                        )
+                );
 
     }
 

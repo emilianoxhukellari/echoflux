@@ -8,7 +8,7 @@ import transcribe.application.core.jpa.filter.impl.NumberJpaFilter;
 import transcribe.application.core.jpa.filter.impl.EnumJpaFilter;
 import transcribe.application.core.jpa.filter.impl.LocalDateJpaFilter;
 import transcribe.application.core.jpa.filter.impl.TextJpaFilter;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 
 import java.util.Objects;
 
@@ -27,12 +27,12 @@ public final class FilterFactory {
         );
     }
 
-    public static <DTO, ENTITY> JpaFilter<ENTITY> newFilter(String attributeName,
-                                                            String propertyName,
-                                                            String propertyTopLevelName,
-                                                            Class<?> propertyType,
-                                                            Class<?> propertyHolderType,
-                                                            boolean asCollection) {
+    public static <ENTITY> JpaFilter<ENTITY> newFilter(String attributeName,
+                                                       String propertyName,
+                                                       String propertyTopLevelName,
+                                                       Class<?> propertyType,
+                                                       Class<?> propertyHolderType,
+                                                       boolean asCollection) {
         Validate.notBlank(attributeName, "Attribute name is required");
         Objects.requireNonNull(propertyHolderType, "Property holder type is required");
         var supportedType = JpaSupportedType.ofBeanType(propertyType);

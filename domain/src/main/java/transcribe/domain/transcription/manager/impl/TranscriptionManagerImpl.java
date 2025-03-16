@@ -1,94 +1,106 @@
 package transcribe.domain.transcription.manager.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import transcribe.core.settings.SettingsLoader;
-import transcribe.domain.transcription.manager.SaveOriginalWordsCommand;
+import transcribe.core.core.validate.guard.Guard;
+import transcribe.core.word.common.Word;
+import transcribe.core.word.processor.SpeakerSegmentAssembler;
+import transcribe.core.word.processor.WordPatcher;
+import transcribe.domain.transcription.manager.ReplaceWordsCommand;
 import transcribe.domain.transcription.manager.TranscriptionManager;
-import transcribe.domain.transcription.manager.TranscriptionManagerSettings;
-import transcribe.domain.transcription_speaker.data.TranscriptionSpeakerEntity;
-import transcribe.domain.transcription_speaker.service.CreateTranscriptionSpeakerCommand;
-import transcribe.domain.transcription_speaker.service.TranscriptionSpeakerService;
-import transcribe.domain.transcription_word.data.TranscriptionWordEntity;
-import transcribe.domain.transcription_word.service.CreateTranscriptionWordCommand;
+import transcribe.domain.transcription.service.TranscriptionService;
+import transcribe.domain.transcription_word.data.SpeakerSegmentDto;
+import transcribe.domain.transcription_word.data.WordDto;
+import transcribe.domain.transcription_word.mapper.TranscriptionWordMapper;
 import transcribe.domain.transcription_word.service.TranscriptionWordService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
+@Slf4j
 public class TranscriptionManagerImpl implements TranscriptionManager {
 
+    private final TranscriptionService transcriptionService;
     private final TranscriptionWordService transcriptionWordService;
-    private final TranscriptionSpeakerService transcriptionSpeakerService;
-    private final SettingsLoader settingsLoader;
+    private final TranscriptionWordMapper transcriptionWordMapper;
+
+
+    @Override
+    public List<WordDto> getTranscriptionSpeakerWords(Long transcriptionId) {
+        return transcriptionWordService.findAllByTranscriptionId(transcriptionId);
+    }
+
+    @Override
+    public List<SpeakerSegmentDto> getTranscriptionSpeakerSegments(Long transcriptionId) {
+        var words = getTranscriptionSpeakerWords(transcriptionId);
+
+        return SpeakerSegmentAssembler.assembleAll(words, SpeakerSegmentDto::new);
+    }
 
     @Transactional
-    public List<TranscriptionWordEntity> saveOriginalWords(SaveOriginalWordsCommand command) {
-        var settings = settingsLoader.load(TranscriptionManagerSettings.class);
+    @Override
+    public void createWords(Long transcriptionId, List<Word> words) {
+        var transcriptionEntity = transcriptionService.getByIdFetchWords(transcriptionId);
+        Guard.empty(transcriptionEntity.getWords(), "words must be empty");
 
-        var emptySpeakerName = settings.getEmptySpeakerName();
-        var speakerNameToSpeakerEntity = new HashMap<String, TranscriptionSpeakerEntity>();
-        var createWordCommands = new ArrayList<CreateTranscriptionWordCommand>(command.getWords().size());
-        var speechToTextWords = command.getWords();
-
-        for (int i = 0; i < speechToTextWords.size(); i++) {
-            var word = speechToTextWords.get(i);
-
-            var speakerEntity = ensureSpeaker(
-                    word.getSpeakerName(),
-                    emptySpeakerName,
-                    command.getTranscriptionId(),
-                    speakerNameToSpeakerEntity
-            );
-
-            var createCommand = CreateTranscriptionWordCommand.builder()
-                    .transcriptionId(command.getTranscriptionId())
-                    .transcriptionSpeaker(speakerEntity)
-                    .sequence(i)
-                    .startOffsetMillis(word.getStartOffsetMillis())
-                    .endOffsetMillis(word.getEndOffsetMillis())
-                    .content(word.getContent())
-                    .build();
-
-            createWordCommands.add(createCommand);
-        }
-
-        return transcriptionWordService.createAll(createWordCommands);
+        var wordEntities = transcriptionWordMapper.toEntities(words);
+        transcriptionEntity.addWords(wordEntities);
     }
 
-    private TranscriptionSpeakerEntity ensureSpeaker(String speakerName,
-                                                     String emptySpeakerName,
-                                                     Long transcriptionId,
-                                                     HashMap<String, TranscriptionSpeakerEntity> cache) {
-        var name = StringUtils.isBlank(speakerName)
-                ? emptySpeakerName
-                : speakerName;
+    @Transactional
+    @Override
+    public void replaceAllWords(Long transcriptionId, String words) {
+        var transcriptionEntity = transcriptionService.getByIdFetchWords(transcriptionId);
+        var wordSize = transcriptionEntity.getWords().size();
 
-        return ensureSpeaker(name, transcriptionId, cache);
-    }
-
-    private TranscriptionSpeakerEntity ensureSpeaker(String speakerName,
-                                                     Long transcriptionId,
-                                                     HashMap<String, TranscriptionSpeakerEntity> cache) {
-        if (cache.containsKey(speakerName)) {
-            return cache.get(speakerName);
-        }
-
-        var speaker = transcriptionSpeakerService.create(
-                CreateTranscriptionSpeakerCommand.builder()
-                        .name(speakerName)
+        replaceWords(
+                ReplaceWordsCommand.builder()
                         .transcriptionId(transcriptionId)
+                        .fromSequence(0)
+                        .size(wordSize)
+                        .words(words)
                         .build()
         );
+    }
 
-        cache.put(speakerName, speaker);
+    @Transactional
+    @Override
+    public void replaceWords(ReplaceWordsCommand command) {
+        var transcriptionEntity = transcriptionService.getByIdFetchWords(command.getTranscriptionId());
+        var wordEntities = transcriptionEntity.getWords();
+        Guard.le(command.getFromSequence() + command.getSize(), wordEntities.size());
 
-        return speaker;
+        int toIndexTarget = command.getFromSequence() + command.getSize();
+        var targetWordEntities = wordEntities.subList(command.getFromSequence(), toIndexTarget);
+
+        var words = transcriptionWordMapper.toWords(targetWordEntities);
+        var patchedWords = WordPatcher.patchAll(words, command.getWords(), Word::new);
+
+        int toIndexPatch = command.getFromSequence() + patchedWords.size();
+        int fromIndex = command.getFromSequence();
+
+        while (fromIndex < toIndexPatch && fromIndex < toIndexTarget) {
+            var word = patchedWords.get(fromIndex - command.getFromSequence());
+            var wordEntity = targetWordEntities.get(fromIndex - command.getFromSequence());
+
+            wordEntity.setContent(word.getContent());
+            wordEntity.setSpeakerName(word.getSpeakerName());
+            wordEntity.setStartOffsetMillis(word.getStartOffsetMillis());
+            wordEntity.setEndOffsetMillis(word.getEndOffsetMillis());
+
+            fromIndex++;
+        }
+
+        if (fromIndex < toIndexTarget) {
+            transcriptionEntity.removeWords(fromIndex, toIndexTarget);
+        } else if (fromIndex < toIndexPatch) {
+            var entitiesToAdd = transcriptionWordMapper.toEntities(patchedWords.subList(fromIndex, toIndexPatch));
+            transcriptionEntity.addWords(fromIndex, entitiesToAdd);
+        }
     }
 
 }

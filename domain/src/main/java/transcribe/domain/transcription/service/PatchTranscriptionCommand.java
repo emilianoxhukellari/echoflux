@@ -1,6 +1,5 @@
 package transcribe.domain.transcription.service;
 
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -28,15 +27,6 @@ public class PatchTranscriptionCommand {
 
     @Min(0)
     private Long lengthMillis;
-
-    @Min(0)
-    private Long downloadDurationMillis;
-
-    @Min(0)
-    private Long processDurationMillis;
-
-    @Min(0)
-    private Long transcribeDurationMillis;
 
     private String error;
 

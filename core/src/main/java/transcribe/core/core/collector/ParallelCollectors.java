@@ -21,6 +21,10 @@ public final class ParallelCollectors {
         return toList(suppliers -> MoreFunctions.getAllParallel(suppliers, concurrency));
     }
 
+    public static <T> Collector<Supplier<T>, ?, TimedResult<List<T>>> toListTimed() {
+        return toListTimed(ConcurrencyLevel.UNBOUND);
+    }
+
     public static <T> Collector<Supplier<T>, ?, TimedResult<List<T>>> toListTimed(int concurrency) {
         return toList(suppliers -> MoreFunctions.getTimed(() -> MoreFunctions.getAllParallel(suppliers, concurrency)));
     }

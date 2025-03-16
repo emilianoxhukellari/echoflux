@@ -63,7 +63,7 @@ public class JpaPropertyDefinition<DTO, T> {
     }
 
     public String getAttributeName() {
-        return fieldProperty.getAttributeName();
+        return fieldProperty.getAttribute().name();
     }
 
 }

@@ -18,7 +18,6 @@ import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.component.HelperDownloadAnchor;
@@ -27,25 +26,18 @@ import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridConfiguration;
 import transcribe.application.core.jpa.grid.JpaGridControls;
-import transcribe.application.core.operation.Operation;
-import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.progress.BallClipRotatePulseProgress;
 import transcribe.application.core.ui.UiUtils;
-import transcribe.application.main.MainLayout;
+import transcribe.application.layout.MainLayout;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcription.TranscriptionJpaDto;
-import transcribe.core.cloud_storage.CloudStorage;
-import transcribe.core.core.tuple.Tuple2;
+import transcribe.application.transcription.TranscriptionView;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
-import transcribe.domain.transcript.transcript_manager.TranscriptManager;
-import transcribe.domain.transcript.transcript_part.part.PartModel;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
 import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
 
-import java.net.URL;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -53,27 +45,17 @@ import java.util.Objects;
 @PageTitle("Transcribe")
 @Route(value = "transcribe", layout = MainLayout.class)
 @PermitAll
-@Slf4j
 public class TranscribeView extends Composite<VerticalLayout> {
 
     private final Broadcaster broadcaster;
-    private final TranscriptManager transcriptManager;
-    private final OperationRunner operationRunner;
-    private final CloudStorage cloudStorage;
     private final List<Subscription> subscriptions = new ArrayList<>();
     private final JpaGrid<TranscriptionJpaDto, TranscriptionEntity, Long> grid;
     private final Long applicationUserId;
     private final HelperDownloadAnchor.Factory helperDownloadAnchorFactory;
 
     public TranscribeView(Broadcaster broadcaster,
-                          TranscriptManager transcriptManager,
-                          OperationRunner operationRunner,
-                          CloudStorage cloudStorage,
                           AuthenticatedUser authenticatedUser) {
         this.broadcaster = broadcaster;
-        this.transcriptManager = transcriptManager;
-        this.operationRunner = operationRunner;
-        this.cloudStorage = cloudStorage;
         this.applicationUserId = authenticatedUser.get().getId();
         this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(getContent());
 
@@ -82,11 +64,12 @@ public class TranscribeView extends Composite<VerticalLayout> {
                         .beanType(TranscriptionJpaDto.class)
                         .service(SimpleJpaDtoService.ofBeanType(TranscriptionJpaDto.class))
                         .defaultSpecification((root, _, criteriaBuilder)
-                                -> criteriaBuilder.equal(root.get("applicationUserId"), applicationUserId))
+                                -> criteriaBuilder.equal(root.get("applicationUser").get("id"), applicationUserId))
                         .build()
         );
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        grid.addClassName("body-cell-cursor-pointer");
         grid.addColumns("name", "language", "createdAt");
         grid.addColumn("lengthMillis")
                 .setRenderer(new TextRenderer<>(TranscribeView::newDuration))
@@ -100,7 +83,9 @@ public class TranscribeView extends Composite<VerticalLayout> {
 
         grid.setAllColumnsResizable();
         grid.addFilters("name", "language", "createdAt");
-        grid.addItemDoubleClickListener(e -> openTranscript(e.getItem()));
+        grid.addItemClickListener(
+                e -> UI.getCurrent().navigate(TranscriptionView.class, e.getItem().getId())
+        );
 
         var transcribeButton = new Button("Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
         transcribeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -130,9 +115,9 @@ public class TranscribeView extends Composite<VerticalLayout> {
         switch (status) {
             case FAILED -> layout.add(IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem", "Error"));
             case COMPLETED -> layout.add(IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem", "Success"));
-            case CREATED, ENHANCING_FAILED -> {
+            case CREATED -> {
             }
-            case DOWNLOADING_PUBLIC, PROCESSING, ENHANCING, TRANSCRIBING -> {
+            case DOWNLOADING_PUBLIC, ENHANCING, TRANSCRIBING -> {
                 var progress = new BallClipRotatePulseProgress();
                 layout.add(progress);
             }
@@ -149,7 +134,10 @@ public class TranscribeView extends Composite<VerticalLayout> {
         contextMenu.setOpenOnClick(true);
 
         var viewTranscriptionHl = new HorizontalLayout(LineAwesomeIcon.FILE_ALT_SOLID.create(), new Text("Open"));
-        contextMenu.addItem(viewTranscriptionHl, _ -> openTranscript(transcription));
+        contextMenu.addItem(
+                viewTranscriptionHl,
+                _ -> UI.getCurrent().navigate(TranscriptionView.class, transcription.getId())
+        );
 
         var renameHl = new HorizontalLayout(LineAwesomeIcon.EDIT_SOLID.create(), new Text("Rename"));
         contextMenu.addItem(
@@ -169,26 +157,6 @@ public class TranscribeView extends Composite<VerticalLayout> {
         );
 
         return button;
-    }
-
-    private void openTranscript(TranscriptionJpaDto transcription) {
-        var operation = Operation.<Tuple2<List<PartModel>, URL>>builder()
-                .name("Fetching transcript")
-                .description("Fetching transcript and signed URL on a long-running operation")
-                .callable(() -> {
-                    var partModels = transcriptManager.getTranscriptPartModels(transcription.getId());
-                    var signedUrl = cloudStorage.getSignedUrl(transcription.getCloudUri(), Duration.ofDays(1));
-
-                    return Tuple2.of(partModels, signedUrl);
-                })
-                .onSuccess(r ->
-                        new OpenTranscriptDialog(transcription.getId(), transcription.getName(), r.getT1(), r.getT2())
-                                .open()
-                )
-                .onSuccessNotify(false)
-                .build();
-
-        operationRunner.run(operation, UI.getCurrent());
     }
 
     @Override

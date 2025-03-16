@@ -9,7 +9,7 @@ import org.apache.commons.lang3.Validate;
 import java.util.Objects;
 
 @Tag("audio-segment-player")
-@JsModule("./element/audio-segment-player.ts")
+@JsModule("./element/audio-segment-player/audio-segment-player.ts")
 public class AudioSegmentPlayer extends Component implements HasSize {
 
     public AudioSegmentPlayer(String audioSrc, Long startOffsetMillis, Long endOffsetMillis) {

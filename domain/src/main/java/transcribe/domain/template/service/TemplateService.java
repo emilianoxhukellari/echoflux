@@ -9,7 +9,7 @@ import transcribe.domain.template.data.TemplateEntity;
 @Validated
 public interface TemplateService {
 
-    TemplateEntity get(@NotBlank String name);
+    TemplateEntity getByName(@NotBlank String name);
 
     String render(@Valid @NotNull RenderTemplateCommand command);
 

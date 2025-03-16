@@ -14,11 +14,11 @@ public class FFmpegWrapper {
 
     public FFmpegWrapper(FFmpegProperties ffmpegProperties) {
         log.info("Loading FFmpeg from: [{}]", ffmpegProperties.getFfmpegExecutionPath());
-        fFmpeg = newFFmpeg(ffmpegProperties.getFfmpegExecutionPath());
+        this.fFmpeg = newFFmpeg(ffmpegProperties.getFfmpegExecutionPath());
     }
 
     public FFmpeg ffmpeg() {
-        return fFmpeg;
+        return this.fFmpeg;
     }
 
     @SneakyThrows

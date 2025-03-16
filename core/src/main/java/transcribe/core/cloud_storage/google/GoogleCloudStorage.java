@@ -12,19 +12,24 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.file.PathUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.function.Failable;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
+import transcribe.core.cloud_storage.CloudDeleteCommand;
 import transcribe.core.cloud_storage.CloudStorage;
+import transcribe.core.cloud_storage.CloudUploadCommand;
+import transcribe.core.cloud_storage.GetSignedUrlOfResourceCommand;
+import transcribe.core.cloud_storage.GetSignedUrlOfUriCommand;
 import transcribe.core.cloud_storage.ResourceInfo;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.properties.GoogleCloudProperties;
 
-import java.net.URI;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -40,37 +45,24 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
         this.googleStorage = newGoogleStorage(googleCloudProperties);
     }
 
-    @Override
     @LoggedMethodExecution
-    public URL getSignedUrl(URI cloudUri, Duration duration, boolean temp) {
-        var blobId = BlobId.fromGsUtilUri(cloudUri.toString());
-
-        return getSignedUrl(blobId, duration);
-    }
-
+    @SneakyThrows({IOException.class})
     @Override
-    @LoggedMethodExecution
-    public URL getSignedUrl(String resourceName, Duration duration, boolean temp) {
-        var bucketName = resolveBucketName(temp);
-        var blobId = BlobId.of(bucketName, resourceName);
-
-        return getSignedUrl(blobId, duration);
-    }
-
-    @Override
-    @SneakyThrows
-    @LoggedMethodExecution
-    public ResourceInfo upload(Path path, boolean temp) {
-        var name = String.format("%s.%s", UlidCreator.getUlid().toString(), PathUtils.getExtension(path));
-        var bucketName = resolveBucketName(temp);
+    public ResourceInfo upload(CloudUploadCommand command) {
+        var name = String.format("%s.%s", UlidCreator.getUlid().toString(), PathUtils.getExtension(command.getPath()));
+        var bucketName = resolveBucketName(command.isTemp());
         var blobId = BlobId.of(bucketName, name);
-        var contentType = Files.probeContentType(path);
+
+        var contentType = StringUtils.getIfBlank(
+                command.getContentType(),
+                () -> Failable.get(() -> Files.probeContentType(command.getPath()))
+        );
 
         var blobInfo = BlobInfo.newBuilder(blobId)
                 .setContentType(contentType)
                 .build();
 
-        try (var is = Files.newInputStream(path); var writer = googleStorage.writer(blobInfo)) {
+        try (var is = Files.newInputStream(command.getPath()); var writer = googleStorage.writer(blobInfo)) {
             var buffer = new byte[4096];
             int length;
             while ((length = is.read(buffer)) >= 0) {
@@ -81,14 +73,33 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
         return ResourceInfo.ofBlobId(blobId);
     }
 
-    @Override
     @LoggedMethodExecution
-    public boolean delete(String resourceName, boolean temp) {
-        var bucketName = resolveBucketName(temp);
+    @Override
+    public boolean delete(CloudDeleteCommand command) {
+        var bucketName = resolveBucketName(command.isTemp());
+        var blobId = BlobId.of(bucketName, command.getResourceName());
 
-        return googleStorage.delete(BlobId.of(bucketName, resourceName));
+        return googleStorage.delete(blobId);
     }
 
+    @LoggedMethodExecution
+    @Override
+    public URL getSignedUrl(GetSignedUrlOfResourceCommand command) {
+        var bucketName = resolveBucketName(command.isTemp());
+        var blobId = BlobId.of(bucketName, command.getResourceName());
+
+        return getSignedUrl(blobId, command.getDuration());
+    }
+
+    @LoggedMethodExecution
+    @Override
+    public URL getSignedUrl(GetSignedUrlOfUriCommand command) {
+        var blobId = BlobId.fromGsUtilUri(command.getCloudUri().toString());
+
+        return getSignedUrl(blobId, command.getDuration());
+    }
+
+    @LoggedMethodExecution
     @Override
     public void destroy() throws Exception {
         googleStorage.close();
@@ -96,6 +107,7 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
 
     private URL getSignedUrl(BlobId blobId, Duration duration) {
         Objects.requireNonNull(blobId, "blobId cannot be null");
+        Objects.requireNonNull(duration, "duration cannot be null");
 
         return googleStorage.signUrl(
                 BlobInfo.newBuilder(blobId).build(),
@@ -105,7 +117,7 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
         );
     }
 
-    @SneakyThrows
+    @SneakyThrows({IOException.class})
     private static Storage newGoogleStorage(GoogleCloudProperties properties) {
         @Cleanup
         var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);

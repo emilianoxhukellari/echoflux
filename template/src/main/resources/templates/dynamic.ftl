@@ -1,2 +1,2 @@
-<#assign inlineTemplate = content?interpret>
+<#assign inlineTemplate = dynamicTemplateContent?interpret>
 <@inlineTemplate />

@@ -17,6 +17,7 @@ import java.util.Optional;
 @Slf4j
 public class AuditConfiguration {
 
+    //todo: fix created and updated by
     @Bean
     public AuditorAware<String> auditorAware() {
 

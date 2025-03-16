@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ProgressTrigger {
 
-    private static final Executor executor = MoreExecutors.virtualThreadExecutor();
+    private static final Executor executor = MoreExecutors.delegatingSecurityVirtualThreadExecutor();
 
     private final ReentrantLock lock = new ReentrantLock();
     private final AtomicBoolean running = new AtomicBoolean(false);

@@ -2,6 +2,7 @@ package transcribe.application.template;
 
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
@@ -20,6 +21,7 @@ public interface TemplateJpaDtoMapper extends JpaDtoMapper<TemplateJpaDto, Templ
     TemplateEntity toEntity(TemplateJpaDto dto);
 
     @Override
+    @Mapping(target = "version", ignore = true)
     TemplateEntity updateEntity(@MappingTarget TemplateEntity entity, TemplateJpaDto dto);
 
     @Override

@@ -11,16 +11,17 @@ import transcribe.domain.application_user.data.ApplicationUserRepository;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final ApplicationUserRepository applicationUserRepository;
-    private final SecurityMapper mapper;
+    private final SecurityMapper securityMapper;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return applicationUserRepository.findByUsername(username)
-                .map(mapper::toDetails)
+                .map(securityMapper::toDetails)
                 .orElseThrow(() -> new UsernameNotFoundException("No user present with username: " + username));
     }
 

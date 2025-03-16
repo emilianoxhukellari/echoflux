@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -19,6 +20,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import transcribe.core.core.validate.constraint.double_range.DoubleRange;
 import transcribe.domain.audit.data.BaseEntity;
+import transcribe.domain.transcription.data.TranscriptionEntity;
 
 @Entity
 @Table(name = "completion")
@@ -34,9 +36,10 @@ public class CompletionEntity extends BaseEntity {
     @Column(name = "id")
     private Long id;
 
+    @ManyToOne
     @JoinColumn(name = "transcription_id")
     @NotNull
-    private Long transcriptionId;
+    private TranscriptionEntity transcription;
 
     @Column(name = "input")
     @NotEmpty

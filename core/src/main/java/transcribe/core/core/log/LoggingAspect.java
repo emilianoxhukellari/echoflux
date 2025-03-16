@@ -22,9 +22,9 @@ public class LoggingAspect {
         var args = proceedingJoinPoint.getArgs();
 
         if (logMethodExecution.logArgs()){
-            log.debug("Entered [{}] with args [{}]", methodName, args);
+            log.trace("Entered [{}] with args [{}]", methodName, args);
         } else {
-            log.debug("Entered [{}]", methodName);
+            log.trace("Entered [{}]", methodName);
         }
 
         var start = System.nanoTime();
@@ -40,13 +40,13 @@ public class LoggingAspect {
         var executionTime = (System.nanoTime() - start) / 1_000_000;
 
         if (logMethodExecution.logExecutionTime()) {
-            log.debug("Executed [{}] in [{}]ms", methodName, executionTime);
+            log.trace("Executed [{}] in [{}]ms", methodName, executionTime);
         }
 
         if (logMethodExecution.logReturn()) {
-            log.debug("[{}] exited returning [{}]", methodName, result);
+            log.trace("[{}] exited returning [{}]", methodName, result);
         } else {
-            log.debug("[{}] exited", methodName);
+            log.trace("[{}] exited", methodName);
         }
 
         return result;

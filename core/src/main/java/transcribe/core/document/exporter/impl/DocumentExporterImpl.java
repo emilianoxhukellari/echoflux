@@ -17,7 +17,7 @@ public class DocumentExporterImpl implements DocumentExporter {
 
     @Override
     public Path export(String text, DocumentType type) {
-        var exporter = beanLoader.loadWhen(
+        var exporter = beanLoader.getWhen(
                 DocumentExporterSpi.class,
                 spi -> spi.supports(type)
         );

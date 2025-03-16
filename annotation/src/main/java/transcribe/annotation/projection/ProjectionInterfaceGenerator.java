@@ -130,7 +130,11 @@ public final class ProjectionInterfaceGenerator {
     private static String getAttributeName(VariableElement variableElement) {
         var attributeOverride = variableElement.getAnnotation(AttributeOverride.class);
 
-        return attributeOverride != null ? attributeOverride.value() : variableElement.getSimpleName().toString();
+        if (attributeOverride != null && StringUtils.isNotBlank(attributeOverride.name())) {
+            return attributeOverride.name();
+        }
+
+        return variableElement.getSimpleName().toString();
     }
 
 }

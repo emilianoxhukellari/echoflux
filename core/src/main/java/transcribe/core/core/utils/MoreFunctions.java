@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
@@ -88,13 +89,10 @@ public final class MoreFunctions {
         }
     }
 
-    public static <T> T pollUntil(Supplier<T> supplier,
-                                  Predicate<T> until,
-                                  Duration pollInterval,
-                                  Duration timeout) {
+    public static <T> T pollUntil(Supplier<T> supplier, Predicate<T> until, Duration interval, Duration timeout) {
         Objects.requireNonNull(supplier, "Supplier must not be null");
         Objects.requireNonNull(until, "Until predicate must not be null");
-        Objects.requireNonNull(pollInterval, "Poll interval must not be null");
+        Objects.requireNonNull(interval, "Interval must not be null");
         Objects.requireNonNull(timeout, "Timeout must not be null");
 
         long startNanos = System.nanoTime();
@@ -110,8 +108,12 @@ public final class MoreFunctions {
                 throw new IllegalStateException("Polling timed out");
             }
 
-            ThreadUtils.sleepQuietly(pollInterval);
+            ThreadUtils.sleepQuietly(interval);
         }
+    }
+
+    public static <T> CompletableFuture<T> getAsync(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, virtualThreadExecutor);
     }
 
     public static <T> List<T> getAllParallel(List<Supplier<T>> suppliers, int concurrency) {
@@ -128,6 +130,16 @@ public final class MoreFunctions {
         Objects.requireNonNull(function, "Function must not be null");
         Validate.isTrue(concurrency == ConcurrencyLevel.UNBOUND || concurrency > 0,
                 "Concurrency must be greater than 0 or %d", ConcurrencyLevel.UNBOUND);
+
+        if (items.isEmpty()) {
+            return List.of();
+        }
+
+        if (items.size() == 1) {
+            var singleResult = function.apply(items.getFirst());
+
+            return List.of(singleResult);
+        }
 
         if (concurrency == 1) {
             return executeAll(items, function);

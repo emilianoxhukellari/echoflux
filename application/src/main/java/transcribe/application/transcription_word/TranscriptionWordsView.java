@@ -7,7 +7,7 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
-import transcribe.application.main.MainLayout;
+import transcribe.application.layout.MainLayout;
 
 @PageTitle("Transcription Words")
 @Route(value = "transcription-words", layout = MainLayout.class)

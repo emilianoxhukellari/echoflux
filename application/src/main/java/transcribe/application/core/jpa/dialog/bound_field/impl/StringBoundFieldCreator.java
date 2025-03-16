@@ -12,7 +12,7 @@ import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import transcribe.application.core.jpa.dialog.bound_field.BoundFieldCreator;
 import transcribe.application.core.annotation.BigText;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 
 @SpringComponent
 public class StringBoundFieldCreator implements BoundFieldCreator {

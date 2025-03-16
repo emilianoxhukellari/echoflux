@@ -4,9 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.application.core.annotation.BigText;
-import transcribe.core.core.annotation.Required;
+import org.springframework.data.annotation.PersistenceCreator;
+import transcribe.annotation.core.ParentProperty;
 import transcribe.annotation.jpa.JpaDto;
+import transcribe.application.core.annotation.BigText;
+import transcribe.application.transcription.TranscriptionJpaDto;
+import transcribe.core.core.annotation.Required;
 import transcribe.domain.completion.data.CompletionEntity;
 import transcribe.domain.completion.data.CompletionStatus;
 
@@ -15,20 +18,18 @@ import java.time.LocalDateTime;
 @JpaDto(entityBeanType = CompletionEntity.class)
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_ = @PersistenceCreator)
 @NoArgsConstructor
 public class CompletionJpaDto {
 
     private Long id;
 
     @Required
-    private Long transcriptionId;
-
-    @Required
     @BigText
     private String input;
 
     @Required
+    @BigText
     private String output;
 
     private Integer inputTokens;
@@ -49,7 +50,9 @@ public class CompletionJpaDto {
     @BigText
     private String error;
 
-    private Integer version;
+    @Required
+    @ParentProperty
+    private TranscriptionJpaDto transcription;
 
     private LocalDateTime createdAt;
 

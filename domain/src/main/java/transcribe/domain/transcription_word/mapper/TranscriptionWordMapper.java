@@ -1,17 +1,12 @@
 package transcribe.domain.transcription_word.mapper;
 
-import org.mapstruct.BeanMapping;
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueCheckStrategy;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
+import transcribe.core.word.common.Word;
 import transcribe.domain.transcription_word.data.TranscriptionWordEntity;
-import transcribe.domain.transcription_word.service.CreateTranscriptionWordCommand;
-import transcribe.domain.transcription_word.service.PatchTranscriptionWordCommand;
 
 import java.util.List;
 
@@ -21,12 +16,10 @@ import java.util.List;
         componentModel = MappingConstants.ComponentModel.SPRING)
 public interface TranscriptionWordMapper {
 
-    TranscriptionWordEntity toEntity(CreateTranscriptionWordCommand command);
+    List<TranscriptionWordEntity> toEntities(List<Word> words);
 
-    List<TranscriptionWordEntity> toEntities(List<CreateTranscriptionWordCommand> commands);
+    TranscriptionWordEntity toEntity(Word word);
 
-    @Mapping(target = "id", ignore = true)
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    TranscriptionWordEntity patch(@MappingTarget TranscriptionWordEntity entity, PatchTranscriptionWordCommand command);
+    List<Word> toWords(List<TranscriptionWordEntity> entities);
 
 }

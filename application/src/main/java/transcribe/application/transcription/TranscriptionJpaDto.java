@@ -4,9 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.application.core.annotation.BigText;
-import transcribe.core.core.annotation.Required;
+import org.springframework.data.annotation.PersistenceCreator;
+import transcribe.annotation.core.ParentProperty;
 import transcribe.annotation.jpa.JpaDto;
+import transcribe.application.core.annotation.BigText;
+import transcribe.application.user.ApplicationUserJpaDto;
+import transcribe.core.core.annotation.Required;
 import transcribe.core.transcribe.common.Language;
 import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionStatus;
@@ -17,7 +20,7 @@ import java.time.LocalDateTime;
 @JpaDto(entityBeanType = TranscriptionEntity.class)
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_ = @PersistenceCreator)
 @NoArgsConstructor
 public class TranscriptionJpaDto {
 
@@ -37,24 +40,16 @@ public class TranscriptionJpaDto {
     private String name;
 
     @Required
-    private Long applicationUserId;
-
-    @Required
     private Boolean enhanced;
 
     private Long lengthMillis;
 
-    private Long downloadDurationMillis;
-
-    private Long processDurationMillis;
-
-    private Long transcribeDurationMillis;
-
-    @Required
     @BigText
     private String error;
 
-    private Integer version;
+    @Required
+    @ParentProperty
+    private ApplicationUserJpaDto applicationUser;
 
     private LocalDateTime createdAt;
 

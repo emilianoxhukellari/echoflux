@@ -5,14 +5,24 @@ import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.speech.v2.*;
+import com.google.cloud.speech.v2.AutoDetectDecodingConfig;
+import com.google.cloud.speech.v2.BatchRecognizeFileMetadata;
+import com.google.cloud.speech.v2.BatchRecognizeRequest;
+import com.google.cloud.speech.v2.InlineOutputConfig;
+import com.google.cloud.speech.v2.RecognitionConfig;
+import com.google.cloud.speech.v2.RecognitionFeatures;
+import com.google.cloud.speech.v2.RecognitionOutputConfig;
+import com.google.cloud.speech.v2.RecognizerName;
+import com.google.cloud.speech.v2.SpeechClient;
+import com.google.cloud.speech.v2.SpeechRecognitionAlternative;
+import com.google.cloud.speech.v2.SpeechRecognitionResult;
+import com.google.cloud.speech.v2.SpeechSettings;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.executor.MoreExecutors;
@@ -21,10 +31,9 @@ import transcribe.core.core.provider.AiProvider;
 import transcribe.core.core.utils.MoreLists;
 import transcribe.core.properties.GoogleCloudProperties;
 import transcribe.core.settings.SettingsLoader;
-import transcribe.core.transcribe.GoogleSpeechSettings;
 import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.transcribe.common.Language;
-import transcribe.core.transcribe.common.SpeechToTextWord;
+import transcribe.core.word.common.SpeechToTextWord;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -89,15 +98,10 @@ public class GoogleSpeechToText implements SpeechToText {
                 .map(w -> SpeechToTextWord.builder()
                         .startOffsetMillis(protobufDurationToMillis(w.getStartOffset()))
                         .endOffsetMillis(protobufDurationToMillis(w.getEndOffset()))
-                        .speakerName(StringUtils.EMPTY)
                         .content(w.getWord())
-                        .build())
+                        .build()
+                )
                 .toList();
-    }
-
-    @Override
-    public boolean supportsDiarization() {
-        return false;
     }
 
     @Override

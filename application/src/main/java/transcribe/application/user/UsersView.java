@@ -10,7 +10,7 @@ import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.main.MainLayout;
+import transcribe.application.layout.MainLayout;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.operation.data.OperationType;
@@ -42,7 +42,7 @@ public class UsersView extends Composite<VerticalLayout> {
             var operation = Operation.builder()
                     .name("Deleting application user")
                     .description("User with ID " + e.getId())
-                    .callable(OperationCallable.ofRunnable(() -> service.delete(e.getId())))
+                    .callable(OperationCallable.ofRunnable(() -> service.deleteById(e.getId())))
                     .onSuccess(_ -> grid.refreshAll())
                     .type(OperationType.NON_BLOCKING)
                     .build();

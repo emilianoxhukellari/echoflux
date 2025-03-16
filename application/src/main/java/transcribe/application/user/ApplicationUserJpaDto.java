@@ -4,8 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.core.core.annotation.Required;
+import org.springframework.data.annotation.PersistenceCreator;
+import transcribe.annotation.core.AttributeOverride;
 import transcribe.annotation.jpa.JpaDto;
+import transcribe.annotation.projection.AttributeProjectType;
+import transcribe.core.core.annotation.Required;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.Role;
 
@@ -18,7 +21,7 @@ import java.util.Set;
 )
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_ = @PersistenceCreator)
 @NoArgsConstructor
 public class ApplicationUserJpaDto {
 
@@ -37,9 +40,8 @@ public class ApplicationUserJpaDto {
     private Boolean enabled;
 
     @Required
+    @AttributeOverride(projectType = AttributeProjectType.DEFERRED)
     private Set<Role> roles;
-
-    private Integer version;
 
     private LocalDateTime createdAt;
 

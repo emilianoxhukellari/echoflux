@@ -23,7 +23,6 @@ import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.utils.MoreEnums;
 import transcribe.core.document.exporter.DocumentExporter;
 import transcribe.domain.operation.data.OperationType;
-import transcribe.domain.transcript.transcript_manager.TranscriptManager;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +31,6 @@ import java.util.Objects;
 
 public class DownloadTranscriptDialog extends EnhancedDialog {
 
-    private final TranscriptManager transcriptManager;
     private final DocumentExporter documentExporter;
     private final OperationRunner operationRunner;
     private final HelperDownloadAnchor.Factory helperDownloadAnchorFactory;
@@ -43,7 +41,6 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
                                     HelperDownloadAnchor.Factory helperDownloadAnchorFactory) {
         Objects.requireNonNull(transcriptionId);
         this.helperDownloadAnchorFactory = Objects.requireNonNull(helperDownloadAnchorFactory);
-        this.transcriptManager = SpringContext.getBean(TranscriptManager.class);
         this.documentExporter = SpringContext.getBean(DocumentExporter.class);
         this.operationRunner = SpringContext.getBean(OperationRunner.class);
         this.binder = new Binder<>(DownloadBean.class);
@@ -113,9 +110,9 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
                 .description("Getting transcript and exporting document")
                 .beforeCall(this::close)
                 .callable(() -> {
-                    var transcript = transcriptManager.getTranscript(binder.getBean().getTranscriptionId());
 
-                    return documentExporter.export(transcript, binder.getBean().getFormat().getDocumentType());
+                    //todo: retrieve transcript
+                    return documentExporter.export("", binder.getBean().getFormat().getDocumentType());
                 })
                 .onSuccess(path -> {
                     var streamResource = new StreamResource(

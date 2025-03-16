@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import transcribe.application.security.AuthenticatedUser;
+import transcribe.domain.application_user.data.ApplicationUser;
 import transcribe.core.core.utils.MoreSets;
-import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.ApplicationUserRepository;
 import transcribe.domain.application_user.data.Role;
 
@@ -22,7 +22,7 @@ public class AuthenticatedUserImpl implements AuthenticatedUser {
     private final AuthenticationContext authenticationContext;
 
     @Override
-    public Optional<ApplicationUserEntity> find() {
+    public Optional<ApplicationUser> find() {
         return authenticationContext.getAuthenticatedUser(UserDetails.class)
                 .flatMap(ud -> applicationUserRepository.findByUsername(ud.getUsername()));
     }

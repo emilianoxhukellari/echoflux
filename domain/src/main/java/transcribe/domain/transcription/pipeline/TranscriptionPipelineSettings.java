@@ -26,7 +26,7 @@ public class TranscriptionPipelineSettings {
 
     @Builder.Default
     @NotBlank
-    private String enhanceCompletionTextDataModelKey = "text";
+    private String enhanceCompletionContentDataModelKey = "content";
 
     @Builder.Default
     @NotBlank
@@ -39,12 +39,13 @@ public class TranscriptionPipelineSettings {
     @NotNull
     @Valid
     private Partition partition = Partition.builder()
-            .partitionDurationMinutes(20)
+            .durationMinutes(20)
             .toleranceDurationMinutes(5)
             .minSilenceDurationSeconds(2)
             .splitConcurrency(ConcurrencyLevel.AVAILABLE_PROCESSORS)
-            .transcribeConcurrency(ConcurrencyLevel.UNBOUND)
-            .enhanceConcurrency(ConcurrencyLevel.UNBOUND)
+            .transcribeConcurrency(6)
+            .enhanceConcurrency(2)
+            .enhanceWordLimit(4000)
             .build();
 
     @Builder.Default
@@ -78,7 +79,7 @@ public class TranscriptionPipelineSettings {
 
         @NotNull
         @Min(0)
-        private Integer partitionDurationMinutes;
+        private Integer durationMinutes;
 
         @NotNull
         @Min(0)
@@ -96,6 +97,10 @@ public class TranscriptionPipelineSettings {
 
         @NotNull
         private Integer enhanceConcurrency;
+
+        @NotNull
+        @Min(1)
+        private Integer enhanceWordLimit;
 
     }
 

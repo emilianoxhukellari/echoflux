@@ -1,5 +1,8 @@
 package transcribe.application.core.jpa.dto.impl;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -7,7 +10,7 @@ import transcribe.application.core.jpa.dto.JpaDtoConfiguration;
 import transcribe.application.core.jpa.dto.JpaDtoMapper;
 import transcribe.application.core.jpa.dto.JpaDtoService;
 import transcribe.application.core.spring.SpringContext;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 import transcribe.domain.core.repository.EnhancedJpaRepository;
 
 import java.util.List;
@@ -18,24 +21,20 @@ import java.util.function.Supplier;
 @Slf4j
 public class SimpleJpaDtoService<DTO, ENTITY, ID> implements JpaDtoService<DTO, ENTITY, ID> {
 
+    private final static LoadingCache<Class<?>, SimpleJpaDtoService<?, ?, ?>> CACHE = CacheBuilder.newBuilder()
+            .build(CacheLoader.from(SimpleJpaDtoService::new));
+
     private final EnhancedJpaRepository<ENTITY, ID> repository;
     private final JpaDtoMapper<DTO, ENTITY> mapper;
     private final Class<DTO> beanType;
     private final JpaDtoConfiguration jpaDtoConfiguration;
-    public SimpleJpaDtoService(EnhancedJpaRepository<ENTITY, ID> repository,
-                               JpaDtoMapper<DTO, ENTITY> mapper,
-                               Class<DTO> beanType) {
-        this.repository = Objects.requireNonNull(repository, "Repository must not be null");
-        this.mapper = Objects.requireNonNull(mapper, "Mapper must not be null");
-        this.beanType = Objects.requireNonNull(beanType, "DTO bean type must not be null");
-        this.jpaDtoConfiguration = JpaDtoConfiguration.ofBeanType(beanType);
-    }
 
+    @SuppressWarnings("unchecked")
     public static <DTO, ENTITY, ID> SimpleJpaDtoService<DTO, ENTITY, ID> ofBeanType(Class<DTO> beanType) {
-        return new SimpleJpaDtoService<>(beanType);
+        return (SimpleJpaDtoService<DTO, ENTITY, ID>) CACHE.getUnchecked(beanType);
     }
 
-    public SimpleJpaDtoService(Class<DTO> beanType) {
+    private SimpleJpaDtoService(Class<DTO> beanType) {
         this.beanType = Objects.requireNonNull(beanType, "DTO bean type must not be null");
         this.jpaDtoConfiguration = JpaDtoConfiguration.ofBeanType(beanType);
 
@@ -56,12 +55,12 @@ public class SimpleJpaDtoService<DTO, ENTITY, ID> implements JpaDtoService<DTO, 
 
     @Override
     public Optional<DTO> findById(ID id) {
-        return SpringContext.getTransactionalReadonly(() -> repository.findById(id, beanType));
+        return SpringContext.getTransactionalReadonly(() -> repository.findByIdEnhanced(id, beanType));
     }
 
     @Override
     public List<DTO> findAll(Specification<ENTITY> specification, Pageable pageable) {
-        return SpringContext.getTransactionalReadonly(() -> repository.findAll(specification, pageable, beanType));
+        return SpringContext.getTransactionalReadonly(() -> repository.findAllEnhanced(specification, pageable, beanType));
     }
 
     @Override
@@ -86,9 +85,7 @@ public class SimpleJpaDtoService<DTO, ENTITY, ID> implements JpaDtoService<DTO, 
                 entity = mapper.toEntity(dto);
             }
 
-            var savedEntity = repository.save(entity);
-
-            return mapper.toDto(savedEntity);
+            return perform(() -> repository.save(entity));
         });
     }
 

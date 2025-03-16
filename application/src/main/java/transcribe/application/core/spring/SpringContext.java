@@ -10,6 +10,7 @@ import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.core.validate.formatter.StrictValidator;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -33,18 +34,8 @@ public class SpringContext implements ApplicationContextAware {
     }
 
     public static void runTransactional(Runnable runnable) {
-        runTransactional(runnable, false);
-    }
-
-    public static void runTransactionalReadonly(Runnable runnable) {
-        runTransactional(runnable, true);
-    }
-
-    public static void runTransactional(Runnable runnable, boolean readOnly) {
-        var transactionTemplate = getBean(TransactionTemplate.class);
-        transactionTemplate.setReadOnly(readOnly);
-
-        transactionTemplate.executeWithoutResult(_ -> runnable.run());
+        getBean(TransactionTemplate.class)
+                .executeWithoutResult(_ -> runnable.run());
     }
 
     public static <T> T getTransactional(Supplier<T> supplier) {
@@ -66,8 +57,12 @@ public class SpringContext implements ApplicationContextAware {
         return get().getBean(beanType);
     }
 
+    public static <T> Optional<T> findBeanWhen(Class<T> beanType, Predicate<T> predicate) {
+        return getBean(BeanLoader.class).findWhen(beanType, predicate);
+    }
+
     public static <T> T getBeanWhen(Class<T> beanType, Predicate<T> predicate) {
-        return getBean(BeanLoader.class).loadWhen(beanType, predicate);
+        return getBean(BeanLoader.class).getWhen(beanType, predicate);
     }
 
 }

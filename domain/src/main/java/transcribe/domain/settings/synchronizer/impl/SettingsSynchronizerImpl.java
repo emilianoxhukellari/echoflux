@@ -3,27 +3,25 @@ package transcribe.domain.settings.synchronizer.impl;
 import com.google.common.collect.Maps;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.Failable;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import transcribe.core.core.bean.MoreBeans;
 import transcribe.core.core.initialize.Initialize;
 import transcribe.core.core.initialize.InitializeOrder;
 import transcribe.core.core.utils.MoreFunctions;
 import transcribe.core.settings.Settings;
-import transcribe.core.core.bean.utils.MoreBeans;
 import transcribe.domain.settings.data.SettingsEntity;
+import transcribe.domain.settings.data.SettingsProjection;
+import transcribe.domain.settings.mapper.SettingsMapper;
+import transcribe.domain.settings.schema_processor.SettingsSchemaProcessor;
 import transcribe.domain.settings.service.CreateSettingsCommand;
-import transcribe.domain.settings.service.PatchSettingsCommand;
 import transcribe.domain.settings.service.SettingsService;
 import transcribe.domain.settings.synchronizer.SettingsSynchronizer;
-import transcribe.domain.settings.schema_processor.SettingsSchemaProcessor;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -31,19 +29,23 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Slf4j
 public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initialize {
 
     private final SettingsSchemaProcessor schemaProcessor;
-    private final SettingsService service;
+    private final SettingsService settingsService;
+    private final SettingsMapper settingsMapper;
     private final Map<String, Class<?>> keyBeanTypeMap = newKeyBeanTypeMap();
 
     @Override
     @Transactional
     public void synchronize() {
-        MoreFunctions.runTimed(this::delete, d -> log.info("Deleted settings in [{}]ms", d.toMillis()));
-        MoreFunctions.runTimed(this::update, d -> log.info("Updated settings in [{}]ms", d.toMillis()));
-        MoreFunctions.runTimed(this::create, d -> log.info("Created settings in [{}]ms", d.toMillis()));
+        int deleted = delete();
+        int updated = update();
+        int created = create();
+
+        log.info("Synchronized settings: [{}] created, [{}] updated, [{}] deleted", created, updated, deleted);
     }
 
     @Override
@@ -54,16 +56,12 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
 
     @Override
     @Transactional
-    public SettingsEntity reset(String key) {
-        var entity = service.getByKey(key);
+    public SettingsProjection reset(String key) {
+        var settings = settingsService.getByKey(key);
+        settings.setName(MoreBeans.getDisplayName(keyBeanTypeMap.get(key)));
+        settings.setValue(schemaProcessor.create(keyBeanTypeMap.get(key)));
 
-        var command = PatchSettingsCommand.builder()
-                .id(entity.getId())
-                .name(MoreBeans.getDisplayName(keyBeanTypeMap.get(key)))
-                .value(schemaProcessor.create(keyBeanTypeMap.get(key)))
-                .build();
-
-        return service.patch(command);
+        return settingsMapper.toProjection(settings);
     }
 
     @Override
@@ -71,13 +69,13 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
         return InitializeOrder.SETTINGS;
     }
 
-    private void create() {
-        var existing = service.getAllByKeys(keyBeanTypeMap.keySet())
+    private int create() {
+        var existingKeys = settingsService.getAllByKeys(keyBeanTypeMap.keySet())
                 .stream()
                 .map(SettingsEntity::getKey)
                 .collect(Collectors.toUnmodifiableSet());
 
-        var toCreate = Maps.filterEntries(keyBeanTypeMap, e -> !existing.contains(e.getKey()))
+        var toCreate = Maps.filterEntries(keyBeanTypeMap, e -> !existingKeys.contains(e.getKey()))
                 .entrySet()
                 .stream()
                 .map(e -> CreateSettingsCommand.builder()
@@ -87,44 +85,37 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
                         .build())
                 .toList();
 
-        var entities = service.createAll(toCreate);
-        logActionOnEntities("Created", entities);
+        var createdSettings = settingsService.createAll(toCreate);
+
+        return createdSettings.size();
     }
 
-    private void update() {
-        var existingEntities = service.getAllByKeys(keyBeanTypeMap.keySet());
+    private int update() {
+        var existingEntities = settingsService.getAllByKeys(keyBeanTypeMap.keySet());
 
-        var commands = new ArrayList<PatchSettingsCommand>();
-
+        int updated = 0;
         for (var entity : existingEntities) {
             var dbName = entity.getName();
             var codeName = MoreBeans.getDisplayName(keyBeanTypeMap.get(entity.getKey()));
 
             var dbValue = entity.getValue();
             var mergedValue = schemaProcessor.adaptToSchema(keyBeanTypeMap.get(entity.getKey()), dbValue);
+
             if (!StringUtils.equals(dbName, codeName) || !Objects.equals(dbValue, mergedValue)) {
-                commands.add(
-                        PatchSettingsCommand.builder()
-                                .id(entity.getId())
-                                .name(codeName)
-                                .value(mergedValue)
-                                .build()
-                );
+                entity.setName(codeName);
+                entity.setValue(mergedValue);
+                updated++;
             }
         }
 
-        var entities = service.patchAll(commands);
-        logActionOnEntities("Updated", entities);
+        return updated;
     }
 
-    private void delete() {
-        var entitiesToDelete = service.getAllByKeysExcluding(keyBeanTypeMap.keySet());
-        var idsToDelete = entitiesToDelete.stream()
-                .map(SettingsEntity::getId)
-                .toList();
+    private int delete() {
+        var entitiesToDelete = settingsService.getAllByKeysExcluding(keyBeanTypeMap.keySet());
+        settingsService.deleteAll(entitiesToDelete);
 
-        service.deleteAll(idsToDelete);
-        logActionOnEntities("Deleted", entitiesToDelete);
+        return entitiesToDelete.size();
     }
 
     private static Map<String, Class<?>> newKeyBeanTypeMap() {
@@ -141,12 +132,6 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
                         beanType -> beanType.getAnnotation(Settings.class).key(),
                         Function.identity()
                 ));
-    }
-
-    private static void logActionOnEntities(String action, Collection<SettingsEntity> entities) {
-        if (CollectionUtils.isNotEmpty(entities)) {
-            log.info("{} settings: [{}]", action, entities.stream().map(SettingsEntity::getName).toList());
-        }
     }
 
 }

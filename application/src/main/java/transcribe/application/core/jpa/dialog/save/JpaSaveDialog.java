@@ -13,7 +13,7 @@ import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.no_op.NoOp;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.Objects;

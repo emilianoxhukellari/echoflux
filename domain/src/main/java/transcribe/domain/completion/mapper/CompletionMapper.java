@@ -11,6 +11,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.core.completions.CompletionResult;
 import transcribe.domain.completion.data.CompletionEntity;
+import transcribe.domain.completion.data.CompletionProjection;
+import transcribe.domain.completion.data.CompletionStatus;
 import transcribe.domain.completion.service.CreateCompletionCommand;
 import transcribe.domain.completion.service.PatchCompletionCommand;
 
@@ -23,10 +25,13 @@ public interface CompletionMapper {
     @Mapping(target = "status", constant = "CREATED")
     CompletionEntity toEntity(CreateCompletionCommand command);
 
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.ERROR)
+    CompletionProjection toProjection(CompletionEntity entity);
+
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CompletionEntity patch(@MappingTarget CompletionEntity entity, PatchCompletionCommand command);
 
-    PatchCompletionCommand toCommand(CompletionResult result);
+    PatchCompletionCommand toCommand(Long id, CompletionStatus status, Long durationMillis, CompletionResult result);
 
 }

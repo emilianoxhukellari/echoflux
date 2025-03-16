@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.json.JsonMapper;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 import transcribe.domain.settings.schema_processor.SettingsSchemaProcessor;
 
 @Component

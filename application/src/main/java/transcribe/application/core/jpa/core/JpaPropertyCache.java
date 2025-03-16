@@ -7,11 +7,13 @@ import com.vaadin.flow.data.binder.BeanPropertySet;
 import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.binder.PropertyFilterDefinition;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import transcribe.application.core.jpa.dto.JpaDtoConfiguration;
 import transcribe.annotation.core.ParentProperty;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.annotation.jpa.JpaDto;
+import transcribe.application.core.jpa.dto.JpaDtoConfiguration;
+import transcribe.core.core.bean.MoreBeans;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +26,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 public final class JpaPropertyCache {
 
     private static final LoadingCache<Class<?>, Value<?>> CACHE = CacheBuilder.newBuilder()
@@ -39,14 +42,6 @@ public final class JpaPropertyCache {
                 .filter(p -> p.getPropertyTypes().contains(JpaPropertyType.ID))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No ID property found. This should not happen."));
-    }
-
-    public static <DTO> JpaPropertyDefinition<DTO, ?> getVersionProperty(Class<DTO> beanType) {
-        return getProperties(beanType)
-                .stream()
-                .filter(p -> p.getPropertyTypes().contains(JpaPropertyType.VERSION))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No version property found."));
     }
 
     public static <DTO> List<JpaPropertyDefinition<DTO, ?>> getAuditProperties(Class<DTO> beanType) {
@@ -93,7 +88,7 @@ public final class JpaPropertyCache {
         for (var fieldProperty : fieldProperties) {
             var propertyDefinition = propertySet.getProperty(fieldProperty.getName())
                     .orElseThrow();
-            var types = resolveTypes(beanType, propertyDefinition, jpaDtoConfiguration);
+            var types = resolveTypes(propertyDefinition, jpaDtoConfiguration);
 
             properties.add(new JpaPropertyDefinition<>(propertyDefinition, fieldProperty, types));
         }
@@ -108,31 +103,24 @@ public final class JpaPropertyCache {
         return new Value<>(Collections.unmodifiableList(properties));
     }
 
-    private static <DTO> Set<JpaPropertyType> resolveTypes(Class<DTO> beanType,
-                                                           PropertyDefinition<DTO, ?> propertyDefinition,
+    private static <DTO> Set<JpaPropertyType> resolveTypes(PropertyDefinition<DTO, ?> propertyDefinition,
                                                            JpaDtoConfiguration configuration) {
         var types = new HashSet<JpaPropertyType>();
 
         if (isIdProperty(propertyDefinition, configuration)) {
             types.add(JpaPropertyType.ID);
         }
-        if (isVersionProperty(propertyDefinition, configuration)) {
-            types.add(JpaPropertyType.VERSION);
-        }
-        if (isAuditProperty(propertyDefinition, configuration)) {
+        if (isAuditProperty(propertyDefinition, propertyDefinition.getTopLevelName())) {
             types.add(JpaPropertyType.AUDIT);
         }
-        if (isHiddenProperty(propertyDefinition, configuration)) {
+        if (isHiddenProperty(propertyDefinition, propertyDefinition.getTopLevelName())) {
             types.add(JpaPropertyType.HIDDEN);
         }
-        if (isParentProperty(beanType, propertyDefinition)) {
+        if (isParentProperty(configuration, propertyDefinition)) {
             types.add(JpaPropertyType.PARENT);
         }
 
         if (types.contains(JpaPropertyType.ID)) {
-            if (types.contains(JpaPropertyType.VERSION)) {
-                throw new IllegalArgumentException("An ID property cannot be a version property");
-            }
             if (types.contains(JpaPropertyType.AUDIT)) {
                 throw new IllegalArgumentException("An ID property cannot be an audit property");
             }
@@ -145,23 +133,8 @@ public final class JpaPropertyCache {
             if (types.contains(JpaPropertyType.ID)) {
                 throw new IllegalArgumentException("An audit property cannot be an ID property");
             }
-            if (types.contains((JpaPropertyType.VERSION))) {
-                throw new IllegalArgumentException("An audit property cannot be a version property");
-            }
             if (types.contains(JpaPropertyType.PARENT)) {
                 throw new IllegalArgumentException("An audit property cannot be a parent property");
-            }
-        }
-
-        if (types.contains(JpaPropertyType.VERSION)) {
-            if (types.contains(JpaPropertyType.ID)) {
-                throw new IllegalArgumentException("A version property cannot be an ID property");
-            }
-            if (types.contains(JpaPropertyType.AUDIT)) {
-                throw new IllegalArgumentException("A version property cannot be an audit property");
-            }
-            if (types.contains(JpaPropertyType.PARENT)) {
-                throw new IllegalArgumentException("A version property cannot be a parent property");
             }
         }
 
@@ -171,9 +144,6 @@ public final class JpaPropertyCache {
             }
             if (types.contains(JpaPropertyType.AUDIT)) {
                 throw new IllegalArgumentException("A parent property cannot be an audit property");
-            }
-            if (types.contains(JpaPropertyType.VERSION)) {
-                throw new IllegalArgumentException("A parent property cannot be a version property");
             }
         }
 
@@ -189,30 +159,48 @@ public final class JpaPropertyCache {
         return StringUtils.equals(jpaDtoConfiguration.idFieldName(), propertyDefinition.getName());
     }
 
-    private static <DTO> boolean isVersionProperty(PropertyDefinition<DTO, ?> propertyDefinition,
-                                                   JpaDtoConfiguration jpaDtoConfiguration) {
-        return StringUtils.equals(jpaDtoConfiguration.versionFieldName(), propertyDefinition.getName());
+    private static <DTO> boolean isAuditProperty(PropertyDefinition<DTO, ?> propertyDefinition, String topLevelName) {
+        return isPropertyMatchingNested(propertyDefinition, topLevelName, JpaDtoConfiguration::auditFields);
     }
 
-    private static <DTO> boolean isAuditProperty(PropertyDefinition<DTO, ?> propertyDefinition,
-                                                 JpaDtoConfiguration jpaDtoConfiguration) {
-        return jpaDtoConfiguration.auditFields()
-                .stream()
-                .anyMatch(a -> StringUtils.equals(a, propertyDefinition.getName()));
+    private static <DTO> boolean isHiddenProperty(PropertyDefinition<DTO, ?> propertyDefinition, String topLevelName) {
+        return isPropertyMatchingNested(propertyDefinition, topLevelName, JpaDtoConfiguration::hiddenFields);
     }
 
-    private static <DTO> boolean isHiddenProperty(PropertyDefinition<DTO, ?> propertyDefinition,
-                                                  JpaDtoConfiguration jpaDtoConfiguration) {
-        return jpaDtoConfiguration.hiddenFields()
+    private static <DTO> boolean isPropertyMatchingNested(PropertyDefinition<DTO, ?> propertyDefinition,
+                                                          String topLevelName,
+                                                          Function<JpaDtoConfiguration, List<String>> fieldExtractor) {
+        if (!propertyDefinition.getPropertyHolderType().isAnnotationPresent(JpaDto.class)) {
+            return false;
+        }
+
+        var jpaDtoConfig = JpaDtoConfiguration.ofBeanType(propertyDefinition.getPropertyHolderType());
+        var isMatching = fieldExtractor.apply(jpaDtoConfig)
                 .stream()
                 .anyMatch(h ->
-                        StringUtils.equals(h, propertyDefinition.getName())
-                                || StringUtils.startsWith(propertyDefinition.getName(), h + ".")
+                        StringUtils.equals(h, topLevelName)
+                                || StringUtils.startsWith(topLevelName, h + ".")
                 );
+
+        if (isMatching) {
+            return true;
+        }
+
+        var parent = propertyDefinition.getParent();
+        if (parent == null) {
+            return false;
+        }
+
+        return isPropertyMatchingNested(parent, "%s.%s".formatted(parent.getTopLevelName(), topLevelName), fieldExtractor);
     }
 
-    private static <DTO> boolean isParentProperty(Class<DTO> beanType, PropertyDefinition<DTO, ?> propertyDefinition) {
-        return MoreBeans.isAnnotationPresentNested(beanType, propertyDefinition.getName(), ParentProperty.class);
+    private static <DTO> boolean isParentProperty(JpaDtoConfiguration jpaDtoConfiguration,
+                                                  PropertyDefinition<DTO, ?> propertyDefinition) {
+        return MoreBeans.isAnnotationPresentNested(
+                jpaDtoConfiguration.dtoBeanType(),
+                propertyDefinition.getName(),
+                ParentProperty.class
+        );
     }
 
     private static class Value<DTO> {
@@ -222,7 +210,7 @@ public final class JpaPropertyCache {
         private final Map<String, JpaPropertyDefinition<DTO, ?>> byName;
 
         public Value(List<JpaPropertyDefinition<DTO, ?>> properties) {
-            this.properties = Objects.requireNonNull(properties, "Properties must not be null");
+            this.properties = Objects.requireNonNull(properties, "properties");
             this.byName = properties.stream()
                     .collect(Collectors.toMap(JpaPropertyDefinition::getName, Function.identity()));
         }

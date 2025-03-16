@@ -24,22 +24,18 @@ public abstract class BaseEntity {
 
     @CreatedDate
     @Column(name = "created_at")
-    @SuppressWarnings("unused")
     protected LocalDateTime createdAt;
 
     @CreatedBy
     @Column(name = "created_by")
-    @SuppressWarnings("unused")
     protected String createdBy;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    @SuppressWarnings("unused")
     protected LocalDateTime updatedAt;
 
     @LastModifiedBy
     @Column(name = "updated_by")
-    @SuppressWarnings("unused")
     protected String updatedBy;
 
 }

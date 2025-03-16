@@ -4,16 +4,21 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.domain.transcription.data.TranscriptionProjection;
 
 @Validated
 public interface TranscriptionService {
 
-    TranscriptionEntity getById(Long id);
+    TranscriptionEntity getById(@NotNull Long id);
 
-    TranscriptionEntity create(@Valid @NotNull CreateTranscriptionCommand command);
+    TranscriptionEntity getByIdFetchWords(@NotNull Long id);
 
-    TranscriptionEntity patch(@Valid @NotNull PatchTranscriptionCommand command);
+    TranscriptionProjection projectById(@NotNull Long id);
 
-    TranscriptionEntity rename(@Valid @NotNull RenameTranscriptionCommand command);
+    TranscriptionProjection create(@Valid @NotNull CreateTranscriptionCommand command);
+
+    TranscriptionProjection patch(@Valid @NotNull PatchTranscriptionCommand command);
+
+    TranscriptionProjection rename(@Valid @NotNull RenameTranscriptionCommand command);
 
 }

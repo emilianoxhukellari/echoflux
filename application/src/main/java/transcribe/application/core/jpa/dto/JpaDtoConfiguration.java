@@ -4,7 +4,7 @@ import lombok.Builder;
 import org.apache.commons.lang3.Validate;
 import transcribe.annotation.jpa.JpaDto;
 import transcribe.core.core.bean.FieldProperty;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 import transcribe.core.core.utils.MoreArrays;
 
 import java.util.List;
@@ -13,15 +13,15 @@ import java.util.stream.Collectors;
 
 @Builder
 public record JpaDtoConfiguration(Class<?> entityBeanType,
+                                  Class<?> dtoBeanType,
                                   String idFieldName,
-                                  String versionFieldName,
                                   List<String> auditFields,
                                   List<String> hiddenFields) {
 
     public JpaDtoConfiguration {
         Objects.requireNonNull(entityBeanType, "Entity bean type must not be null");
+        Objects.requireNonNull(dtoBeanType, "DTO bean type must not be null");
         Objects.requireNonNull(idFieldName, "Id field name must not be null");
-        Objects.requireNonNull(versionFieldName, "Version field name must not be null");
         Objects.requireNonNull(auditFields, "Audit fields must not be null");
         Objects.requireNonNull(hiddenFields, "Hidden fields must not be null");
     }
@@ -45,7 +45,6 @@ public record JpaDtoConfiguration(Class<?> entityBeanType,
                     jpaDtoBeanType.getSimpleName()
             );
         }
-
         for (int i = 0; i < annotation.hiddenFields().length; i++) {
             Validate.isTrue(byName.containsKey(annotation.hiddenFields()[i]),
                     "Hidden field %s not found in bean %s",
@@ -60,16 +59,10 @@ public record JpaDtoConfiguration(Class<?> entityBeanType,
                 jpaDtoBeanType.getSimpleName()
         );
 
-        Validate.isTrue(byName.containsKey(annotation.versionField()),
-                "Version field %s not found in bean %s",
-                annotation.versionField(),
-                jpaDtoBeanType.getSimpleName()
-        );
-
         return JpaDtoConfiguration.builder()
                 .entityBeanType(annotation.entityBeanType())
+                .dtoBeanType(jpaDtoBeanType)
                 .idFieldName(annotation.idField())
-                .versionFieldName(annotation.versionField())
                 .auditFields(MoreArrays.toList(annotation.auditFields()))
                 .hiddenFields(MoreArrays.toList(annotation.hiddenFields()))
                 .build();

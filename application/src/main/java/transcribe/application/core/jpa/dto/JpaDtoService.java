@@ -15,7 +15,7 @@ public interface JpaDtoService<DTO, ENTITY, ID> {
 
     default DTO getById(@NotNull ID id) {
         return findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Entity not found"));
+                .orElseThrow(() -> new NoSuchElementException("Not found by id [%s]".formatted(id)));
     }
 
     Optional<DTO> findById(ID id);

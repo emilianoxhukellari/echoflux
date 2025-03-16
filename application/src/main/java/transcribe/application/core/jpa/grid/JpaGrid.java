@@ -10,6 +10,7 @@ import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -21,11 +22,9 @@ import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.jpa.core.JpaPropertyCache;
 import transcribe.application.core.jpa.core.JpaPropertyDefinition;
-import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.core.JpaPropertyDefinitionUtils;
+import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import transcribe.application.core.jpa.dto.JpaDtoConfiguration;
-import transcribe.application.core.jpa.dto.JpaDtoMapper;
 import transcribe.application.core.jpa.dto.JpaDtoService;
 import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.jpa.filter.CombinedFilter;
@@ -35,10 +34,10 @@ import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
+import transcribe.core.core.bean.MoreBeans;
+import transcribe.core.core.executor.MoreExecutors;
 import transcribe.core.core.utils.MoreArrays;
 import transcribe.core.core.utils.MoreLists;
-import transcribe.core.core.bean.utils.MoreBeans;
-import transcribe.domain.core.repository.EnhancedJpaRepository;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.ArrayList;
@@ -57,8 +56,10 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     private final JpaDtoService<DTO, ENTITY, ID> service;
     @Getter
     private final Class<DTO> beanType;
+    @Nullable
     private final Specification<ENTITY> defaultSpecification;
     private final JpaPropertyDefinition<DTO, ID> idPropertyDefinition;
+    @Nullable
     private final String defaultSortProperty;
     private final Sort.Direction defaultSortDirection;
     private final List<JpaFilter<ENTITY>> filters = new ArrayList<>();
@@ -71,23 +72,31 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     private GridContextMenu<DTO> contextMenu;
 
     public JpaGrid(Class<DTO> beanType) {
-        this(newJpaGridGenericConfiguration(beanType));
+        this(
+                JpaGridConfiguration.<DTO, ENTITY, ID>builder()
+                        .service(SimpleJpaDtoService.ofBeanType(beanType))
+                        .beanType(beanType)
+                        .build()
+        );
     }
 
     @SuppressWarnings("unchecked")
     public JpaGrid(JpaGridConfiguration<DTO, ENTITY, ID> configuration) {
-        super(configuration.getDefaultPageSize());
-        SpringContext.getStrictValidator().validate(configuration);
+        super(30);
+        Objects.requireNonNull(configuration.getBeanType(), "Bean type cannot be null");
+        Objects.requireNonNull(configuration.getService(), "Service cannot be null");
 
         this.service = configuration.getService();
         this.beanType = configuration.getBeanType();
         this.defaultSpecification = configuration.getDefaultSpecification();
         this.idPropertyDefinition = (JpaPropertyDefinition<DTO, ID>) JpaPropertyCache.getIdProperty(beanType);
         this.defaultSortProperty = configuration.getDefaultSortAttribute();
-        this.defaultSortDirection = configuration.getDefaultSortDirection();
+        this.defaultSortDirection = Objects.requireNonNullElse(configuration.getDefaultSortDirection(), Sort.Direction.DESC);
         this.filterDataProvider = newDataProvider();
 
         configureBeanType(beanType, false);
+        getDataCommunicator()
+                .enablePushUpdates(MoreExecutors.virtualThreadExecutor());
         setDataProvider(this.filterDataProvider);
         addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
     }
@@ -103,14 +112,12 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     public void addAllColumns() {
         addCoreAttributeColumns();
         addAuditColumns();
-        addVersionColumn();
         addIdColumn();
     }
 
     public void addAllFilters() {
         addCoreAttributeFilters();
         addAuditFilters();
-        addVersionFilter();
         addIdFilter();
     }
 
@@ -136,11 +143,6 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void addIdColumn() {
         addColumn(idPropertyDefinition.getName());
-    }
-
-    public void addVersionColumn() {
-        var versionProperty = JpaPropertyCache.getVersionProperty(beanType);
-        addColumn(versionProperty.getName());
     }
 
     @Override
@@ -184,11 +186,6 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void addIdFilter() {
         addFilter(idPropertyDefinition.getName());
-    }
-
-    public void addVersionFilter() {
-        var versionProperty = JpaPropertyCache.getVersionProperty(beanType);
-        addFilter(versionProperty.getName());
     }
 
     public void addFilters(String... propertyNames) {
@@ -349,28 +346,6 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         return sort.isSorted()
                 ? sort
                 : Sort.by(defaultSortDirection, StringUtils.firstNonBlank(defaultSortProperty, idPropertyDefinition.getAttributeName()));
-    }
-
-    private static <DTO, ENTITY, ID> JpaGridConfiguration<DTO, ENTITY, ID> newJpaGridGenericConfiguration(Class<DTO> beanType) {
-        Objects.requireNonNull(beanType, "Bean type cannot be null");
-        var jpaDtoConfiguration = JpaDtoConfiguration.ofBeanType(beanType);
-
-        @SuppressWarnings("unchecked")
-        var repository = (EnhancedJpaRepository<ENTITY, ID>) SpringContext.getBeanWhen(
-                EnhancedJpaRepository.class,
-                r -> Objects.equals(jpaDtoConfiguration.entityBeanType(), r.getBeanType())
-        );
-        @SuppressWarnings("unchecked")
-        var mapper = (JpaDtoMapper<DTO, ENTITY>) SpringContext.getBeanWhen(
-                JpaDtoMapper.class,
-                m -> Objects.equals(beanType, m.getBeanType())
-        );
-        var service = new SimpleJpaDtoService<>(repository, mapper, beanType);
-
-        return JpaGridConfiguration.<DTO, ENTITY, ID>builder()
-                .service(service)
-                .beanType(beanType)
-                .build();
     }
 
 }

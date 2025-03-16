@@ -1,0 +1,3 @@
+vaadin-grid.body-cell-cursor-pointer::part(body-cell) {
+    cursor: pointer;
+}

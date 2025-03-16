@@ -16,6 +16,6 @@ public class FieldProperty {
     private Field field;
     private Field parentField;
     private String name;
-    private String attributeName;
+    private Attribute attribute;
 
 }

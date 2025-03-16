@@ -16,9 +16,10 @@ import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.main.MainLayout;
+import transcribe.application.layout.MainLayout;
 import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.settings.data.SettingsEntity;
+import transcribe.domain.settings.data.SettingsProjection;
 import transcribe.domain.settings.synchronizer.SettingsSynchronizer;
 
 @PageTitle("Settings")
@@ -63,11 +64,14 @@ public class SettingsView extends Composite<VerticalLayout> {
         grid.addCrudActions();
 
         grid.addConfirmedContextMenuItem("Reset", item -> {
-            var operation = Operation.<SettingsJpaDto>builder()
+            var operation = Operation.<SettingsProjection>builder()
                     .name("Resetting settings")
-                    .callable(() -> jpaDtoService.perform(() -> synchronizer.reset(item.getKey())))
+                    .callable(() -> synchronizer.reset(item.getKey()))
                     .type(OperationType.NON_BLOCKING)
-                    .onSuccess(grid::refreshItem)
+                    .onSuccess(settings -> {
+                        var dto = jpaDtoService.getById(settings.id());
+                        grid.refreshItem(dto);
+                    })
                     .build();
 
             operationRunner.run(operation, UI.getCurrent());

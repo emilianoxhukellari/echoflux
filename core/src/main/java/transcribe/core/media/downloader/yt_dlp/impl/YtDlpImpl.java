@@ -15,6 +15,7 @@ import transcribe.core.properties.YtDlpProperties;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -35,8 +36,8 @@ public class YtDlpImpl implements YtDlp {
                     .get();
 
             int exitCode = executor.execute(commandLine);
-            var out = outStream.toString();
-            var err = errorStream.toString();
+            var out = outStream.toString(StandardCharsets.UTF_8);
+            var err = errorStream.toString(StandardCharsets.UTF_8);
 
             if (exitCode > 0) {
                 if (StringUtils.containsIgnoreCase(err, "Video unavailable")) {

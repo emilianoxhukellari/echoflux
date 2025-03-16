@@ -65,7 +65,7 @@ public class GoogleCompletions implements Completions, DisposableBean {
 
         int p = 1;
         while (Candidate.FinishReason.MAX_TOKENS == ResponseHandler.getFinishReason(currentResponse)) {
-            log.info("Max tokens reached, requesting part [{}]", ++p);
+            log.warn("Max tokens reached, requesting part [{}]", ++p);
 
             currentResponse = chatSession.sendMessage(settings.getContinuePhrase());
             responseList.add(currentResponse);

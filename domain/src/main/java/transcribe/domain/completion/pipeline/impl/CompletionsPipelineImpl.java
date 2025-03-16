@@ -4,10 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import transcribe.core.completions.Completions;
-import transcribe.core.core.provider.AiProvider;
+import transcribe.core.core.bean.loader.BeanLoader;
+import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.utils.MoreFunctions;
 import transcribe.core.settings.SettingsLoader;
-import transcribe.domain.completion.data.CompletionEntity;
+import transcribe.domain.completion.data.CompletionProjection;
 import transcribe.domain.completion.data.CompletionStatus;
 import transcribe.domain.completion.mapper.CompletionMapper;
 import transcribe.domain.completion.pipeline.CompleteCommand;
@@ -17,8 +18,6 @@ import transcribe.domain.completion.service.CompletionService;
 import transcribe.domain.completion.service.CreateCompletionCommand;
 import transcribe.domain.completion.service.PatchCompletionCommand;
 
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Component
@@ -26,14 +25,15 @@ import java.util.Objects;
 @Slf4j
 public class CompletionsPipelineImpl implements CompletionsPipeline {
 
-    private final List<Completions> completionsList;
-    private final CompletionService service;
-    private final CompletionMapper mapper;
+    private final CompletionService completionService;
+    private final CompletionMapper completionMapper;
     private final SettingsLoader settingsLoader;
+    private final BeanLoader beanLoader;
 
+    @LoggedMethodExecution(logArgs = false, logReturn = false)
     @Override
-    public CompletionEntity complete(CompleteCommand command) {
-        var entity = service.create(
+    public CompletionProjection complete(CompleteCommand command) {
+        var completion = completionService.create(
                 CreateCompletionCommand.builder()
                         .input(command.getInput())
                         .transcriptionId(command.getTranscriptionId())
@@ -45,13 +45,16 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
                     command.getAiProvider(),
                     () -> settingsLoader.load(CompletionsPipelineSettings.class).getPreferredAiProvider()
             );
-            var completions = getImplementation(provider);
+            var completions = beanLoader.getWhen(
+                    Completions.class,
+                    c -> Objects.equals(c.getProvider(), provider)
+            );
 
-            return completeCreated(entity, completions);
+            return completeCreated(completion, completions);
         } catch (Throwable e) {
-            service.patch(
+            completionService.patch(
                     PatchCompletionCommand.builder()
-                            .id(entity.getId())
+                            .id(completion.id())
                             .error(e.getMessage())
                             .status(CompletionStatus.FAILED)
                             .build()
@@ -61,35 +64,28 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         }
     }
 
-    private CompletionEntity completeCreated(CompletionEntity entity, Completions completions) {
-        Objects.requireNonNull(entity, "Entity cannot be null");
+    private CompletionProjection completeCreated(CompletionProjection completion, Completions completions) {
+        Objects.requireNonNull(completion, "Completion cannot be null");
         Objects.requireNonNull(completions, "Completions cannot be null");
 
-        service.patch(
+        completionService.patch(
                 PatchCompletionCommand.builder()
-                        .id(entity.getId())
+                        .id(completion.id())
                         .status(CompletionStatus.PROCESSING)
                         .build()
         );
 
-        var timedResult = MoreFunctions.getTimed(() -> completions.complete(entity.getInput()));
+        var timedResult = MoreFunctions.getTimed(() -> completions.complete(completion.input()));
         var completionResult = timedResult.getResult();
 
-        return service.patch(
-                mapper.toCommand(completionResult)
-                        .setId(entity.getId())
-                        .setStatus(CompletionStatus.COMPLETED)
-                        .setDurationMillis(timedResult.getDuration().toMillis())
+        var patchCommand = completionMapper.toCommand(
+                completion.id(),
+                CompletionStatus.COMPLETED,
+                timedResult.getDuration().toMillis(),
+                completionResult
         );
-    }
 
-    private Completions getImplementation(AiProvider aiProvider) {
-        Objects.requireNonNull(aiProvider, "AI provider cannot be null");
-
-        return completionsList.stream()
-                .filter(c -> Objects.equals(c.getProvider(), aiProvider))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No completion implementation found for provider: " + aiProvider));
+        return completionService.patch(patchCommand);
     }
 
 }

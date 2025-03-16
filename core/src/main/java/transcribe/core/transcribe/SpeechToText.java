@@ -6,7 +6,7 @@ import org.springframework.validation.annotation.Validated;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.provider.AiProviderAware;
 import transcribe.core.transcribe.common.Language;
-import transcribe.core.transcribe.common.SpeechToTextWord;
+import transcribe.core.word.common.SpeechToTextWord;
 
 import java.net.URI;
 import java.util.List;
@@ -20,7 +20,5 @@ public interface SpeechToText extends AiProviderAware {
     }
 
     List<SpeechToTextWord> transcribe(@NotNull URI cloudUri, @NotEmpty List<@NotNull Language> languages);
-
-    boolean supportsDiarization();
 
 }

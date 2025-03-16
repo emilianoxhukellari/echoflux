@@ -10,7 +10,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.icon.CustomizedIcon;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.core.core.bean.MoreBeans;
 
 import java.util.Objects;
 
@@ -82,7 +82,7 @@ public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
         Objects.requireNonNull(onClick, "On click action must not be null");
 
         var button = new Button(LineAwesomeIcon.PLUS_SOLID.create(), _ -> onClick.run());
-        button.setTooltipText("Create new entityBeanType");
+        button.setTooltipText("Create");
 
         addTopRight(button);
 

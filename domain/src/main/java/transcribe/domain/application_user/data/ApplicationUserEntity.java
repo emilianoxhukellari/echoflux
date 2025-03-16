@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +22,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import transcribe.domain.audit.data.BaseEntity;
+import transcribe.domain.transcription.data.TranscriptionEntity;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -65,5 +68,9 @@ public class ApplicationUserEntity extends BaseEntity {
     @Column(name = "role")
     @NotNull
     private Set<Role> roles;
+
+    @OneToMany(mappedBy = "applicationUser", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<TranscriptionEntity> transcriptions = new HashSet<>();
 
 }

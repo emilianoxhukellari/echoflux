@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 @Slf4j
 public class BroadcasterImpl implements Broadcaster {
 
-    private final ExecutorService executor = MoreExecutors.virtualThreadExecutor();
+    private final ExecutorService executor = MoreExecutors.delegatingSecurityVirtualThreadExecutor();
     private final ReentrantLock lock = new ReentrantLock();
     private final Map<Class<?>, List<EventConsumer<?>>> eventSubscribersMap = new HashMap<>();
 

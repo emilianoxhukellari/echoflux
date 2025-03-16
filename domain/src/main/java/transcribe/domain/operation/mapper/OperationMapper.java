@@ -1,15 +1,13 @@
 package transcribe.domain.operation.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.domain.operation.data.OperationEntity;
-import transcribe.domain.operation.data.OperationStatus;
-
-import java.time.LocalDateTime;
+import transcribe.domain.operation.data.OperationProjection;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -17,13 +15,7 @@ import java.time.LocalDateTime;
         componentModel = MappingConstants.ComponentModel.SPRING)
 public interface OperationMapper {
 
-    OperationEntity asEntity(@MappingTarget OperationEntity entity,
-                             LocalDateTime endedAt,
-                             OperationStatus status,
-                             String error);
-
-    OperationEntity asEntity(@MappingTarget OperationEntity entity,
-                             LocalDateTime endedAt,
-                             OperationStatus status);
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.ERROR)
+    OperationProjection toProjection(OperationEntity entity);
 
 }

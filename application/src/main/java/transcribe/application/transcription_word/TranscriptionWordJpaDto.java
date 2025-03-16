@@ -1,14 +1,17 @@
 package transcribe.application.transcription_word;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.application.core.annotation.BigText;
-import transcribe.core.core.annotation.Required;
-import transcribe.annotation.jpa.JpaDto;
-import transcribe.application.transcription_speaker.TranscriptionSpeakerJpaDto;
+import lombok.Setter;
+import org.springframework.data.annotation.PersistenceCreator;
 import transcribe.annotation.core.ParentProperty;
+import transcribe.annotation.jpa.JpaDto;
+import transcribe.application.core.annotation.BigText;
+import transcribe.application.transcription.TranscriptionJpaDto;
+import transcribe.core.core.annotation.Required;
 import transcribe.domain.transcription_word.data.TranscriptionWordEntity;
 
 import java.time.LocalDateTime;
@@ -16,17 +19,18 @@ import java.time.LocalDateTime;
 @JpaDto(entityBeanType = TranscriptionWordEntity.class)
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_ = @PersistenceCreator)
 @NoArgsConstructor
 public class TranscriptionWordJpaDto {
 
     private Long id;
 
     @Required
-    private Long transcriptionId;
+    @BigText
+    private String content;
 
     @Required
-    private Integer sequence;
+    private String speakerName;
 
     @Required
     private Long startOffsetMillis;
@@ -34,15 +38,12 @@ public class TranscriptionWordJpaDto {
     @Required
     private Long endOffsetMillis;
 
-    @Required
-    @BigText
-    private String content;
+    @Setter(value = AccessLevel.NONE)
+    private Integer sequence;
 
     @Required
     @ParentProperty
-    private TranscriptionSpeakerJpaDto transcriptionSpeaker;
-
-    private Integer version;
+    private TranscriptionJpaDto transcription;
 
     private LocalDateTime createdAt;
 

@@ -2,6 +2,7 @@ package transcribe.application.operation;
 
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
@@ -20,6 +21,7 @@ public interface OperationJpaDtoMapper extends JpaDtoMapper<OperationJpaDto, Ope
     OperationEntity toEntity(OperationJpaDto dto);
 
     @Override
+    @Mapping(target = "version", ignore = true)
     OperationEntity updateEntity(@MappingTarget OperationEntity entity, OperationJpaDto dto);
 
     @Override

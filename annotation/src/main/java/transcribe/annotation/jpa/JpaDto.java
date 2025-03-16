@@ -15,8 +15,6 @@ public @interface JpaDto {
 
     String idField() default JpaDtoConstants.ID_FIELD;
 
-    String versionField() default JpaDtoConstants.VERSION_FIELD;
-
     String[] auditFields() default {
             JpaDtoConstants.CREATED_AT_FIELD,
             JpaDtoConstants.CREATED_BY_FIELD,

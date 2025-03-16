@@ -22,15 +22,15 @@ public class AudioTranscoderImpl implements AudioTranscoder, TempFileNameGenerat
 
     @SneakyThrows
     @LoggedMethodExecution
-    public Path transcode(Path source, TranscodeParameters parameters) {
-        var fileName = String.format("%s.%s", newFileName(), parameters.getAudioContainer().getContainer());
+    public Path transcode(Path source, TranscodeParameters transcodeParameters) {
+        var fileName = String.format("%s.%s", newFileName(), transcodeParameters.getAudioContainer().getContainer());
         var outputPath = AudioTranscoderTempDirectory.INSTANCE.locationPath().resolve(fileName).toAbsolutePath();
 
         var outputBuilder = new FFmpegOutputBuilder()
                 .setFilename(outputPath.toString())
-                .setAudioCodec(parameters.getAudioContainer().getCodec())
-                .setAudioChannels(parameters.getChannels())
-                .setFormat(parameters.getAudioContainer().getContainer());
+                .setAudioCodec(transcodeParameters.getAudioContainer().getCodec())
+                .setAudioChannels(transcodeParameters.getChannels())
+                .setFormat(transcodeParameters.getAudioContainer().getContainer());
 
         var builder = new FFmpegBuilder()
                 .setInput(source.toAbsolutePath().toString())

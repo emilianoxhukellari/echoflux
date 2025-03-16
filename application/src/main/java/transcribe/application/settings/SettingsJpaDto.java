@@ -5,8 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.core.core.annotation.Required;
+import org.springframework.data.annotation.PersistenceCreator;
 import transcribe.annotation.jpa.JpaDto;
+import transcribe.core.core.annotation.Required;
 import transcribe.domain.settings.data.SettingsEntity;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @JpaDto(entityBeanType = SettingsEntity.class)
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_ = @PersistenceCreator)
 @NoArgsConstructor
 public class SettingsJpaDto {
 
@@ -28,8 +29,6 @@ public class SettingsJpaDto {
 
     @Required
     private JsonNode value;
-
-    private Integer version;
 
     private LocalDateTime createdAt;
 

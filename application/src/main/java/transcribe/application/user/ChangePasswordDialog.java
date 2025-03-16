@@ -4,18 +4,23 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.data.binder.Binder;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
+import transcribe.application.core.jpa.dto.JpaDtoService;
+import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.spring.SpringContext;
+import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.application_user.service.ChangePasswordCommand;
 
 public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
-    private final ApplicationUserService service;
+    private final ApplicationUserService applicationUserService;
+    private final JpaDtoService<ApplicationUserJpaDto, ApplicationUserEntity, Long> jpaDTOService;
     private final Binder<ChangePasswordCommand> binder;
 
     public ChangePasswordDialog(ApplicationUserJpaDto applicationUser) {
         super(ApplicationUserJpaDto.class);
-        this.service = SpringContext.getBean(ApplicationUserService.class);
+        this.applicationUserService = SpringContext.getBean(ApplicationUserService.class);
+        this.jpaDTOService = SimpleJpaDtoService.ofBeanType(ApplicationUserJpaDto.class);
         this.binder = new Binder<>(ChangePasswordCommand.class);
 
         this.binder.setBean(
@@ -44,12 +49,9 @@ public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
     @Override
     protected ApplicationUserJpaDto save() {
-        return SpringContext.getTransactional(() -> {
-            var updatedEntity = service.changePassword(binder.getBean());
+        var updatedUser = applicationUserService.changePassword(binder.getBean());
 
-            return SpringContext.getBean(ApplicationUserJpaDtoMapper.class)
-                    .toDto(updatedEntity);
-        });
+        return jpaDTOService.getById(updatedUser.id());
     }
 
     @Override

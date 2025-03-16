@@ -34,10 +34,8 @@ public class MediaDownloaderImpl implements MediaDownloader, TempFileNameGenerat
         var fileName = newFileName();
         var arguments = ArrayUtils.toArray(
                 uri.toString(),
-                "--format",
-                "bestaudio",
-                "--output",
-                String.format("%s.%%(ext)s", fileName)
+                "--format", "bestaudio",
+                "--output", String.format("%s.%%(ext)s", fileName)
         );
         var request = YtDlpRequest.builder()
                 .directory(MediaTempDirectory.INSTANCE.locationFile())
@@ -60,7 +58,15 @@ public class MediaDownloaderImpl implements MediaDownloader, TempFileNameGenerat
     @LoggedMethodExecution
     public Optional<MediaFindResult> find(URI uri) {
         var request = YtDlpRequest.builder()
-                .arguments(ArrayUtils.toArray(uri.toString(), "--skip-download", "--get-title", "--get-thumbnail"))
+                .arguments(
+                        ArrayUtils.toArray(
+                                uri.toString(),
+                                "--skip-download",
+                                "--get-title",
+                                "--get-thumbnail",
+                                "--encoding", "utf-8"
+                        )
+                )
                 .build();
 
         String out;

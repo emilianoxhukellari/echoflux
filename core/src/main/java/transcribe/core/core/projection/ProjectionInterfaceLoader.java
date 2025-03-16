@@ -23,7 +23,7 @@ public class ProjectionInterfaceLoader {
     private final static Map<Class<?>, Class<?>> CACHE = scanAll();
 
     /**
-     * Loads a single {@link ProjectionInterface} for the given bean type. The result is cached.
+     * Loads an already cached {@link ProjectionInterface} for the given bean type.
      * */
     public static  <T> Class<? extends ObjectConvertable<T>> load(Class<T> beanType) {
         @SuppressWarnings("unchecked")

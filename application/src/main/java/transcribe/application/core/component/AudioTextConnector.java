@@ -1,93 +1,78 @@
 package transcribe.application.core.component;
 
-import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
-import com.vaadin.flow.component.internal.AllowInert;
-import elemental.json.Json;
-import elemental.json.JsonObject;
+import com.vaadin.flow.internal.JsonUtils;
 import org.apache.commons.lang3.Validate;
 import transcribe.application.core.spring.SpringContext;
-import transcribe.application.transcribe.EditTranscriptPartDialog;
-import transcribe.domain.transcript.transcript_part.mapper.TranscriptPartMapper;
-import transcribe.domain.transcript.transcript_part.part.PartModel;
-import transcribe.domain.transcript.transcript_part.service.TranscriptPartService;
+import transcribe.core.cloud_storage.CloudStorage;
+import transcribe.core.cloud_storage.GetSignedUrlOfUriCommand;
+import transcribe.domain.transcription.data.TranscriptionProjection;
+import transcribe.domain.transcription.manager.TranscriptionManager;
+import transcribe.domain.transcription.service.TranscriptionService;
+import transcribe.domain.transcription_word.data.SpeakerSegmentDto;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
 @Tag("audio-text-connector")
-@JsModule("./element/audio-text-connector.ts")
+@JsModule("./element/audio-text-connector/audio-text-connector.ts")
 public class AudioTextConnector extends Component implements HasSize {
 
-    private final Long transcriptionId;
-    private final String audioSrc;
+    private final TranscriptionManager transcriptionManager;
+    private final CloudStorage cloudStorage;
+    private final TranscriptionProjection transcription;
 
-    public AudioTextConnector(Long transcriptionId, String audioSrc, List<PartModel> parts) {
+    public AudioTextConnector(Long transcriptionId) {
         Objects.requireNonNull(transcriptionId, "transcriptionId cannot be null");
-        Validate.notBlank(audioSrc, "audioSrc cannot be blank");
 
-        this.transcriptionId = transcriptionId;
-        this.audioSrc = audioSrc;
-        getElement().setProperty("audioSrc", audioSrc);
-        setAudioParts(parts);
+        this.transcriptionManager = SpringContext.getBean(TranscriptionManager.class);
+        this.cloudStorage = SpringContext.getBean(CloudStorage.class);
+        this.transcription = SpringContext.getBean(TranscriptionService.class)
+                .projectById(transcriptionId);
+
+        build();
     }
 
-    private void setAudioParts(List<PartModel> parts) {
-        Objects.requireNonNull(parts, "parts cannot be null");
+    public void build() {
+        var audioUrl = cloudStorage.getSignedUrl(
+                GetSignedUrlOfUriCommand.builder()
+                        .cloudUri(transcription.cloudUri())
+                        .duration(Duration.ofHours(8))
+                        .build()
+        );
 
-        var jsonArray = Json.createArray();
+        var speakerSegments = transcriptionManager.getTranscriptionSpeakerSegments(transcription.id());
 
-        for (var part : parts) {
-            var jsonObject = toJsonObject(part);
-            jsonArray.set(jsonArray.length(), jsonObject);
-        }
-
-        getElement().setPropertyJson("partModels", jsonArray);
+        setAudioUrl(audioUrl.toString());
+        setSpeakerWordSegments(speakerSegments);
     }
 
-    private static JsonObject toJsonObject(PartModel part) {
-        var jsonObject = Json.createObject();
-        jsonObject.put("text", part.getText());
-        jsonObject.put("sequence", part.getSequence());
-        jsonObject.put("startOffsetMillis", part.getStartOffsetMillis());
-        jsonObject.put("endOffsetMillis", part.getEndOffsetMillis());
+    public void setAudioUrl(String audioUrl) {
+        Validate.notBlank(audioUrl, "audioSrc cannot be blank");
 
-        return jsonObject;
+        getElement().setProperty("audioSrc", audioUrl);
     }
 
-    private void updatePart(PartModel part) {
-        Objects.requireNonNull(part);
+    public void setSpeakerWordSegments(List<SpeakerSegmentDto> speakerSegments) {
+        Objects.requireNonNull(speakerSegments, "speakerSegments cannot be null");
 
-        var jsonObject = toJsonObject(part);
-        getElement().callJsFunction("updatePart", jsonObject);
+        var jsonValue = JsonUtils.listToJson(speakerSegments);
+
+        getElement().setPropertyJson("speakerSegments", jsonValue);
+    }
+
+    public void setMaxHighlightedWords(int maxHighlightedWords) {
+        Validate.isTrue(maxHighlightedWords > 0, "maxHighlightedWords must be greater than 0");
+
+        getElement().setProperty("maxHighlightedWords", maxHighlightedWords);
     }
 
     private void pause() {
         getElement().callJsFunction("pause");
-    }
-
-    @ClientCallable
-    @AllowInert
-    private void onEditPart(Integer sequence) {
-        Objects.requireNonNull(sequence);
-
-        new EditTranscriptPartDialog(transcriptionId, sequence, audioSrc)
-                .setSaveListener(_ -> {
-                            var transcriptPartEntity = SpringContext.getBean(TranscriptPartService.class)
-                                    .getForTranscriptionAndSequence(transcriptionId, sequence);
-
-                            var transcriptPartModel = SpringContext.getBean(TranscriptPartMapper.class)
-                                    .toModel(transcriptPartEntity);
-
-                            updatePart(transcriptPartModel);
-                        }
-                )
-                .open();
-
-        pause();
     }
 
 }

@@ -10,17 +10,20 @@ import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.transcription.TranscriptionJpaDto;
 import transcribe.domain.operation.data.OperationType;
+import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.service.RenameTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
 
 public class RenameTranscriptionDialog extends JpaSaveDialog<TranscriptionJpaDto> {
 
-    private final TranscriptionService service;
+    private final TranscriptionService transcriptionService;
+    private final SimpleJpaDtoService<TranscriptionJpaDto, TranscriptionEntity, Long> simpleJpaDTOService;
     private final Binder<RenameTranscriptionCommand> binder;
 
     public RenameTranscriptionDialog(TranscriptionJpaDto transcription) {
         super(TranscriptionJpaDto.class);
-        this.service = SpringContext.getBean(TranscriptionService.class);
+        this.transcriptionService = SpringContext.getBean(TranscriptionService.class);
+        this.simpleJpaDTOService = SimpleJpaDtoService.ofBeanType(TranscriptionJpaDto.class);
         this.binder = new Binder<>();
 
         this.binder.setBean(
@@ -63,8 +66,9 @@ public class RenameTranscriptionDialog extends JpaSaveDialog<TranscriptionJpaDto
 
     @Override
     protected TranscriptionJpaDto save() {
-        return SimpleJpaDtoService.ofBeanType(TranscriptionJpaDto.class)
-                .perform(() -> service.rename(binder.getBean()));
+        var renamed = transcriptionService.rename(binder.getBean());
+
+        return simpleJpaDTOService.getById(renamed.id());
     }
 
     @Override

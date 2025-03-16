@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import transcribe.domain.application_user.data.ApplicationUserEntity;
+import transcribe.domain.application_user.data.ApplicationUserProjection;
 import transcribe.domain.application_user.data.ApplicationUserRepository;
 import transcribe.domain.application_user.service.ApplicationUserMapper;
 import transcribe.domain.application_user.service.ApplicationUserService;
@@ -14,44 +14,48 @@ import transcribe.domain.application_user.service.UpdateApplicationUserCommand;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ApplicationUserServiceImpl implements ApplicationUserService {
 
     private final PasswordEncoder passwordEncoder;
-    private final ApplicationUserRepository repository;
-    private final ApplicationUserMapper mapper;
+    private final ApplicationUserRepository applicationUserRepository;
+    private final ApplicationUserMapper applicationUserMapper;
 
     @Override
     @Transactional
-    public ApplicationUserEntity create(CreateApplicationUserCommand command) {
+    public ApplicationUserProjection create(CreateApplicationUserCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
-        var user = mapper.toEntity(command, hashedPassword);
+        var user = applicationUserMapper.toEntity(command, hashedPassword);
+        var saved = applicationUserRepository.save(user);
 
-        return repository.save(user);
+        return applicationUserMapper.toProjection(saved);
     }
 
     @Override
     @Transactional
-    public ApplicationUserEntity update(UpdateApplicationUserCommand command) {
-        var user = repository.getReferenceById(command.getId());
-        var patched = mapper.patch(user, command);
+    public ApplicationUserProjection patch(UpdateApplicationUserCommand command) {
+        var user = applicationUserRepository.getReferenceById(command.getId());
+        var patched = applicationUserMapper.patch(user, command);
+        var saved = applicationUserRepository.save(patched);
 
-        return repository.save(patched);
+        return applicationUserMapper.toProjection(saved);
     }
 
     @Override
     @Transactional
-    public ApplicationUserEntity changePassword(ChangePasswordCommand command) {
+    public ApplicationUserProjection changePassword(ChangePasswordCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
-        var user = repository.getReferenceById(command.getId());
-        var patched = mapper.patch(user, hashedPassword);
+        var user = applicationUserRepository.getReferenceById(command.getId());
+        var patched = applicationUserMapper.patch(user, hashedPassword);
+        var saved = applicationUserRepository.save(patched);
 
-        return repository.save(patched);
+        return applicationUserMapper.toProjection(saved);
     }
 
     @Override
     @Transactional
-    public void delete(Long id) {
-        repository.deleteById(id);
+    public void deleteById(Long id) {
+        applicationUserRepository.deleteById(id);
     }
 
 }

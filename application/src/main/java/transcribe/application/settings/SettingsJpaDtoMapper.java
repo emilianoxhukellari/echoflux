@@ -2,6 +2,7 @@ package transcribe.application.settings;
 
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
@@ -20,6 +21,7 @@ public interface SettingsJpaDtoMapper extends JpaDtoMapper<SettingsJpaDto, Setti
     SettingsEntity toEntity(SettingsJpaDto dto);
 
     @Override
+    @Mapping(target = "version", ignore = true)
     SettingsEntity updateEntity(@MappingTarget SettingsEntity entity, SettingsJpaDto dto);
 
     @Override

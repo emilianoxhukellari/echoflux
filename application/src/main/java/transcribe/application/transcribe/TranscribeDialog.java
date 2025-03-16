@@ -15,19 +15,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.EnhancedDialog;
+import transcribe.application.core.field.MediaField;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.operation.OperationSuccessImportance;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
-import transcribe.application.core.field.MediaField;
 import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.core.utils.MoreEnums;
 import transcribe.core.transcribe.common.Language;
-import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.operation.data.OperationType;
-import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.domain.transcription.data.TranscriptionProjection;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 
@@ -104,11 +103,11 @@ public class TranscribeDialog extends EnhancedDialog {
                 .sourceUri(command.getMediaValue().uri())
                 .mediaOrigin(command.getMediaValue().mediaOrigin())
                 .language(command.getLanguage())
-                .applicationUserId(authenticatedUser.find().map(ApplicationUserEntity::getId).orElse(null))
+                .applicationUserId(authenticatedUser.getId())
                 .enhanced(command.getEnhanced())
                 .build();
 
-        var operation = Operation.<TranscriptionEntity>builder()
+        var operation = Operation.<TranscriptionProjection>builder()
                 .name(String.format("Transcribing \"%s\"", command.getMediaValue().name()))
                 .beforeCall(this::close)
                 .type(OperationType.NON_BLOCKING)

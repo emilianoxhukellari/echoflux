@@ -3,15 +3,14 @@ package transcribe.domain.settings.mapper;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueCheckStrategy;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import transcribe.domain.settings.data.SettingsEntity;
+import transcribe.domain.settings.data.SettingsProjection;
 import transcribe.domain.settings.service.CreateSettingsCommand;
-import transcribe.domain.settings.service.PatchSettingsCommand;
+
+import java.util.List;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -21,8 +20,10 @@ public interface SettingsMapper {
 
     SettingsEntity toEntity(CreateSettingsCommand command);
 
-    @Mapping(target = "id", ignore = true)
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    SettingsEntity patch(@MappingTarget SettingsEntity entity, PatchSettingsCommand command);
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.ERROR)
+    SettingsProjection toProjection(SettingsEntity entity);
+
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.ERROR)
+    List<SettingsProjection> toProjections(List<SettingsEntity> entities);
 
 }

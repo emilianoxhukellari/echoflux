@@ -10,15 +10,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import transcribe.core.word.common.WordInfo;
 import transcribe.domain.audit.data.BaseEntity;
-import transcribe.domain.transcription_speaker.data.TranscriptionSpeakerEntity;
+import transcribe.domain.transcription.data.TranscriptionEntity;
 
 @Entity
 @Table(name = "transcription_word")
@@ -28,21 +29,20 @@ import transcribe.domain.transcription_speaker.data.TranscriptionSpeakerEntity;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @SequenceGenerator(name = "transcription_word_id_seq", sequenceName = "transcription_word_id_seq", allocationSize = 30)
-public class TranscriptionWordEntity extends BaseEntity {
+public class TranscriptionWordEntity extends BaseEntity implements WordInfo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transcription_word_id_seq")
     @Column(name = "id")
     private Long id;
 
-    @JoinColumn(name = "transcription_id")
+    @Column(name = "content")
     @NotNull
-    private Long transcriptionId;
+    private String content;
 
-    @NotNull
-    @Column(name = "sequence")
-    @Min(0)
-    private Integer sequence;
+    @Column(name = "speaker_name")
+    @NotBlank
+    private String speakerName;
 
     @Column(name = "start_offset_millis")
     @NotNull
@@ -52,13 +52,15 @@ public class TranscriptionWordEntity extends BaseEntity {
     @NotNull
     private Long endOffsetMillis;
 
-    @Column(name = "content")
-    @NotNull
-    private String content;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "transcription_speaker_id")
+    @JoinColumn(name = "transcription_id")
     @NotNull
-    private TranscriptionSpeakerEntity transcriptionSpeaker;
+    private TranscriptionEntity transcription;
+
+    /**
+     * Do not update this field directly - {@link TranscriptionEntity} uses {@link JoinColumn} to order the words.
+     * */
+    @Column(name = "sequence")
+    private Integer sequence;
 
 }

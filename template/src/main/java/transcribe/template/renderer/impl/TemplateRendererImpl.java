@@ -18,7 +18,7 @@ import java.util.Map;
 public class TemplateRendererImpl implements TemplateRenderer {
 
     private final static String DYNAMIC_TEMPLATE_NAME = "dynamic.ftl";
-    private final static String DYNAMIC_TEMPLATE_CONTENT_KEY = "content";
+    private final static String DYNAMIC_TEMPLATE_CONTENT_KEY = "dynamicTemplateContent";
 
     private final Configuration configuration;
 

@@ -11,9 +11,9 @@ import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import transcribe.application.security.AuthenticatedUser;
 
-@AnonymousAllowed
 @PageTitle("Login")
 @Route(value = "login")
+@AnonymousAllowed
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
     private final AuthenticatedUser authenticatedUser;

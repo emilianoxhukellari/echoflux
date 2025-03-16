@@ -2,6 +2,7 @@ package transcribe.application.user;
 
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
@@ -18,9 +19,12 @@ public interface ApplicationUserJpaDtoMapper extends JpaDtoMapper<ApplicationUse
     ApplicationUserJpaDto toDto(ApplicationUserEntity entity);
 
     @Override
+    @Mapping(target = "transcriptions", ignore = true)
     ApplicationUserEntity toEntity(ApplicationUserJpaDto dto);
 
     @Override
+    @Mapping(target = "transcriptions", ignore = true)
+    @Mapping(target = "version", ignore = true)
     ApplicationUserEntity updateEntity(@MappingTarget ApplicationUserEntity entity, ApplicationUserJpaDto dto);
 
     UpdateApplicationUserCommand toUpdateCommand(ApplicationUserJpaDto dto);

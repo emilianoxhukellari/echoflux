@@ -7,9 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.transaction.annotation.Transactional;
-import transcribe.core.core.bean.BeanTypeAware;
+import transcribe.annotation.core.AttributeOverride;
 import transcribe.annotation.core.ObjectConvertable;
-import transcribe.core.core.bean.utils.MoreBeans;
+import transcribe.annotation.core.ParentProperty;
+import transcribe.annotation.projection.ProjectionInterface;
+import transcribe.annotation.projection.ProjectionInterfaceSupport;
+import transcribe.core.core.bean.BeanTypeAware;
+import transcribe.core.core.bean.MoreBeans;
 import transcribe.core.core.projection.ProjectionInterfaceLoader;
 
 import java.util.List;
@@ -22,24 +26,66 @@ public interface EnhancedJpaRepository<ENTITY, ID> extends
         JpaSpecificationExecutor<ENTITY>,
         BeanTypeAware<ENTITY> {
 
-    default <T> Optional<T> findById(ID id, Class<T> projection) {
-        var projectionInterface = ProjectionInterfaceLoader.load(projection);
+    /**
+     * <p>
+     * Supports projection of interfaces, classes, and record types. By default, this method will project
+     * all attributes.
+     * </p>
+     * <p>
+     * Use {@link AttributeOverride} to configure the attributes and {@link ParentProperty} to allow nested properties.
+     * </p>
+     * <p>
+     * Classes and record types must be annotated with {@link ProjectionInterfaceSupport} which will generate a
+     * projection interface for the class or record type.
+     * Alternatively, there must be a projection interface annotated with {@link ProjectionInterface}
+     * that also implements {@link ObjectConvertable}.
+     * </p>
+     */
+    default <T> Optional<T> findByIdEnhanced(ID id, Class<T> projection) {
         var idAttributeName = MoreBeans.getSingleFieldWithAnnotation(getBeanType(), Id.class).getName();
-        var attributeNames = MoreBeans.getAttributeNamesNested(projection);
+        var projectProperties = MoreBeans.getDefaultProjectAttributeNamesNested(projection);
 
+        if (projection.isInterface()) {
+            return findBy((root, _, cb) -> cb.equal(root.get(idAttributeName), id),
+                    q ->
+                            q.as(projection)
+                                    .project(projectProperties)
+                                    .one()
+            );
+        }
+
+        var projectionInterface = ProjectionInterfaceLoader.load(projection);
         return findBy((root, _, cb) -> cb.equal(root.get(idAttributeName), id),
                 q ->
                         q.as(projectionInterface)
-                                .project(attributeNames)
+                                .project(projectProperties)
                                 .one()
                                 .map(ObjectConvertable::toObject)
         );
     }
 
-    default <T> List<T> findAll(Specification<ENTITY> specification, Pageable pageable, Class<T> projection) {
+    /**
+     * <p>
+     * Supports projection of interfaces, classes, and record types. By default, this method will project
+     * all attributes.
+     * </p>
+     * <p>
+     * Use {@link AttributeOverride} to configure the attributes and {@link ParentProperty} to allow nested properties.
+     * </p>
+     * <p>
+     * Classes and record types must be annotated with {@link ProjectionInterfaceSupport} which will generate a
+     * projection interface for the class or record type.
+     * Alternatively, there must be a projection interface annotated with {@link ProjectionInterface}
+     * that also implements {@link ObjectConvertable}.
+     * </p>
+     */
+    default <T> List<T> findAllEnhanced(Specification<ENTITY> specification, Pageable pageable, Class<T> projection) {
+        var projectProperties = MoreBeans.getDefaultProjectAttributeNamesNested(projection);
+
         if (projection.isInterface()) {
             return findBy(specification, q ->
                     q.as(projection)
+                            .project(projectProperties)
                             .sortBy(pageable.getSort())
                             .page(pageable)
                             .getContent()
@@ -47,11 +93,9 @@ public interface EnhancedJpaRepository<ENTITY, ID> extends
         }
 
         var projectionInterface = ProjectionInterfaceLoader.load(projection);
-        var attributeNames = MoreBeans.getAttributeNamesNested(projection);
-
         return findBy(specification, q ->
                 q.as(projectionInterface)
-                        .project(attributeNames)
+                        .project(projectProperties)
                         .sortBy(pageable.getSort())
                         .page(pageable)
                         .map(ObjectConvertable::toObject)

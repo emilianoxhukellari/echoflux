@@ -1,14 +1,38 @@
 package transcribe.domain.transcription.data;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import transcribe.core.transcribe.common.Language;
+import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.audit.data.BaseEntity;
+import transcribe.domain.completion.data.CompletionEntity;
+import transcribe.domain.transcription_word.data.TranscriptionWordEntity;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "transcription")
@@ -44,9 +68,10 @@ public class TranscriptionEntity extends BaseEntity {
     @NotBlank
     private String name;
 
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_user_id")
     @NotNull
-    private Long applicationUserId;
+    private ApplicationUserEntity applicationUser;
 
     @Column(name = "enhanced")
     @NotNull
@@ -56,19 +81,44 @@ public class TranscriptionEntity extends BaseEntity {
     @Min(0)
     private Long lengthMillis;
 
-    @Column(name = "download_duration_millis")
-    @Min(0)
-    private Long downloadDurationMillis;
-
-    @Column(name = "process_duration_millis")
-    @Min(0)
-    private Long processDurationMillis;
-
-    @Column(name = "transcribe_duration_millis")
-    @Min(0)
-    private Long transcribeDurationMillis;
-
     @Column(name = "error")
     private String error;
+
+    @OneToMany(
+            mappedBy = "transcription",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    @OrderColumn(name = "sequence")
+    @Builder.Default
+    private List<TranscriptionWordEntity> words = new ArrayList<>();
+
+    @OneToMany(mappedBy = "transcription", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<CompletionEntity> completions = new HashSet<>();
+
+    public void addWords(List<TranscriptionWordEntity> transcriptionWords) {
+        words.addAll(transcriptionWords);
+        words.forEach(w -> w.setTranscription(this));
+    }
+
+    /**
+     * @param index inclusive
+     * */
+    public void addWords(int index, List<TranscriptionWordEntity> transcriptionWords) {
+        words.addAll(index, transcriptionWords);
+        words.forEach(w -> w.setTranscription(this));
+    }
+
+    /**
+     * @param fromIndex inclusive
+     * @param toIndex   exclusive
+     */
+    public void removeWords(int fromIndex, int toIndex) {
+        var sublist = words.subList(fromIndex, toIndex);
+        sublist.forEach(w -> w.setTranscription(null));
+        sublist.clear();
+    }
 
 }

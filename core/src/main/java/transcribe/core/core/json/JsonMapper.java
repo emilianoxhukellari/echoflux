@@ -37,6 +37,12 @@ public interface JsonMapper {
         return objectMapper.treeToValue(node, clazz);
     }
 
+    default <T> T toValue(String json, Class<T> clazz) {
+        var node = toNode(json);
+
+        return toValue(node, clazz);
+    }
+
     @SneakyThrows
     default <T> String toString(T object) {
         return objectMapper.writeValueAsString(object);

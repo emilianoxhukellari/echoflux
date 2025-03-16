@@ -1,7 +1,6 @@
 package transcribe.core.audio.splitter;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,15 +12,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AudioSegment {
 
-    @NotNull
     @Min(0)
-    private Long startMillis;
+    private long startMillis;
 
-    @NotNull
     @Min(0)
-    private Long endMillis;
+    private long endMillis;
 
-    public Long getDurationMillis() {
+    public long getDurationMillis() {
         return endMillis - startMillis;
     }
 

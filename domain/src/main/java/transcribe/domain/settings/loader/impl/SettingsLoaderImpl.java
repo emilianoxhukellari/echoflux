@@ -15,8 +15,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class SettingsLoaderImpl implements SettingsLoader {
 
-    private final SettingsService service;
-    private final JsonMapper mapper;
+    private final SettingsService settingsService;
+    private final JsonMapper jsonMapper;
 
     @Override
     public <T> T load(Class<T> type) {
@@ -25,9 +25,9 @@ public class SettingsLoaderImpl implements SettingsLoader {
                 "Settings annotation not found"
         );
         var key = Validate.notBlank(annotation.key(), "Settings annotation key is blank");
-        var entity = service.getByKey(key);
+        var entity = settingsService.getByKey(key);
 
-        return mapper.toValue(entity.getValue(), type);
+        return jsonMapper.toValue(entity.getValue(), type);
     }
 
 }

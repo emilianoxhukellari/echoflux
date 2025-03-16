@@ -8,7 +8,7 @@ import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import transcribe.domain.application_user.data.ApplicationUserEntity;
+import transcribe.domain.application_user.data.ApplicationUser;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -16,20 +16,20 @@ import transcribe.domain.application_user.data.ApplicationUserEntity;
         componentModel = MappingConstants.ComponentModel.SPRING)
 public interface SecurityMapper {
 
-    default UserDetails toDetails(ApplicationUserEntity entity) {
-        if (entity == null) {
+    default UserDetails toDetails(ApplicationUser applicationUser) {
+        if (applicationUser == null) {
             return null;
         }
 
-        var roles = SetUtils.emptyIfNull(entity.getRoles())
+        var roles = SetUtils.emptyIfNull(applicationUser.getRoles())
                 .stream()
                 .map(Enum::name)
                 .toArray(String[]::new);
 
         return User.builder()
-                .username(entity.getUsername())
-                .password(entity.getPassword())
-                .disabled(!Boolean.TRUE.equals(entity.getEnabled()))
+                .username(applicationUser.getUsername())
+                .password(applicationUser.getPassword())
+                .disabled(!Boolean.TRUE.equals(applicationUser.getEnabled()))
                 .roles(roles)
                 .build();
     }

@@ -1,26 +1,29 @@
 package transcribe.core.completions.openai;
 
-import com.azure.ai.openai.assistants.AssistantsClient;
-import com.azure.ai.openai.assistants.AssistantsClientBuilder;
-import com.azure.ai.openai.assistants.models.AssistantThread;
-import com.azure.ai.openai.assistants.models.AssistantThreadCreationOptions;
-import com.azure.ai.openai.assistants.models.CreateRunOptions;
-import com.azure.ai.openai.assistants.models.ListSortOrder;
-import com.azure.ai.openai.assistants.models.MessageRole;
-import com.azure.ai.openai.assistants.models.MessageTextContent;
-import com.azure.ai.openai.assistants.models.RunStatus;
-import com.azure.ai.openai.assistants.models.ThreadMessageOptions;
-import com.azure.ai.openai.assistants.models.ThreadRun;
-import com.azure.core.credential.KeyCredential;
-import com.azure.core.http.policy.ExponentialBackoffOptions;
-import com.azure.core.http.policy.RetryOptions;
 import com.google.common.collect.Lists;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.beta.threads.Thread;
+import com.openai.models.beta.threads.ThreadDeleteParams;
+import com.openai.models.beta.threads.messages.MessageCreateParams;
+import com.openai.models.beta.threads.messages.MessageListParams;
+import com.openai.models.beta.threads.messages.Text;
+import com.openai.models.beta.threads.messages.TextContentBlock;
+import com.openai.models.beta.threads.runs.Run;
+import com.openai.models.beta.threads.runs.RunCreateParams;
+import com.openai.models.beta.threads.runs.RunRetrieveParams;
+import com.openai.models.beta.threads.runs.RunStatus;
+import com.openai.services.blocking.beta.ThreadService;
+import com.openai.services.blocking.beta.threads.MessageService;
+import com.openai.services.blocking.beta.threads.RunService;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.completions.CompletionResult;
 import transcribe.core.completions.Completions;
 import transcribe.core.completions.Tokens;
+import transcribe.core.core.executor.MoreExecutors;
 import transcribe.core.core.provider.AiProvider;
 import transcribe.core.core.utils.MoreFunctions;
 import transcribe.core.properties.OpenAiProperties;
@@ -35,34 +38,41 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OpenAiCompletions implements Completions {
 
-    private final static RunStatus INCOMPLETE_STATUS = RunStatus.fromString("incomplete");
-    private final AssistantsClient assistantsClient;
     private final SettingsLoader settingsLoader;
+    private final ThreadService threadService;
+    private final RunService runService;
+    private final MessageService messageService;
 
     public OpenAiCompletions(OpenAiProperties openAiProperties,
                              SettingsLoader settingsLoader) {
-        this.assistantsClient = newAssistantsClient(openAiProperties);
+        var openAIClient = newOpenAIClient(openAiProperties);
         this.settingsLoader = settingsLoader;
+        this.threadService = openAIClient.beta().threads();
+        this.runService = threadService.runs();
+        this.messageService = threadService.messages();
     }
 
     @Override
     public CompletionResult complete(String input) {
         var settings = settingsLoader.load(OpenAiCompletionsSettings.class);
 
-        var thread = assistantsClient.createThread(new AssistantThreadCreationOptions());
-
+        var thread = threadService.create();
         var currentResponse = sendMessage(input, thread, settings);
         var responseList = Lists.newArrayList(currentResponse);
 
         int p = 1;
         while (currentResponse.isIncomplete()) {
-            log.info("Max tokens reached, requesting part [{}]", ++p);
+            log.warn("Max tokens reached, requesting part [{}]", ++p);
 
             currentResponse = sendMessage(settings.getContinuePhrase(), thread, settings);
             responseList.add(currentResponse);
         }
 
-        assistantsClient.deleteThread(thread.getId());
+        var threadDeleteParams = ThreadDeleteParams.builder()
+                .threadId(thread.id())
+                .build();
+
+        threadService.delete(threadDeleteParams);
 
         var output = responseList.stream()
                 .map(ContentResponse::text)
@@ -93,85 +103,87 @@ public class OpenAiCompletions implements Completions {
         return AiProvider.OPENAI;
     }
 
-    //todo: why no usage info on max completions hit?
-    private ContentResponse sendMessage(String message, AssistantThread thread, OpenAiCompletionsSettings settings) {
-        var threadCreationOptions = new ThreadMessageOptions(MessageRole.USER, message);
+    private ContentResponse sendMessage(String message, Thread thread, OpenAiCompletionsSettings settings) {
+        var messageCreateParams = MessageCreateParams.builder()
+                .threadId(thread.id())
+                .role(MessageCreateParams.Role.USER)
+                .content(message)
+                .build();
 
-        var userMessage = assistantsClient.createMessage(thread.getId(), threadCreationOptions);
+        var userMessage = messageService.create(messageCreateParams);
 
-        var runOptions = new CreateRunOptions(settings.getAssistantId())
-                .setMaxCompletionTokens(settings.getRunMaxOutputTokens())
-                .setModel(settings.getModel())
-                .setTemperature(settings.getTemperature())
-                .setTopP(settings.getTopP());
+        var runCreateParams = RunCreateParams.builder()
+                .assistantId(settings.getAssistantId())
+                .threadId(thread.id())
+                .maxCompletionTokens(settings.getRunMaxOutputTokens())
+                .model(settings.getModel())
+                .temperature(settings.getTemperature())
+                .topP(settings.getTopP())
+                .build();
 
-        var run = assistantsClient.createRun(thread.getId(), runOptions);
+        var run = runService.create(runCreateParams);
+
+        var runRetrieveParams = RunRetrieveParams.builder()
+                .threadId(thread.id())
+                .runId(run.id())
+                .build();
 
         var finishedRun = MoreFunctions.pollUntil(
-                () -> assistantsClient.getRun(thread.getId(), run.getId()),
+                () -> runService.retrieve(runRetrieveParams),
                 this::isRunFinished,
-                Duration.ofSeconds(3),
+                Duration.ofSeconds(5),
                 Duration.ofMinutes(10)
         );
 
-        if (finishedRun.getStatus() != RunStatus.COMPLETED && finishedRun.getStatus() != INCOMPLETE_STATUS) {
+        if (!RunStatus.COMPLETED.equals(finishedRun.status()) && !RunStatus.INCOMPLETE.equals(finishedRun.status())) {
             var errorMessage = "Run did not succeed. Status: [%s]. Error: [%s]".formatted(
-                    finishedRun.getStatus(),
-                    finishedRun.getLastError().getMessage()
+                    finishedRun.status(),
+                    finishedRun.lastError().orElse(null)
             );
             throw new IllegalStateException(errorMessage);
         }
 
-        var newMessages = assistantsClient.listMessages(
-                thread.getId(),
-                1,
-                ListSortOrder.ASCENDING,
-                userMessage.getId(),
-                null
-        );
+        var messageListParams = MessageListParams.builder()
+                .threadId(thread.id())
+                .limit(1)
+                .order(MessageListParams.Order.ASC)
+                .after(userMessage.id())
+                .build();
 
-        var assistantMessageText = newMessages.getData()
+        var newMessages = messageService.list(messageListParams);
+
+        var assistantMessageText = newMessages.data()
                 .getFirst()
-                .getContent()
+                .content()
                 .stream()
-                .map(MessageTextContent.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No content item found"))
-                .getText()
-                .getValue();
-
-        long inTokens = 0;
-        long outTokens = 0;
-
-        if (finishedRun.getUsage() != null) {
-            inTokens = finishedRun.getUsage().getPromptTokens();
-            outTokens = finishedRun.getUsage().getCompletionTokens();
-        }
+                .text()
+                .map(TextContentBlock::text)
+                .map(Text::value)
+                .orElse(StringUtils.EMPTY);
 
         return ContentResponse.builder()
                 .text(assistantMessageText)
-                .isIncomplete(finishedRun.getStatus() == INCOMPLETE_STATUS)
-                .inTokens(inTokens)
-                .outTokens(outTokens)
+                .isIncomplete(RunStatus.INCOMPLETE.equals(finishedRun.status()))
+                .inTokens(finishedRun.usage().map(Run.Usage::promptTokens).orElse(0L))
+                .outTokens(finishedRun.usage().map(Run.Usage::completionTokens).orElse(0L))
                 .build();
     }
 
-    private boolean isRunFinished(ThreadRun threadRun) {
-        Objects.requireNonNull(threadRun, "Thread run must not be null");
+    private boolean isRunFinished(Run run) {
+        Objects.requireNonNull(run, "Run must not be null");
 
-        return threadRun.getStatus() != RunStatus.QUEUED && threadRun.getStatus() != RunStatus.IN_PROGRESS;
+        return !RunStatus.QUEUED.equals(run.status()) && !RunStatus.IN_PROGRESS.equals(run.status());
     }
 
-    private static AssistantsClient newAssistantsClient(OpenAiProperties openAiProperties) {
-        var exponentialBackoffOptions = new ExponentialBackoffOptions()
-                .setBaseDelay(Duration.ofSeconds(10))
-                .setMaxDelay(Duration.ofSeconds(60))
-                .setMaxRetries(10);
-
-        return new AssistantsClientBuilder()
-                .credential(new KeyCredential(openAiProperties.getApiKey()))
-                .retryOptions(new RetryOptions(exponentialBackoffOptions))
-                .buildClient();
+    private static OpenAIClient newOpenAIClient(OpenAiProperties openAiProperties) {
+        return OpenAIOkHttpClient.builder()
+                .apiKey(openAiProperties.getApiKey())
+                .maxRetries(5)
+                .timeout(Duration.ofMinutes(10))
+                .streamHandlerExecutor(MoreExecutors.virtualThreadExecutor())
+                .build();
     }
 
     @Builder

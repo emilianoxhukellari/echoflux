@@ -50,6 +50,7 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
     public List<AudioPartition> split(SplitAudioCommand command) {
         var silences = findSilences(command.getAudio(), command.getMinSilenceDuration().toMillis());
         log.debug("Silences: [{}]", silences);
+        //todo: this is not finding enough silences
 
         var audioDuration = fFprobeWrapper.getDuration(command.getAudio());
         log.debug("Audio duration: [{}]", audioDuration);
@@ -176,31 +177,31 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
         return segments;
     }
 
-    private static List<AudioSegment> findOptimalSplits(long start,
-                                                        long end,
+    private static List<AudioSegment> findOptimalSplits(long startMillis,
+                                                        long endMillis,
                                                         long partitionDuration,
                                                         long toleranceDuration,
                                                         long minSilenceDuration,
                                                         List<AudioSegment> silences) {
         var splitSegments = new ArrayList<AudioSegment>();
-        long audioSegmentDuration = end - start;
+        long audioSegmentDuration = endMillis - startMillis;
 
         if (audioSegmentDuration <= partitionDuration + toleranceDuration) {
             log.debug("Audio segment duration [{}] <= partition duration [{}]", audioSegmentDuration, partitionDuration);
 
             splitSegments.add(
                     AudioSegment.builder()
-                            .startMillis(start)
-                            .endMillis(end)
+                            .startMillis(startMillis)
+                            .endMillis(endMillis)
                             .build()
             );
 
             return splitSegments;
         }
 
-        long middleOfAudioSegment = start + audioSegmentDuration / 2;
-        long windowStart = Math.max(start, middleOfAudioSegment - toleranceDuration);
-        long windowEnd = Math.min(end, middleOfAudioSegment + toleranceDuration);
+        long middleOfAudioSegment = startMillis + audioSegmentDuration / 2;
+        long windowStart = Math.max(startMillis, middleOfAudioSegment - toleranceDuration);
+        long windowEnd = Math.min(endMillis, middleOfAudioSegment + toleranceDuration);
 
         var silence = findLongestSilenceInRange(silences, windowStart, windowEnd, minSilenceDuration);
 
@@ -218,21 +219,21 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
         }
 
         splitSegments.addAll(
-                findOptimalSplits(start, splitPoint, partitionDuration, toleranceDuration, minSilenceDuration, silences)
+                findOptimalSplits(startMillis, splitPoint, partitionDuration, toleranceDuration, minSilenceDuration, silences)
         );
         splitSegments.addAll(
-                findOptimalSplits(splitPoint, end, partitionDuration, toleranceDuration, minSilenceDuration, silences)
+                findOptimalSplits(splitPoint, endMillis, partitionDuration, toleranceDuration, minSilenceDuration, silences)
         );
 
         return splitSegments;
     }
 
     private static Optional<AudioSegment> findLongestSilenceInRange(List<AudioSegment> audioSegments,
-                                                                    long rangeStart,
-                                                                    long rangeEnd,
+                                                                    long rangeStartMillis,
+                                                                    long rangeEndMillis,
                                                                     long minSilenceDuration) {
         return audioSegments.stream()
-                .filter(s -> s.getStartMillis() >= rangeStart && s.getEndMillis() <= rangeEnd)
+                .filter(s -> s.getStartMillis() >= rangeStartMillis && s.getEndMillis() <= rangeEndMillis)
                 .filter(s -> s.getDurationMillis() >= minSilenceDuration)
                 .max(Comparator.comparing(AudioSegment::getDurationMillis));
     }

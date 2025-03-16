@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
+import transcribe.annotation.jpa.JpaDto;
 import transcribe.application.core.annotation.BigText;
 import transcribe.core.core.annotation.Required;
-import transcribe.annotation.jpa.JpaDto;
 import transcribe.domain.operation.data.OperationEntity;
 import transcribe.domain.operation.data.OperationStatus;
 import transcribe.domain.operation.data.OperationType;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @JpaDto(entityBeanType = OperationEntity.class)
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_ = @PersistenceCreator)
 @NoArgsConstructor
 public class OperationJpaDto {
 
@@ -43,8 +44,6 @@ public class OperationJpaDto {
 
     @BigText
     private String description;
-
-    private Integer version;
 
     private LocalDateTime createdAt;
 

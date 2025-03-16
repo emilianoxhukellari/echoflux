@@ -1,13 +1,14 @@
 package transcribe.application.transcription;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
-import transcribe.application.main.MainLayout;
+import transcribe.application.layout.MainLayout;
 
 @PageTitle("Transcriptions")
 @Route(value = "transcriptions", layout = MainLayout.class)
@@ -20,6 +21,7 @@ public class TranscriptionsView extends Composite<VerticalLayout> {
         grid.setAllColumnsResizable();
         grid.addAllFilters();
         grid.addCrudActions();
+        grid.addContextMenuItem("Open", t -> UI.getCurrent().navigate(TranscriptionView.class, t.getId()));
 
         getContent().addAndExpand(new JpaGridControls<>(grid));
     }

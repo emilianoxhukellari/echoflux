@@ -2,6 +2,8 @@ package transcribe.application.core.jpa.dialog.save;
 
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
+import lombok.SneakyThrows;
 import transcribe.application.core.jpa.core.JpaPropertyCache;
 import transcribe.application.core.jpa.dialog.bound_field.JpaSaveDialogFieldFactory;
 import transcribe.application.core.jpa.dto.JpaDtoService;
@@ -32,8 +34,11 @@ public class JpaSaveCorePropertiesDialog<DTO> extends JpaSaveDialog<DTO> {
         add(form);
     }
 
+    @SneakyThrows({ValidationException.class})
     @Override
     protected DTO save() {
+        binder.writeBean(binder.getBean());
+
         return service.save(binder.getBean());
     }
 

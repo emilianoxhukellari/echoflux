@@ -3,6 +3,7 @@ package transcribe.application.core.init;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.SessionInitEvent;
+import com.vaadin.flow.server.UIInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ public class ServiceListener implements VaadinServiceInitListener {
     @Override
     public void serviceInit(ServiceInitEvent event) {
         event.getSource().addSessionInitListener(this::initSession);
+        event.getSource().addUIInitListener(this::initUI);
     }
 
     private void initSession(SessionInitEvent event) {
@@ -26,6 +28,14 @@ public class ServiceListener implements VaadinServiceInitListener {
         );
 
         log.info("Session initialized");
+    }
+
+    private void initUI(UIInitEvent event) {
+        var configuration = event.getUI().getLoadingIndicatorConfiguration();
+
+        configuration.setFirstDelay(250);
+        configuration.setSecondDelay(400);
+        configuration.setThirdDelay(1000);
     }
 
 }

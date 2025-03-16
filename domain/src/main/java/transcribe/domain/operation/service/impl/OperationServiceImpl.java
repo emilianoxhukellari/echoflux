@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import transcribe.domain.operation.data.OperationEntity;
+import transcribe.domain.operation.data.OperationProjection;
 import transcribe.domain.operation.data.OperationRepository;
 import transcribe.domain.operation.data.OperationStatus;
 import transcribe.domain.operation.data.OperationType;
@@ -14,14 +15,15 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class OperationServiceImpl implements OperationService {
 
-    private final OperationRepository repository;
-    private final OperationMapper mapper;
+    private final OperationRepository operationRepository;
+    private final OperationMapper operationMapper;
 
     @Override
-    public OperationEntity createRunning(String name, String description, OperationType type) {
+    @Transactional
+    public OperationProjection createRunning(String name, String description, OperationType type) {
         var entity = OperationEntity.builder()
                 .name(name)
                 .description(description)
@@ -29,24 +31,31 @@ public class OperationServiceImpl implements OperationService {
                 .status(OperationStatus.RUNNING)
                 .startedAt(LocalDateTime.now())
                 .build();
+        var saved = operationRepository.save(entity);
 
-        return repository.save(entity);
+        return operationMapper.toProjection(saved);
     }
 
     @Override
-    public OperationEntity updateSuccess(Long id) {
-        var operation = repository.getReferenceById(id);
-        var updated = mapper.asEntity(operation, LocalDateTime.now(), OperationStatus.SUCCESS);
+    @Transactional
+    public OperationProjection updateSuccess(Long id) {
+        var operation = operationRepository.getReferenceById(id);
+        operation.setStatus(OperationStatus.SUCCESS);
+        operation.setEndedAt(LocalDateTime.now());
+        var saved = operationRepository.save(operation);
 
-        return repository.save(updated);
+        return operationMapper.toProjection(saved);
     }
 
     @Override
-    public OperationEntity updateFailure(Long id, Throwable error) {
-        var operation = repository.getReferenceById(id);
-        var updated = mapper.asEntity(operation, LocalDateTime.now(), OperationStatus.FAILURE, error.getMessage());
+    @Transactional
+    public OperationProjection updateFailure(Long id, Throwable error) {
+        var operation = operationRepository.getReferenceById(id);
+        operation.setStatus(OperationStatus.FAILURE);
+        operation.setEndedAt(LocalDateTime.now());
+        var saved = operationRepository.save(operation);
 
-        return repository.save(updated);
+        return operationMapper.toProjection(saved);
     }
 
 }

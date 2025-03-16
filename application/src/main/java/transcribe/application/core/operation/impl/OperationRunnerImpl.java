@@ -26,7 +26,7 @@ public class OperationRunnerImpl implements OperationRunner {
 
     @Override
     public <T> void run(Operation<T> operation, UI ui) {
-        var operationEntity = operationService.createRunning(
+        var op = operationService.createRunning(
                 operation.getName(),
                 operation.getDescription(),
                 operation.getType()
@@ -42,7 +42,7 @@ public class OperationRunnerImpl implements OperationRunner {
         CompletableFuture.runAsync(() -> UiUtils.safeAccess(ui, () -> {
                     progress.open();
                     operation.getBeforeCall().run();
-                }), MoreExecutors.virtualThreadExecutor())
+                }), MoreExecutors.delegatingSecurityVirtualThreadExecutor())
                 .thenApply(_ -> operation.getCallable().call())
                 .thenAccept(result -> {
                     UiUtils.safeAccess(ui, () -> {
@@ -61,7 +61,7 @@ public class OperationRunnerImpl implements OperationRunner {
                         }
                     });
 
-                    operationService.updateSuccess(operationEntity.getId());
+                    operationService.updateSuccess(op.id());
                 }).exceptionally(e -> {
                     if (operation.isOnErrorLog()) {
                         log.error("Operation failed: {}", operation.getName(), e);
@@ -90,7 +90,7 @@ public class OperationRunnerImpl implements OperationRunner {
                         }
                     });
 
-                    operationService.updateFailure(operationEntity.getId(), e);
+                    operationService.updateFailure(op.id(), e);
                     return null;
                 }).whenComplete((_, _) -> UiUtils.safeAccess(ui, () -> {
                     progress.close();

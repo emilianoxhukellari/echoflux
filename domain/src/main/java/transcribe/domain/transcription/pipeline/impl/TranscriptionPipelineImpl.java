@@ -1,8 +1,11 @@
 package transcribe.domain.transcription.pipeline.impl;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.audio.ffmpeg.FFprobeWrapper;
@@ -12,35 +15,38 @@ import transcribe.core.audio.splitter.AudioSplitter;
 import transcribe.core.audio.splitter.SplitAudioCommand;
 import transcribe.core.audio.transcoder.AudioTranscoder;
 import transcribe.core.audio.transcoder.TranscodeParameters;
+import transcribe.core.cloud_storage.CloudDeleteCommand;
+import transcribe.core.cloud_storage.CloudStorage;
+import transcribe.core.cloud_storage.CloudUploadCommand;
+import transcribe.core.cloud_storage.GetSignedUrlOfUriCommand;
 import transcribe.core.cloud_storage.ResourceInfo;
 import transcribe.core.core.collector.ParallelCollectors;
 import transcribe.core.core.iterable.DoublyLinkedIterable;
+import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.supplier.MoreSuppliers;
 import transcribe.core.core.tuple.Tuple2;
 import transcribe.core.core.utils.MoreEnums;
+import transcribe.core.core.utils.MoreFiles;
+import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.diarization.AudioDiarizer;
+import transcribe.core.diarization.DiarizationEntry;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.settings.SettingsLoader;
-import transcribe.domain.completion.data.CompletionEntity;
+import transcribe.core.transcribe.SpeechToText;
+import transcribe.core.word.common.Word;
+import transcribe.core.word.processor.SpeakerSegmentPartitioner;
+import transcribe.core.word.processor.WordAssembler;
+import transcribe.domain.completion.data.CompletionProjection;
 import transcribe.domain.completion.pipeline.CompleteCommand;
 import transcribe.domain.completion.pipeline.CompletionsPipeline;
 import transcribe.domain.core.broadcaster.Broadcaster;
-import transcribe.core.cloud_storage.CloudStorage;
-import transcribe.core.core.log.LoggedMethodExecution;
-import transcribe.core.core.utils.MoreFiles;
-import transcribe.core.core.utils.MoreFunctions;
-import transcribe.core.transcribe.SpeechToText;
 import transcribe.domain.template.service.RenderTemplateCommand;
 import transcribe.domain.template.service.TemplateService;
-import transcribe.domain.transcript.transcript_manager.SaveEnhancedParts;
-import transcribe.domain.transcript.transcript_manager.SaveOriginalParts;
-import transcribe.domain.transcript.transcript_manager.TranscriptManager;
-import transcribe.domain.transcript.transcript_manager.TranscriptPartition;
-import transcribe.domain.transcript.transcript_part.part.PartModelUtils;
-import transcribe.domain.transcription.data.MediaOrigin;
-import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.domain.transcription.data.TranscriptionProjection;
 import transcribe.domain.transcription.data.TranscriptionStatus;
 import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
 import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
+import transcribe.domain.transcription.manager.TranscriptionManager;
 import transcribe.domain.transcription.mapper.TranscriptionMapper;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
@@ -48,13 +54,15 @@ import transcribe.domain.transcription.pipeline.TranscriptionPipelineSettings;
 import transcribe.domain.transcription.service.PatchTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
 
-import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -67,36 +75,37 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private final AudioSplitter audioSplitter;
     private final CloudStorage cloudStorage;
     private final SpeechToText speechToText;
-    private final TranscriptionMapper mapper;
+    private final TranscriptionMapper transcriptionMapper;
     private final TranscriptionService transcriptionService;
-    private final TranscriptManager transcriptManager;
+    private final TranscriptionManager transcriptionManager;
     private final CompletionsPipeline completionsPipeline;
     private final Broadcaster broadcaster;
     private final FFprobeWrapper ffprobeWrapper;
     private final SettingsLoader settingsLoader;
     private final TemplateService templateService;
+    private final AudioDiarizer audioDiarizer;
 
     @Override
     @LoggedMethodExecution(logReturn = false)
-    public TranscriptionEntity transcribe(TranscriptionPipelineCommand command) {
-        var entity = transcriptionService.create(mapper.toCommand(command));
-        log.debug("Transcription created: [{}]", entity);
+    public TranscriptionProjection transcribe(TranscriptionPipelineCommand command) {
+        var transcription = transcriptionService.create(transcriptionMapper.toCommand(command));
+        log.debug("Transcription created: [{}]", transcription.id());
 
         broadcaster.publishQuietly(
                 TranscriptionCreateUserEvent.builder()
                         .applicationUserId(command.getApplicationUserId())
-                        .transcriptionId(entity.getId())
+                        .transcriptionId(transcription.id())
                         .build()
         );
 
         try {
-            return transcribeCreated(entity, command);
+            return transcribeCreated(transcription, command);
         } catch (Throwable e) {
             log.error("Transcription failed", e);
 
             var withError = transcriptionService.patch(
                     PatchTranscriptionCommand.builder()
-                            .id(entity.getId())
+                            .id(transcription.id())
                             .status(TranscriptionStatus.FAILED)
                             .error(e.getMessage())
                             .build()
@@ -104,7 +113,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
             broadcaster.publishQuietly(
                     TranscriptionUpdateUserEvent.builder()
                             .applicationUserId(command.getApplicationUserId())
-                            .transcriptionId(withError.getId())
+                            .transcriptionId(withError.id())
                             .build()
             );
 
@@ -112,87 +121,63 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         }
     }
 
-    @SneakyThrows
-    private TranscriptionEntity transcribeCreated(TranscriptionEntity entity, TranscriptionPipelineCommand command) {
+    @SneakyThrows({URISyntaxException.class})
+    private CompletableFuture<List<DiarizationEntry>> diarizeAsync(TranscriptionProjection transcription) {
+        var publicUri = cloudStorage.getSignedUrl(
+                GetSignedUrlOfUriCommand.builder()
+                        .cloudUri(transcription.cloudUri())
+                        .duration(Duration.ofHours(1))
+                        .build()
+        );
+        var uri = publicUri.toURI();
+
+        return MoreFunctions.getAsync(() -> audioDiarizer.diarize(uri));
+    }
+
+    private TranscriptionProjection transcribeCreated(TranscriptionProjection transcription, TranscriptionPipelineCommand command) {
         var settings = settingsLoader.load(TranscriptionPipelineSettings.class);
 
-        var originalMedia = resolveOriginalMedia(entity, command.getMediaOrigin(), command.getSourceUri());
+        var originalMedia = resolveOriginalMedia(transcription, command);
 
-        var withDuration = probeDuration(entity, originalMedia);
+        var durationProbedTranscription = probeDuration(transcription, originalMedia, command.getApplicationUserId());
 
-        var processResult = process(withDuration, originalMedia, settings);
+        var transcodeResult = transcode(durationProbedTranscription, originalMedia, settings, command.getApplicationUserId());
 
-        //todo: add diarization
-        MoreFiles.deleteIfExists(originalMedia);
-
-        var partitionsToTranscribe = new ArrayList<UploadedAudioPartition>();
-        if (CollectionUtils.isEmpty(processResult.splitPartitions())) {
-            log.debug("No split partitions available for transcription [{}], using single original audio", entity.getId());
-            var audioSegment = AudioSegment.builder()
-                    .startMillis(0L)
-                    .endMillis(withDuration.getLengthMillis())
-                    .build();
-
-            partitionsToTranscribe.add(
-                    UploadedAudioPartition.builder()
-                            .audioSegment(audioSegment)
-                            .resourceInfo(
-                                    ResourceInfo.builder()
-                                            .uri(processResult.entity().getCloudUri())
-                                            .build()
-                            )
-                            .build()
-            );
-        } else {
-            log.debug("Split partitions available for transcription [{}]", entity.getId());
-            partitionsToTranscribe.addAll(processResult.splitPartitions());
-        }
-
-        var transcribed = transcribe(processResult.entity(), partitionsToTranscribe, settings);
-
-        var resourcesToDelete = processResult.splitPartitions()
-                .stream()
-                .map(UploadedAudioPartition::resourceInfo)
-                .toList();
-
-        MoreFunctions.executeAllParallel(
-                resourcesToDelete,
-                r -> cloudStorage.delete(r.getResourceName(), true)
+        var uploadedTranscription = upload(
+                durationProbedTranscription,
+                transcodeResult.audio(),
+                transcodeResult.contentType(),
+                command.getApplicationUserId()
         );
 
-        if (command.getEnhanced()) {
-            try {
-                enhance(transcribed);
-            } catch (Throwable e) {
-                var failedEnhancing = transcriptionService.patch(
-                        PatchTranscriptionCommand.builder()
-                                .id(entity.getId())
-                                .status(TranscriptionStatus.ENHANCING_FAILED)
-                                .error(e.getMessage())
-                                .build()
-                );
-                broadcaster.publishQuietly(
-                        TranscriptionUpdateUserEvent.builder()
-                                .applicationUserId(command.getApplicationUserId())
-                                .transcriptionId(failedEnhancing.getId())
-                                .build()
-                );
+        var diarizeFuture = diarizeAsync(uploadedTranscription);
 
-                return failedEnhancing;
-            }
+        var uploadedSplits = split(uploadedTranscription, transcodeResult.audio(), settings, command.getApplicationUserId());
+
+        MoreFiles.deleteIfExists(originalMedia, transcodeResult.audio());
+
+        var transcribed = transcribe(uploadedTranscription, uploadedSplits, diarizeFuture, settings, command.getApplicationUserId());
+
+        deleteUploadedAudioPartitions(uploadedSplits);
+
+        if (command.getEnhanced()) {
+            enhance(transcribed, settings, command.getApplicationUserId());
         }
 
         return updateStatusAndPublish(
                 UpdateStatusAndPublishCommand.builder()
-                        .transcriptionId(transcribed.getId())
-                        .applicationUserId(transcribed.getApplicationUserId())
+                        .transcriptionId(transcribed.id())
+                        .applicationUserId(command.getApplicationUserId())
                         .status(TranscriptionStatus.COMPLETED)
                         .build()
         );
     }
 
-    private Path resolveOriginalMedia(TranscriptionEntity entity, MediaOrigin mediaOrigin, URI sourceUri) {
-        return switch (mediaOrigin) {
+    @LoggedMethodExecution
+    private Path resolveOriginalMedia(TranscriptionProjection transcription, TranscriptionPipelineCommand command) {
+        var sourceUri = command.getSourceUri();
+
+        return switch (command.getMediaOrigin()) {
             case LOCAL -> {
                 log.debug("Transcription source is local: [{}]", sourceUri);
 
@@ -203,34 +188,25 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
                 updateStatusAndPublish(
                         UpdateStatusAndPublishCommand.builder()
-                                .transcriptionId(entity.getId())
-                                .applicationUserId(entity.getApplicationUserId())
+                                .transcriptionId(transcription.id())
+                                .applicationUserId(command.getApplicationUserId())
                                 .status(TranscriptionStatus.DOWNLOADING_PUBLIC)
                                 .build()
                 );
-                var downloadedTimed = MoreFunctions.getTimed(() -> mediaDownloader.download(sourceUri));
-                log.debug("Transcription downloaded at [{}] in [{}]ms",
-                        downloadedTimed.getResult(), downloadedTimed.getDuration().toMillis());
 
-                transcriptionService.patch(
-                        PatchTranscriptionCommand.builder()
-                                .id(entity.getId())
-                                .downloadDurationMillis(downloadedTimed.getDuration().toMillis())
-                                .build()
-                );
-                log.debug("Transcription patched with download duration: [{}]", downloadedTimed.getDuration().toMillis());
-
-                yield downloadedTimed.getResult();
+                yield mediaDownloader.download(sourceUri);
             }
         };
     }
 
     @SneakyThrows
-    private TranscriptionEntity probeDuration(TranscriptionEntity entity, Path originalMedia) {
+    private TranscriptionProjection probeDuration(TranscriptionProjection transcription,
+                                                  Path originalMedia,
+                                                  Long applicationUserId) {
         updateStatusAndPublish(
                 UpdateStatusAndPublishCommand.builder()
-                        .transcriptionId(entity.getId())
-                        .applicationUserId(entity.getApplicationUserId())
+                        .transcriptionId(transcription.id())
+                        .applicationUserId(applicationUserId)
                         .status(TranscriptionStatus.FINDING_DURATION)
                         .build()
         );
@@ -238,37 +214,35 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var lengthMillis = ffprobeWrapper.getDuration(originalMedia).toMillis();
         log.debug("Transcription duration found: [{}]", lengthMillis);
 
-        var withLengthEntity = transcriptionService.patch(
+        var withLength = transcriptionService.patch(
                 PatchTranscriptionCommand.builder()
-                        .id(entity.getId())
+                        .id(transcription.id())
                         .lengthMillis(lengthMillis)
                         .build()
         );
-        log.debug("Transcription [{}] patched with duration: [{}]ms", entity.getId(), lengthMillis);
+        log.debug("Transcription [{}] patched with duration: [{}]ms", transcription.id(), lengthMillis);
 
         broadcaster.publishQuietly(
                 TranscriptionUpdateUserEvent.builder()
-                        .applicationUserId(entity.getApplicationUserId())
-                        .transcriptionId(withLengthEntity.getId())
+                        .applicationUserId(applicationUserId)
+                        .transcriptionId(withLength.id())
                         .build()
         );
 
-        return withLengthEntity;
+        return withLength;
     }
 
-    @SneakyThrows
-    private ProcessResult process(TranscriptionEntity entity,
-                                  Path originalMedia,
-                                  TranscriptionPipelineSettings settings) {
+    private TranscodeResult transcode(TranscriptionProjection transcription,
+                                      Path originalMedia,
+                                      TranscriptionPipelineSettings settings,
+                                      Long applicationUserId) {
         updateStatusAndPublish(
                 UpdateStatusAndPublishCommand.builder()
-                        .transcriptionId(entity.getId())
-                        .applicationUserId(entity.getApplicationUserId())
-                        .status(TranscriptionStatus.PROCESSING)
+                        .transcriptionId(transcription.id())
+                        .applicationUserId(applicationUserId)
+                        .status(TranscriptionStatus.TRANSCODING)
                         .build()
         );
-
-        var processStart = System.nanoTime();
 
         var transcodeParameters = TranscodeParameters.builder()
                 .audioContainer(settings.getTranscode().getContainer())
@@ -276,198 +250,212 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 .build();
         var transcoded = audioTranscoder.transcode(originalMedia, transcodeParameters);
         log.debug("Transcription [{}] transcoded to [{}]: [{}]",
-                entity.getId(), settings.getTranscode().getContainer(), transcoded);
+                transcription.id(), settings.getTranscode().getContainer(), transcoded);
 
-        var lengthMillis = Objects.requireNonNull(entity.getLengthMillis(), "Length is required");
-        var splitPartitions = new ArrayList<UploadedAudioPartition>();
-        var minSplitThresholdMillis = Duration.ofMinutes(settings.getPartition().getPartitionDurationMinutes())
-                .plus(Duration.ofMinutes(settings.getPartition().getToleranceDurationMinutes()))
-                .toMillis();
-        log.debug("Min split threshold: [{}]ms", minSplitThresholdMillis);
-
-        if (lengthMillis > minSplitThresholdMillis) {
-            log.debug("Transcription [{}] will be split because length > min split threshold", entity.getId());
-
-            var partitions = audioSplitter.split(
-                    SplitAudioCommand.builder()
-                            .audio(transcoded)
-                            .partitionDuration(Duration.ofMinutes(settings.getPartition().getPartitionDurationMinutes()))
-                            .toleranceDuration(Duration.ofMinutes(settings.getPartition().getToleranceDurationMinutes()))
-                            .minSilenceDuration(Duration.ofSeconds(settings.getPartition().getMinSilenceDurationSeconds()))
-                            .concurrency(settings.getPartition().getSplitConcurrency())
-                            .build()
-            );
-            log.debug("Transcription [{}] split into [{}] partitions", entity.getId(), partitions.size());
-
-            log.debug("Performing parallel upload for split partitions with concurrency [{}] for transcription [{}]",
-                    settings.getPartition().getSplitConcurrency(), entity.getId());
-            var uploadedAudioPartitions = partitions.stream()
-                    .map(
-                            p -> MoreSuppliers.of(
-                                    () -> UploadedAudioPartition.builder()
-                                            .audioSegment(p.getAudioSegment())
-                                            .resourceInfo(cloudStorage.uploadTemp(p.getAudio()))
-                                            .build()
-                            )
-                    )
-                    .collect(ParallelCollectors.toList());
-            log.debug("Transcription [{}] split partitions uploaded", entity.getId());
-
-            splitPartitions.addAll(uploadedAudioPartitions);
-
-            MoreFiles.deleteIfExists(
-                    partitions.stream()
-                            .map(AudioPartition::getAudio)
-                            .toList()
-            );
-        }
-
-        var resourceInfo = cloudStorage.upload(transcoded);
-        log.debug("Transcription [{}] uploaded to cloud: [{}]", entity.getId(), resourceInfo);
-
-        MoreFiles.deleteIfExists(transcoded);
-
-        var processedEntity = transcriptionService.patch(
-                PatchTranscriptionCommand.builder()
-                        .id(entity.getId())
-                        .cloudUri(resourceInfo.getUri())
-                        .processDurationMillis((System.nanoTime() - processStart) / 1_000_000)
-                        .build()
-        );
-
-        return ProcessResult.builder()
-                .entity(processedEntity)
-                .splitPartitions(splitPartitions)
+        return TranscodeResult.builder()
+                .audio(transcoded)
+                .contentType(settings.getTranscode().getContainer().getContentType())
                 .build();
     }
 
-    private TranscriptionEntity transcribe(TranscriptionEntity entity,
-                                           List<UploadedAudioPartition> partitions,
-                                           TranscriptionPipelineSettings settings) {
+    private TranscriptionProjection upload(TranscriptionProjection transcription,
+                                           Path audio,
+                                           String contentType,
+                                           Long applicationUserId) {
         updateStatusAndPublish(
                 UpdateStatusAndPublishCommand.builder()
-                        .transcriptionId(entity.getId())
-                        .applicationUserId(entity.getApplicationUserId())
+                        .transcriptionId(transcription.id())
+                        .applicationUserId(applicationUserId)
+                        .status(TranscriptionStatus.UPLOADING)
+                        .build()
+        );
+
+        var resourceInfo = cloudStorage.upload(
+                CloudUploadCommand.builder()
+                        .path(audio)
+                        .contentType(contentType)
+                        .build()
+        );
+        log.debug("Transcription [{}] uploaded to cloud: [{}]", transcription.id(), resourceInfo);
+
+        return transcriptionService.patch(
+                PatchTranscriptionCommand.builder()
+                        .id(transcription.id())
+                        .cloudUri(resourceInfo.getUri())
+                        .build()
+        );
+    }
+
+    private List<UploadedAudioPartition> split(TranscriptionProjection transcription,
+                                               Path audio,
+                                               TranscriptionPipelineSettings settings,
+                                               Long applicationUserId) {
+        updateStatusAndPublish(
+                UpdateStatusAndPublishCommand.builder()
+                        .transcriptionId(transcription.id())
+                        .applicationUserId(applicationUserId)
+                        .status(TranscriptionStatus.SPLITTING)
+                        .build()
+        );
+
+        var lengthMillis = Objects.requireNonNull(transcription.lengthMillis(), "Length is required");
+        var minSplitThresholdMillis = Duration.ofMinutes(settings.getPartition().getDurationMinutes())
+                .plus(Duration.ofMinutes(settings.getPartition().getToleranceDurationMinutes()))
+                .toMillis();
+
+        if (lengthMillis < minSplitThresholdMillis) {
+            log.debug("Transcription [{}] will not be split because length <= min split threshold", transcription.id());
+            return List.of();
+        }
+
+        var partitions = audioSplitter.split(
+                SplitAudioCommand.builder()
+                        .audio(audio)
+                        .partitionDuration(Duration.ofMinutes(settings.getPartition().getDurationMinutes()))
+                        .toleranceDuration(Duration.ofMinutes(settings.getPartition().getToleranceDurationMinutes()))
+                        .minSilenceDuration(Duration.ofSeconds(settings.getPartition().getMinSilenceDurationSeconds()))
+                        .concurrency(settings.getPartition().getSplitConcurrency())
+                        .build()
+        );
+
+        log.debug("Transcription [{}] split into [{}] partitions", transcription.id(), partitions.size());
+
+        log.debug("Performing parallel upload for split partitions with concurrency [{}] for transcription [{}]",
+                settings.getPartition().getSplitConcurrency(), transcription.id());
+
+        var uploadedAudioPartitions = partitions.stream()
+                .map(p -> MoreSuppliers.of(() -> UploadedAudioPartition.builder()
+                        .audioSegment(p.getAudioSegment())
+                        .resourceInfo(
+                                cloudStorage.upload(
+                                        CloudUploadCommand.builder()
+                                                .path(p.getAudio())
+                                                .temp(true)
+                                                .build()
+                                )
+                        )
+                        .build())
+                )
+                .collect(ParallelCollectors.toList());
+
+        MoreFiles.deleteIfExists(
+                partitions.stream()
+                        .map(AudioPartition::getAudio)
+                        .toList()
+        );
+
+        return uploadedAudioPartitions;
+    }
+
+    private TranscriptionProjection transcribe(TranscriptionProjection transcription,
+                                               List<UploadedAudioPartition> uploadedSplits,
+                                               CompletableFuture<List<DiarizationEntry>> diarizeFuture,
+                                               TranscriptionPipelineSettings settings,
+                                               Long applicationUserId) {
+        updateStatusAndPublish(
+                UpdateStatusAndPublishCommand.builder()
+                        .transcriptionId(transcription.id())
+                        .applicationUserId(applicationUserId)
                         .status(TranscriptionStatus.TRANSCRIBING)
                         .build()
         );
 
-        log.debug("Performing parallel transcription with concurrency [{}] for transcription [{}]",
-                settings.getPartition().getTranscribeConcurrency(), entity.getId());
+        var partitions = CollectionUtils.isNotEmpty(uploadedSplits)
+                ? uploadedSplits
+                : List.of(UploadedAudioPartition.of(transcription));
 
-        var timedTranscribeResult = DoublyLinkedIterable.of(partitions)
+        log.debug("Performing parallel transcription with concurrency [{}] for transcription [{}]",
+                settings.getPartition().getTranscribeConcurrency(), transcription.id());
+
+        var transcribeResults = DoublyLinkedIterable.of(partitions)
                 .nodeStream()
                 .map(node -> {
-                    var offset = node.getAllPrev().stream()
+                    long offsetShift = node.getAllPrev()
+                            .stream()
                             .map(p -> p.getValue().audioSegment().getDurationMillis())
                             .reduce(0L, Long::sum);
 
-                    return Tuple2.of(node.getValue(), offset);
+                    return Tuple2.of(node.getValue(), offsetShift);
                 })
                 .map(valueOffset -> MoreSuppliers.of(() -> {
                     var partition = valueOffset.getT1();
-                    var offset = valueOffset.getT2();
+                    long offsetShift = valueOffset.getT2();
 
-                    var words = speechToText.transcribe(partition.resourceInfo().getUri(), entity.getLanguage());
-                    var offsetAdjustedWords = words.stream()
-                            .map(w ->
-                                    w.setStartOffsetMillis(w.getStartOffsetMillis() + offset)
-                                            .setEndOffsetMillis(w.getEndOffsetMillis() + offset)
-                            )
+                    var words = speechToText.transcribe(partition.resourceInfo().getUri(), transcription.language());
+
+                    return words.stream()
+                            .map(w -> w.shiftOffsets(offsetShift))
                             .toList();
-
-                    return TranscriptPartition.builder()
-                            .speechToTextWords(offsetAdjustedWords)
-                            .build();
                 }))
-                .collect(ParallelCollectors.toListTimed(settings.getPartition().getTranscribeConcurrency()));
+                .collect(ParallelCollectors.toList(settings.getPartition().getTranscribeConcurrency()));
 
-        var allWords = timedTranscribeResult.getResult()
-                .stream()
-                .flatMap(p -> p.getSpeechToTextWords().stream())
+        var speechToTextWords = transcribeResults.stream()
+                .flatMap(Collection::stream)
                 .toList();
 
-       // var t = MoreFunctions.runTimed(() -> transcriptionManager.saveOriginalWords(
-       //         SaveOriginalWordsCommand.builder()
-       //                 .transcriptionId(entity.getId())
-       //                 .words(allWords)
-       //                 .build()
-       // ));
-       // log.info("Transcription [{}] words saved in [{}]ms", entity.getId(), t.toMillis());
+        var diarizationEntries = diarizeFuture.join();
+        var words = WordAssembler.assembleAll(speechToTextWords, diarizationEntries, Word::new);
 
-        transcriptManager.saveOriginalParts(
-                SaveOriginalParts.builder()
-                        .partitions(timedTranscribeResult.getResult())
-                        .transcriptionId(entity.getId())
-                        .build()
-        );
+        log.debug("Saving original words for transcription [{}]", transcription.id());
+        var duration = MoreFunctions.runTimed(() -> transcriptionManager.createWords(transcription.id(), words));
+        log.debug("Original words saved for transcription [{}] in [{}]ms", transcription.id(), duration.toMillis());
 
-        return transcriptionService.patch(
-                PatchTranscriptionCommand.builder()
-                        .id(entity.getId())
-                        .transcribeDurationMillis(timedTranscribeResult.getDuration().toMillis())
-                        .build()
-        );
+        return transcription;
     }
 
-    private void enhance(TranscriptionEntity entity) {
+    private void enhance(TranscriptionProjection transcription, TranscriptionPipelineSettings settings, Long applicationUserId) {
         updateStatusAndPublish(
                 UpdateStatusAndPublishCommand.builder()
-                        .transcriptionId(entity.getId())
-                        .applicationUserId(entity.getApplicationUserId())
+                        .transcriptionId(transcription.id())
+                        .applicationUserId(applicationUserId)
                         .status(TranscriptionStatus.ENHANCING)
                         .build()
         );
 
-        var transcriptPartitionsWithMetadata = transcriptManager.getTranscriptPartitionsWithMetadata(entity.getId());
+        var segments = transcriptionManager.getTranscriptionSpeakerSegments(transcription.id());
+        int partitionWordLimit = settings.getPartition().getEnhanceWordLimit();
+        var partitions = SpeakerSegmentPartitioner.partitionAll(segments, partitionWordLimit);
 
-        var settings = settingsLoader.load(TranscriptionPipelineSettings.class);
-
-        var completionInputs = transcriptPartitionsWithMetadata.stream()
+        var completeCommands = partitions.stream()
                 .map(partition -> Map.<String, Object>of(
-                                settings.getEnhanceCompletionTextDataModelKey(),
-                                partition,
+                                settings.getEnhanceCompletionContentDataModelKey(),
+                                partition.content(),
                                 settings.getEnhanceCompletionLanguageDataModelKey(),
-                                MoreEnums.toDisplayName(entity.getLanguage())
+                                MoreEnums.toDisplayName(transcription.language())
                         )
+                ).map(dataModel -> templateService.render(
+                                RenderTemplateCommand.builder()
+                                        .name(settings.getEnhanceCompletionDynamicTemplateName())
+                                        .dataModel(dataModel)
+                                        .build()
+                        )
+                ).map(input -> CompleteCommand.builder()
+                        .input(input)
+                        .transcriptionId(transcription.id())
+                        .aiProvider(settings.getCompletionsAiProvider())
+                        .build()
                 )
-                .map(dataModel -> templateService.render(
-                        RenderTemplateCommand.builder()
-                                .name(settings.getEnhanceCompletionDynamicTemplateName())
-                                .dataModel(dataModel)
-                                .build()
-                ))
                 .toList();
 
         log.debug("Performing parallel completion with concurrency [{}] for transcription [{}]",
-                settings.getPartition().getEnhanceConcurrency(), entity.getId());
-        var completionEntities = completionInputs.stream()
-                .map(input -> MoreSuppliers.of(() -> completionsPipeline.complete(
-                        CompleteCommand.builder()
-                                .input(input)
-                                .transcriptionId(entity.getId())
-                                .aiProvider(settings.getCompletionsAiProvider())
-                                .build()
-                )))
+                settings.getPartition().getEnhanceConcurrency(), transcription.id());
+
+        var completionResults = completeCommands.stream()
+                .map(command -> MoreSuppliers.of(() -> completionsPipeline.complete(command)))
                 .collect(ParallelCollectors.toList(settings.getPartition().getEnhanceConcurrency()));
 
-        var combinedOutput = completionEntities.stream()
-                .map(CompletionEntity::getOutput)
+        var combinedOutput = completionResults.stream()
+                .map(CompletionProjection::output)
                 .map(StringUtils::strip)
-                .collect(Collectors.joining(StringUtils.LF + StringUtils.LF));
+                .collect(Collectors.joining(StringUtils.SPACE));
 
-        var partModels = PartModelUtils.parse(combinedOutput, transcriptManager.getTranscriptPartModels(entity.getId()));
-
-        transcriptManager.saveEnhancedParts(
-                SaveEnhancedParts.builder()
-                        .transcriptionId(entity.getId())
-                        .partModels(partModels)
-                        .build()
-        );
+        log.debug("Saving enhanced words for transcription [{}]", transcription.id());
+        var duration = MoreFunctions.runTimed(() -> transcriptionManager.replaceAllWords(transcription.id(), combinedOutput));
+        log.debug("Enhanced words saved for transcription [{}] in [{}]ms", transcription.id(), duration.toMillis());
     }
 
-    private TranscriptionEntity updateStatusAndPublish(UpdateStatusAndPublishCommand command) {
-        var updatedEntity = transcriptionService.patch(
+    private TranscriptionProjection updateStatusAndPublish(UpdateStatusAndPublishCommand command) {
+        var updatedTranscription = transcriptionService.patch(
                 PatchTranscriptionCommand.builder()
                         .id(command.transcriptionId())
                         .status(command.status())
@@ -476,25 +464,60 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         broadcaster.publishQuietly(
                 TranscriptionUpdateUserEvent.builder()
                         .applicationUserId(command.applicationUserId())
-                        .transcriptionId(updatedEntity.getId())
+                        .transcriptionId(updatedTranscription.id())
                         .build()
         );
 
-        return updatedEntity;
+        return updatedTranscription;
     }
 
-    @Builder
-    private record ProcessResult(TranscriptionEntity entity, List<UploadedAudioPartition> splitPartitions) {
+    private void deleteUploadedAudioPartitions(List<UploadedAudioPartition> partitions) {
+        var resourcesToDelete = ListUtils.emptyIfNull(partitions)
+                .stream()
+                .map(UploadedAudioPartition::resourceInfo)
+                .toList();
+
+        Function<ResourceInfo, Boolean> deleteFunc = r -> cloudStorage.delete(
+                CloudDeleteCommand.builder()
+                        .resourceName(r.getResourceName())
+                        .temp(true)
+                        .build()
+        );
+
+        MoreFunctions.executeAllParallel(resourcesToDelete, deleteFunc);
     }
 
     @Builder
     private record UploadedAudioPartition(AudioSegment audioSegment, ResourceInfo resourceInfo) {
+
+        public static UploadedAudioPartition of(TranscriptionProjection transcription) {
+            Objects.requireNonNull(transcription, "transcription");
+
+            var audioSegment = AudioSegment.builder()
+                    .startMillis(0L)
+                    .endMillis(transcription.lengthMillis())
+                    .build();
+
+            return UploadedAudioPartition.builder()
+                    .audioSegment(audioSegment)
+                    .resourceInfo(
+                            ResourceInfo.builder()
+                                    .uri(transcription.cloudUri())
+                                    .build()
+                    )
+                    .build();
+        }
+
     }
 
     @Builder
     private record UpdateStatusAndPublishCommand(Long transcriptionId,
                                                  Long applicationUserId,
                                                  TranscriptionStatus status) {
+    }
+
+    @Builder
+    private record TranscodeResult(Path audio, String contentType) {
     }
 
 }

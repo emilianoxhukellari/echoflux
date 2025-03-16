@@ -9,9 +9,10 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
+import transcribe.domain.transcription.data.TranscriptionProjection;
 import transcribe.domain.transcription.data.TranscriptionEntity;
-import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
+import transcribe.domain.transcription.service.CreateTranscriptionCommand;
 import transcribe.domain.transcription.service.PatchTranscriptionCommand;
 
 @Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
@@ -22,6 +23,9 @@ public interface TranscriptionMapper {
 
     @Mapping(target = "status", constant = "CREATED")
     TranscriptionEntity toEntity(CreateTranscriptionCommand command);
+
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.ERROR)
+    TranscriptionProjection toProjection(TranscriptionEntity entity);
 
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

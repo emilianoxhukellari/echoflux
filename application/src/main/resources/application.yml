@@ -4,21 +4,23 @@ server:
 
 logging:
   level:
-    root: warn
-    transcribe: debug
+    transcribe: trace
 
 vaadin:
   launch-browser: true
   allowed-packages: com.vaadin,org.vaadin,transcribe
+  async-supported: true
+  frontend:
+    hotdeploy: true
 
 spring:
   threads:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/vaadinstart?reWriteBatchedInserts=true
-    username: vaadinstart
-    password: vaadinstart
+    url: jdbc:postgresql://localhost:5432/transcribe?reWriteBatchedInserts=true
+    username: transcribe
+    password: transcribe
     driver-class-name: org.postgresql.Driver
     hikari:
       auto-commit: false
@@ -31,6 +33,8 @@ spring:
     defer-datasource-initialization: false
     properties:
       hibernate:
+        query:
+          fail_on_pagination_over_collection_fetch: true
         order_updates: true
         order_inserts: true
         jdbc:
@@ -52,13 +56,13 @@ spring:
     check-template-location: true
 
 gcloud:
-  project-id: ${GCLOUD_PROJECT_ID}
-  private-key: ${GCLOUD_KEY}
-  bucket-name: ${GCLOUD_BUCKET_NAME}
-  temp-bucket-name: ${GCLOUD_TEMP_BUCKET_NAME}
+  project-id: 'transcribe-dev-444319'
+  bucket-name: 'transcribe-dev-cloud-storage'
+  temp-bucket-name: 'transcribe-dev-temp-cloud-storage'
   speech-endpoint: 'europe-west4-speech.googleapis.com:443'
   ai-platform-endpoint: 'europe-west4-aiplatform.googleapis.com:443'
   location: 'europe-west4'
+  private-key: ${GCLOUD_KEY}
 
 openai:
   api-key: ${OPENAI_API_KEY}
@@ -69,3 +73,7 @@ yt-dlp:
 ffmpeg:
   ffmpeg-execution-path: ${FFMPEG_EXECUTION_PATH}
   ffprobe-execution-path: ${FFPROBE_EXECUTION_PATH}
+
+pyannote:
+  api-key: ${PYANNOTE_API_KEY}
+  base-url: 'https://api.pyannote.ai/v1'
