@@ -25,9 +25,9 @@ import transcribe.core.core.iterable.DoublyLinkedIterable;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.supplier.MoreSuppliers;
 import transcribe.core.core.tuple.Tuple2;
-import transcribe.core.core.utils.MoreEnums;
-import transcribe.core.core.utils.MoreFiles;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsEnums;
+import transcribe.core.core.utils.TsFiles;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.core.diarization.AudioDiarizer;
 import transcribe.core.diarization.DiarizationEntry;
 import transcribe.core.media.downloader.MediaDownloader;
@@ -36,6 +36,7 @@ import transcribe.core.transcribe.SpeechToText;
 import transcribe.core.word.common.Word;
 import transcribe.core.word.processor.SpeakerSegmentPartitioner;
 import transcribe.core.word.processor.WordAssembler;
+import transcribe.core.word.processor.WordPatcher;
 import transcribe.domain.completion.data.CompletionProjection;
 import transcribe.domain.completion.pipeline.CompleteCommand;
 import transcribe.domain.completion.pipeline.CompletionsPipeline;
@@ -53,6 +54,7 @@ import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineSettings;
 import transcribe.domain.transcription.service.PatchTranscriptionCommand;
 import transcribe.domain.transcription.service.TranscriptionService;
+import transcribe.domain.transcription_word.data.WordDto;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -131,7 +133,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         );
         var uri = publicUri.toURI();
 
-        return MoreFunctions.getAsync(() -> audioDiarizer.diarize(uri));
+        return TsFunctions.getAsync(() -> audioDiarizer.diarize(uri));
     }
 
     private TranscriptionProjection transcribeCreated(TranscriptionProjection transcription, TranscriptionPipelineCommand command) {
@@ -154,7 +156,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
         var uploadedSplits = split(uploadedTranscription, transcodeResult.audio(), settings, command.getApplicationUserId());
 
-        MoreFiles.deleteIfExists(originalMedia, transcodeResult.audio());
+        TsFiles.deleteIfExists(originalMedia, transcodeResult.audio());
 
         var transcribed = transcribe(uploadedTranscription, uploadedSplits, diarizeFuture, settings, command.getApplicationUserId());
 
@@ -338,7 +340,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 )
                 .collect(ParallelCollectors.toList());
 
-        MoreFiles.deleteIfExists(
+        TsFiles.deleteIfExists(
                 partitions.stream()
                         .map(AudioPartition::getAudio)
                         .toList()
@@ -397,7 +399,9 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var words = WordAssembler.assembleAll(speechToTextWords, diarizationEntries, Word::new);
 
         log.debug("Saving original words for transcription [{}]", transcription.id());
-        var duration = MoreFunctions.runTimed(() -> transcriptionManager.createWords(transcription.id(), words));
+        var duration = TsFunctions.runTimed(
+                () -> transcriptionManager.saveWords(transcription.id(), words)
+        );
         log.debug("Original words saved for transcription [{}] in [{}]ms", transcription.id(), duration.toMillis());
 
         return transcription;
@@ -421,7 +425,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                                 settings.getEnhanceCompletionContentDataModelKey(),
                                 partition.content(),
                                 settings.getEnhanceCompletionLanguageDataModelKey(),
-                                MoreEnums.toDisplayName(transcription.language())
+                                TsEnums.toDisplayName(transcription.language())
                         )
                 ).map(dataModel -> templateService.render(
                                 RenderTemplateCommand.builder()
@@ -450,7 +454,11 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 .collect(Collectors.joining(StringUtils.SPACE));
 
         log.debug("Saving enhanced words for transcription [{}]", transcription.id());
-        var duration = MoreFunctions.runTimed(() -> transcriptionManager.replaceAllWords(transcription.id(), combinedOutput));
+        var words = transcriptionManager.getTranscriptionSpeakerWords(transcription.id());
+        var patchedWords = WordPatcher.patchAllFromText(words, combinedOutput, WordDto::new);
+        var duration = TsFunctions.runTimed(
+                () -> transcriptionManager.saveWords(transcription.id(), patchedWords)
+        );
         log.debug("Enhanced words saved for transcription [{}] in [{}]ms", transcription.id(), duration.toMillis());
     }
 
@@ -484,7 +492,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        MoreFunctions.executeAllParallel(resourcesToDelete, deleteFunc);
+        TsFunctions.executeAllParallel(resourcesToDelete, deleteFunc);
     }
 
     @Builder

@@ -12,9 +12,9 @@ import transcribe.application.core.upload.UploadFileFactory;
 import transcribe.application.transcribe.media_provider.MediaProvider;
 import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.core.core.error.PropagatedException;
-import transcribe.core.core.utils.MoreFiles;
-import transcribe.core.core.utils.MoreUris;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFiles;
+import transcribe.core.core.utils.TsUris;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.io.File;
@@ -52,14 +52,14 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
                 throw new PropagatedException("Unsupported media type. Please upload an audio or video file.");
             }
 
-            MoreFunctions.consumeIfPresent(
+            TsFunctions.consumeIfPresent(
                     onReady,
-                    new MediaValue(MoreUris.toUri(path), FilenameUtils.getBaseName(e.getFileName()), MediaOrigin.LOCAL)
+                    new MediaValue(TsUris.toUri(path), FilenameUtils.getBaseName(e.getFileName()), MediaOrigin.LOCAL)
             );
         });
         upload.addFileRemovedListener(_ -> {
             cleanup();
-            MoreFunctions.runIfPresent(onClientCleared);
+            TsFunctions.runIfPresent(onClientCleared);
         });
 
         add(upload);
@@ -86,7 +86,7 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
     }
 
     private void cleanup() {
-        MoreFiles.deleteIfExists(path);
+        TsFiles.deleteIfExists(path);
         this.path = null;
     }
 

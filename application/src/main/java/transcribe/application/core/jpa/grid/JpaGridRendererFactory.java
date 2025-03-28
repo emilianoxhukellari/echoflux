@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import transcribe.application.core.icon.IconFactory;
 import transcribe.application.core.jpa.core.JpaPropertyDefinition;
-import transcribe.core.core.utils.MoreEnums;
+import transcribe.core.core.utils.TsEnums;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -76,7 +76,7 @@ public class JpaGridRendererFactory {
         return new TextRenderer<>(item -> {
             var value = (Enum<?>) propertyDefinition.getGetter().apply(item);
 
-            return MoreEnums.toDisplayName(value);
+            return TsEnums.toDisplayName(value);
         });
     }
 

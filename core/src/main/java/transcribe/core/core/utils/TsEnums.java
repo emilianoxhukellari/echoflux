@@ -6,7 +6,7 @@ import org.apache.commons.text.WordUtils;
 import transcribe.core.core.bean.MoreBeans;
 import transcribe.core.core.display_name.DisplayName;
 
-public final class MoreEnums {
+public final class TsEnums {
 
     public static <T extends Enum<?>> String toDisplayName(@Nullable T enumValue) {
         if (enumValue == null) {

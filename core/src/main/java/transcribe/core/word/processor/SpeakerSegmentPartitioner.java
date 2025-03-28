@@ -2,11 +2,12 @@ package transcribe.core.word.processor;
 
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.Validate;
-import transcribe.core.core.utils.MoreStrings;
+import transcribe.core.core.utils.TsStrings;
 import transcribe.core.word.common.HasContent;
+import transcribe.core.word.common.SimpleContent;
 import transcribe.core.word.common.SpeakerSegmentInfo;
-import transcribe.core.word.common.WordInfo;
 import transcribe.core.word.common.SpeakerSegmentPartition;
+import transcribe.core.word.common.WordInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,7 +27,7 @@ public final class SpeakerSegmentPartitioner {
         for (var segment : segments) {
             if (currentContents.size() + segment.getWords().size() <= wordLimit) {
                 currentContents.addAll(segment.getWords());
-                currentContents.add(() -> MoreStrings.EMPTY_LINE);
+                currentContents.add(SimpleContent.of(TsStrings.EMPTY_LINE));
             } else {
                 if (!currentContents.isEmpty()) {
                     partitions.add(SpeakerSegmentPartition.ofContents(currentContents));
@@ -39,7 +40,7 @@ public final class SpeakerSegmentPartitioner {
                     );
                 } else {
                     currentContents.addAll(segment.getWords());
-                    currentContents.add(() -> MoreStrings.EMPTY_LINE);
+                    currentContents.add(SimpleContent.of(TsStrings.EMPTY_LINE));
                 }
             }
         }

@@ -1,29 +1,38 @@
 package transcribe.core.document.spi.impl;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.temp_file.TempFileNameGenerator;
+import transcribe.core.core.utils.TsStrings;
 import transcribe.core.document.DocumentType;
+import transcribe.core.document.Paragraph;
 import transcribe.core.document.spi.DocumentExporterSpi;
 import transcribe.core.document.spi.DocumentTempDirectory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class TxtDocumentExporterSpi implements DocumentExporterSpi, TempFileNameGenerator {
 
-    @Override
     @SneakyThrows(IOException.class)
-    public Path export(String text) {
+    @Override
+    public Path export(List<@NotNull Paragraph> paragraphs) {
         var tempPath = DocumentTempDirectory.INSTANCE
                 .locationPath()
                 .resolve("%s.%s".formatted(newFileName(), DocumentType.TXT.getContainer()));
+
+        var text = paragraphs.stream()
+                .map(Paragraph::getContent)
+                .collect(Collectors.joining(TsStrings.LINE_SEPARATOR));
 
         Files.write(tempPath, text.getBytes());
 

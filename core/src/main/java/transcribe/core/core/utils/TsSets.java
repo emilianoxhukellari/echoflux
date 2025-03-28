@@ -5,7 +5,7 @@ import org.apache.commons.collections4.SetUtils;
 
 import java.util.Set;
 
-public class MoreSets {
+public class TsSets {
 
     /**
      * @return true if the set contains the given element. If the set is null, it is treated as empty

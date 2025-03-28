@@ -1,24 +1,10 @@
 package transcribe.application.core.progress;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.dependency.JsModule;
 
-@Tag("div")
-@CssImport("./styles/progress/la-pacman.css")
-public class PacmanProgress extends Div {
-
-    public PacmanProgress() {
-        addClassName("la-pacman");
-        getStyle().set("color", "var(--lumo-primary-color)");
-        this.getElement().setProperty("innerHTML", """
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                """);
-    }
-
+@Tag("la-pacman")
+@JsModule("./element/la-pacman.ts")
+public class PacmanProgress extends Component {
 }

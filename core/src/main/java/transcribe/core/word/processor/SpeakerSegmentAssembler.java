@@ -23,31 +23,40 @@ public final class SpeakerSegmentAssembler {
             return List.of();
         }
 
-        var currS = newSegment.get();
-        currS.setSpeakerName(words.getFirst().getSpeakerName());
-        currS.setStartOffsetMillis(words.getFirst().getStartOffsetMillis());
-        currS.setEndOffsetMillis(words.getFirst().getEndOffsetMillis());
-        currS.setWords(Lists.newArrayList(words.getFirst()));
+        var currSegment = newSegment.get();
+        var currContentBuilder = new StringBuilder(words.getFirst().getContent());
 
-        var sList = Lists.newArrayList(currS);
+        currSegment.setSpeakerName(words.getFirst().getSpeakerName());
+        currSegment.setStartOffsetMillis(words.getFirst().getStartOffsetMillis());
+        currSegment.setEndOffsetMillis(words.getFirst().getEndOffsetMillis());
+        currSegment.setWords(Lists.newArrayList(words.getFirst()));
+
+        var segmentList = Lists.newArrayList(currSegment);
 
         for (int i = 1; i < words.size(); i++) {
             var w = words.get(i);
-            if (StringUtils.equals(currS.getSpeakerName(), w.getSpeakerName())) {
-                currS.setEndOffsetMillis(w.getEndOffsetMillis());
-                currS.getWords().add(w);
+            if (StringUtils.equals(currSegment.getSpeakerName(), w.getSpeakerName())) {
+                currSegment.setEndOffsetMillis(w.getEndOffsetMillis());
+                currSegment.getWords().add(w);
+                currContentBuilder.append(StringUtils.SPACE).append(w.getContent());
             } else {
-                currS = newSegment.get();
-                currS.setSpeakerName(w.getSpeakerName());
-                currS.setStartOffsetMillis(w.getStartOffsetMillis());
-                currS.setEndOffsetMillis(w.getEndOffsetMillis());
-                currS.setWords(Lists.newArrayList(w));
+                currSegment.setContent(currContentBuilder.toString());
 
-                sList.add(currS);
+                currSegment = newSegment.get();
+                currContentBuilder = new StringBuilder(w.getContent());
+
+                currSegment.setSpeakerName(w.getSpeakerName());
+                currSegment.setStartOffsetMillis(w.getStartOffsetMillis());
+                currSegment.setEndOffsetMillis(w.getEndOffsetMillis());
+                currSegment.setWords(Lists.newArrayList(w));
+
+                segmentList.add(currSegment);
             }
         }
 
-        return Collections.unmodifiableList(sList);
+        currSegment.setContent(currContentBuilder.toString());
+
+        return Collections.unmodifiableList(segmentList);
     }
 
 }

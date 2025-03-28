@@ -1,0 +1,20 @@
+:root {
+    --md-outlined-segmented-button-selected-container-color: hsla(214, 100%, 55%, 0.20);
+    --md-outlined-segmented-button-selected-label-text-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-hover-label-text-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-hover-state-layer-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-focus-label-text-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-pressed-label-text-color: var(--lumo-primary-contrast-color);
+
+    --md-outlined-segmented-button-selected-focus-icon-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-hover-icon-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-icon-color: var(--lumo-primary-contrast-color);
+    --md-outlined-segmented-button-selected-pressed-icon-color: var(--lumo-primary-contrast-color);
+
+    --md-outlined-segmented-button-unselected-label-text-color: var(--lumo-body-text-color);
+    --md-outlined-segmented-button-unselected-hover-label-text-color: var(--lumo-body-text-color);
+    --md-outlined-segmented-button-unselected-hover-state-layer-color: var(--lumo-body-text-color);
+    --md-outlined-segmented-button-unselected-focus-label-text-color: var(--lumo-body-text-color);
+    --md-outlined-segmented-button-unselected-pressed-label-text-color: var(--lumo-body-text-color);
+    --md-outlined-segmented-button-shape: 5px;
+}

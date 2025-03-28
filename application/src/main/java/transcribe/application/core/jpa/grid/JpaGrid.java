@@ -36,8 +36,8 @@ import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.bean.MoreBeans;
 import transcribe.core.core.executor.MoreExecutors;
-import transcribe.core.core.utils.MoreArrays;
-import transcribe.core.core.utils.MoreLists;
+import transcribe.core.core.utils.TsArrays;
+import transcribe.core.core.utils.TsLists;
 import transcribe.domain.operation.data.OperationType;
 
 import java.util.ArrayList;
@@ -95,8 +95,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         this.filterDataProvider = newDataProvider();
 
         configureBeanType(beanType, false);
-        getDataCommunicator()
-                .enablePushUpdates(MoreExecutors.virtualThreadExecutor());
+        getDataCommunicator().enablePushUpdates(MoreExecutors.virtualThreadExecutor());
         setDataProvider(this.filterDataProvider);
         addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
     }
@@ -127,7 +126,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void addCoreAttributeColumnsExcluding(String... excludedProperties) {
         addColumns(
-                JpaPropertyCache.getCorePropertiesExcluding(beanType, MoreArrays.toList(excludedProperties))
+                JpaPropertyCache.getCorePropertiesExcluding(beanType, TsArrays.toList(excludedProperties))
                         .stream()
                         .map(JpaPropertyDefinition::getName)
                         .toArray(String[]::new)
@@ -166,8 +165,19 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(this::addColumn);
     }
 
+    public Column<DTO> setColumnWidth(String propertyName, String width) {
+        var column = getColumnByKey(propertyName);
+        column.setWidth(width);
+
+        return column;
+    }
+
     public void setAllColumnsResizable() {
         getColumns().forEach(column -> column.setResizable(true));
+    }
+
+    public void setAllColumnsAutoWidth(boolean autoWidth) {
+        getColumns().forEach(column -> column.setAutoWidth(autoWidth));
     }
 
     public void addCoreAttributeFilters() {
@@ -175,7 +185,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     }
 
     public void addCoreAttributeFiltersExcluding(String... excludedProperties) {
-        JpaPropertyCache.getCorePropertiesExcluding(beanType, MoreArrays.toList(excludedProperties))
+        JpaPropertyCache.getCorePropertiesExcluding(beanType, TsArrays.toList(excludedProperties))
                 .forEach(this::addFilter);
     }
 
@@ -206,7 +216,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void addFilter(JpaFilter<ENTITY> filter) {
         Objects.requireNonNull(filter, "Filter cannot be null");
-        Validate.isTrue(!MoreLists.contains(filters, filter), "Filter already added");
+        Validate.isTrue(!TsLists.contains(filters, filter), "Filter already added");
 
         filters.add(filter);
         addFilterListener(filter);
@@ -273,7 +283,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     }
 
     public void addCrudActionsExcluding(String... excludedProperties) {
-        var excludedPropertiesList = MoreArrays.toList(excludedProperties);
+        var excludedPropertiesList = TsArrays.toList(excludedProperties);
         addContextMenuItem(
                 "Edit",
                 v -> new JpaSaveCorePropertiesDialog<>(v, beanType, service, excludedPropertiesList)

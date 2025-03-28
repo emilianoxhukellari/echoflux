@@ -1,7 +1,6 @@
 package transcribe.core.word.processor;
 
-import org.apache.commons.lang3.Validate;
-import transcribe.core.core.utils.MoreLists;
+import transcribe.core.core.utils.TsLists;
 import transcribe.core.diarization.DiarizationEntry;
 import transcribe.core.word.common.SpeechToTextWord;
 import transcribe.core.word.common.WordInfo;
@@ -17,12 +16,12 @@ public final class WordAssembler {
     public static <T extends WordInfo> List<T> assembleAll(List<SpeechToTextWord> words,
                                                            List<DiarizationEntry> diarizationEntries,
                                                            Supplier<T> newWord) {
-        Validate.notEmpty(words, "words");
-        Validate.notEmpty(diarizationEntries, "diarizationEntries");
+        Objects.requireNonNull(words, "words");
+        Objects.requireNonNull(diarizationEntries, "diarizationEntries");
         Objects.requireNonNull(newWord, "newWord");
 
-        var wList = MoreLists.toSorted(words, SpeechToTextWord::getStartOffsetMillis);
-        var dList = MoreLists.toSorted(diarizationEntries, DiarizationEntry::getStartOffsetMillis);
+        var wList = TsLists.toSorted(words, SpeechToTextWord::getStartOffsetMillis);
+        var dList = TsLists.toSorted(diarizationEntries, DiarizationEntry::getStartOffsetMillis);
         var swList = new ArrayList<T>(wList.size());
 
         var dItr = dList.iterator();

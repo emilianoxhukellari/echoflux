@@ -56,6 +56,7 @@ public class SettingsView extends Composite<VerticalLayout> {
         grid.addAuditColumns();
         grid.addIdColumn();
         grid.setAllColumnsResizable();
+        grid.setAllColumnsAutoWidth(true);
 
         grid.addCoreAttributeFiltersExcluding("value");
         grid.addAuditFilters();

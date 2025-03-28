@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.temp_file.TempFileNameGenerator;
-import transcribe.core.core.utils.MoreUris;
+import transcribe.core.core.utils.TsUris;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
 import transcribe.core.media.downloader.yt_dlp.YtDlp;
@@ -80,7 +80,7 @@ public class MediaDownloaderImpl implements MediaDownloader, TempFileNameGenerat
 
         return Optional.of(MediaFindResult.builder()
                 .title(ArrayUtils.get(parts, 0, StringUtils.EMPTY))
-                .thumbnailUri(MoreUris.newUri(ArrayUtils.get(parts, 1, StringUtils.EMPTY)))
+                .thumbnailUri(TsUris.newUri(ArrayUtils.get(parts, 1, StringUtils.EMPTY)))
                 .uri(uri)
                 .build());
     }

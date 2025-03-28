@@ -1,3 +1,7 @@
+vaadin-dialog-overlay::part(backdrop) {
+    background: var(--lumo-shade-40pct);
+}
+
 vaadin-dialog-overlay.padding-s::part(content) {
     padding: 10px;
 }

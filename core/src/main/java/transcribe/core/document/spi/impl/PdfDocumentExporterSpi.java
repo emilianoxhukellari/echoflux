@@ -4,7 +4,6 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.PageSize;
-import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,8 +14,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.temp_file.TempFileNameGenerator;
-import transcribe.core.document.spi.DocumentExporterSpi;
 import transcribe.core.document.DocumentType;
+import transcribe.core.document.Paragraph;
+import transcribe.core.document.spi.DocumentExporterSpi;
 import transcribe.core.document.spi.DocumentTempDirectory;
 import transcribe.core.settings.Settings;
 import transcribe.core.settings.SettingsLoader;
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -33,9 +34,9 @@ public class PdfDocumentExporterSpi implements DocumentExporterSpi, TempFileName
 
     private final SettingsLoader settingsLoader;
 
-    @Override
     @SneakyThrows(DocumentException.class)
-    public Path export(String text) {
+    @Override
+    public Path export(List<Paragraph> paragraphs) {
         var tempPath = DocumentTempDirectory.INSTANCE
                 .locationPath()
                 .resolve("%s.%s".formatted(newFileName(), DocumentType.PDF.getContainer()));
@@ -51,8 +52,12 @@ public class PdfDocumentExporterSpi implements DocumentExporterSpi, TempFileName
 
         try (var out = Files.newOutputStream(tempPath)) {
             PdfWriter.getInstance(document, out);
+
             document.open();
-            document.add(new Paragraph(text, font));
+            for (var p : paragraphs) {
+                var paragraph = new com.itextpdf.text.Paragraph(p.getContent(), font);
+                document.add(paragraph);
+            }
             document.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

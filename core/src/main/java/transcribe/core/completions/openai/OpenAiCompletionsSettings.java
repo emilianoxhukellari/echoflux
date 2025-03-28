@@ -32,12 +32,12 @@ public class OpenAiCompletionsSettings {
     @Builder.Default
     @DoubleRange(min = 0.1d, max = 2.0d)
     @NotNull
-    private Double temperature = 0.7d;
+    private Double temperature = 0.9d;
 
     @Builder.Default
     @DoubleRange(min = 0.1d, max = 1.0d)
     @NotNull
-    private Double topP = 0.8d;
+    private Double topP = 0.7d;
 
     @Builder.Default
     @NotNull

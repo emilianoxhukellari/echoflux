@@ -8,11 +8,11 @@ import java.util.function.Consumer;
 public final class NoOp {
 
     public static Runnable runnable() {
-        return () -> {};
+        return () -> log.trace("NoOp runnable");
     }
 
     public static <T> Consumer<T> consumer() {
-        return _ -> {};
+        return _ -> log.trace("NoOp consumer");
     }
 
 }

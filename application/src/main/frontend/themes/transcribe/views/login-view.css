@@ -1,7 +1,7 @@
 vaadin-login-overlay-wrapper::part(brand) {
-    /*background-color: #3CB371;*/
+    background-color: var(--lumo-primary-color);
 }
 
 vaadin-login-form vaadin-button[theme~="submit"] {
-    /*background-color: #3CB371;*/
+    background-color: var(--lumo-primary-color);
 }

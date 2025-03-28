@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.executor.MoreExecutors;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
 
@@ -38,7 +38,7 @@ public class BroadcasterImpl implements Broadcaster {
         lock.lock();
         try {
             for (var c : ListUtils.emptyIfNull(eventSubscribersMap.get(event.getClass()))) {
-                MoreFunctions.runQuietly(() -> {
+                TsFunctions.runQuietly(() -> {
                     var casted = (EventConsumer<T>) c;
                     if (casted.condition().test(event)) {
                         executor.execute(() -> casted.consumer().accept(event));
@@ -51,14 +51,14 @@ public class BroadcasterImpl implements Broadcaster {
     }
 
     private void addSynchronized(Class<?> event, EventConsumer<?> consumer) {
-        MoreFunctions.runSynchronized(
+        TsFunctions.runSynchronized(
                 () -> eventSubscribersMap.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer),
                 lock
         );
     }
 
     private void removeSynchronized(Class<?> event, Consumer<?> consumer) {
-        MoreFunctions.runSynchronized(
+        TsFunctions.runSynchronized(
                 () -> eventSubscribersMap.get(event).removeIf(c -> c.consumer().equals(consumer)),
                 lock
         );

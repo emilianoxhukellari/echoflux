@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.core.core.utils.MoreUris;
+import transcribe.core.core.utils.TsUris;
 
 import java.net.URI;
 
@@ -21,7 +21,7 @@ public class ResourceInfo {
     public static ResourceInfo ofBlobId(BlobId blobId) {
         return ResourceInfo.builder()
                 .resourceName(blobId.getName())
-                .uri(MoreUris.newUri(blobId.toGsUtilUri()))
+                .uri(TsUris.newUri(blobId.toGsUtilUri()))
                 .build();
     }
 

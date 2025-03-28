@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.domain.application_user.data.ApplicationUser;
-import transcribe.core.core.utils.MoreSets;
+import transcribe.core.core.utils.TsSets;
 import transcribe.domain.application_user.data.ApplicationUserRepository;
 import transcribe.domain.application_user.data.Role;
 
@@ -34,7 +34,7 @@ public class AuthenticatedUserImpl implements AuthenticatedUser {
 
     @Override
     public boolean hasRole(Role role) {
-        return find().map(u -> MoreSets.contains(u.getRoles(), role))
+        return find().map(u -> TsSets.contains(u.getRoles(), role))
                 .orElse(false);
     }
 

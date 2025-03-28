@@ -68,9 +68,12 @@ public class TranscribeView extends Composite<VerticalLayout> {
                         .build()
         );
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
-        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         grid.addClassName("body-cell-cursor-pointer");
-        grid.addColumns("name", "language", "createdAt");
+        grid.addColumn("name")
+                        .setWidth("25rem");
+        grid.addColumn("language");
+        grid.addColumn("createdAt")
+                .setHeader("Date");
         grid.addColumn("lengthMillis")
                 .setRenderer(new TextRenderer<>(TranscribeView::newDuration))
                 .setHeader("Length");
@@ -92,7 +95,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
         transcribeButton.addClickListener(_ -> new TranscribeDialog().open());
 
         var controls = new JpaGridControls<>(grid);
-        controls.addTopRight(transcribeButton);
+        controls.addTopLeft(transcribeButton);
 
         var content = getContent();
         content.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -149,11 +152,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
         var downloadHl = new HorizontalLayout(LineAwesomeIcon.DOWNLOAD_SOLID.create(), new Text("Download"));
         contextMenu.addItem(
                 downloadHl,
-                _ -> new DownloadTranscriptDialog(
-                        transcription.getId(),
-                        transcription.getName(),
-                        helperDownloadAnchorFactory
-                ).open()
+                _ -> new DownloadTranscriptDialog(transcription.getId(), helperDownloadAnchorFactory).open()
         );
 
         return button;

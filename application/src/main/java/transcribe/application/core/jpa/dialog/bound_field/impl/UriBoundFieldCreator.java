@@ -13,7 +13,7 @@ import transcribe.application.core.jpa.core.JpaPropertyDefinition;
 import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import transcribe.application.core.jpa.dialog.bound_field.BoundFieldCreator;
-import transcribe.core.core.utils.MoreUris;
+import transcribe.core.core.utils.TsUris;
 
 import java.net.URI;
 import java.util.Objects;
@@ -31,7 +31,7 @@ public class UriBoundFieldCreator implements BoundFieldCreator {
         var setter = (Setter<T, URI>) property.getSetter().orElse(null);
         var builder = binder.forField(field).withConverter(
                 Converter.from(
-                        v -> Result.ok(MoreUris.newUri(v)),
+                        v -> Result.ok(TsUris.newUri(v)),
                         v -> Objects.toString(v, StringUtils.EMPTY)
                 )
         );

@@ -10,7 +10,7 @@ import transcribe.application.core.jpa.core.JpaPropertyDefinition;
 import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import transcribe.application.core.jpa.dialog.bound_field.BoundFieldCreator;
-import transcribe.core.core.utils.MoreEnums;
+import transcribe.core.core.utils.TsEnums;
 
 @SpringComponent
 public class EnumBoundFieldCreator implements BoundFieldCreator {
@@ -21,7 +21,7 @@ public class EnumBoundFieldCreator implements BoundFieldCreator {
                                                                           Binder<T> binder,
                                                                           boolean required) {
         var comboBox = new ComboBox<Enum<?>>(JpaPropertyDefinitionUtils.toDisplayName(property));
-        comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
+        comboBox.setItemLabelGenerator(TsEnums::toDisplayName);
 
         var enumType = (Class<Enum<?>>) property.getType();
         comboBox.setItems(enumType.getEnumConstants());

@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import transcribe.core.core.bean.MoreBeans;
 import transcribe.core.core.initialize.Initialize;
 import transcribe.core.core.initialize.InitializeOrder;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.core.settings.Settings;
 import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.data.SettingsProjection;
@@ -122,7 +122,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(Settings.class));
 
-        var timedFind = MoreFunctions.getTimed(() -> scanner.findCandidateComponents("transcribe"));
+        var timedFind = TsFunctions.getTimed(() -> scanner.findCandidateComponents("transcribe"));
         var beanDefinitions = timedFind.getResult();
         log.info("Scanned [{}] settings in [{}] ms", beanDefinitions.size(), timedFind.getDuration().toMillis());
 

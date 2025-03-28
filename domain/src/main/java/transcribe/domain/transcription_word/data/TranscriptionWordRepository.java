@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface TranscriptionWordRepository extends EnhancedJpaRepository<TranscriptionWordEntity, Long> {
 
-    List<WordDto> findAllByTranscriptionId(Long transcriptionId);
+    List<WordDto> findAllByTranscriptionIdOrderBySequence(Long transcriptionId);
 
     @Override
     default Class<TranscriptionWordEntity> getBeanType() {

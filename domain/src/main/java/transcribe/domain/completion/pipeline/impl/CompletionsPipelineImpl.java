@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import transcribe.core.completions.Completions;
 import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.core.log.LoggedMethodExecution;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.core.settings.SettingsLoader;
 import transcribe.domain.completion.data.CompletionProjection;
 import transcribe.domain.completion.data.CompletionStatus;
@@ -75,7 +75,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
                         .build()
         );
 
-        var timedResult = MoreFunctions.getTimed(() -> completions.complete(completion.input()));
+        var timedResult = TsFunctions.getTimed(() -> completions.complete(completion.input()));
         var completionResult = timedResult.getResult();
 
         var patchCommand = completionMapper.toCommand(

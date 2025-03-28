@@ -8,8 +8,4 @@ public final class JpaDtoConstants {
     public static final String UPDATED_AT_FIELD = "updatedAt";
     public static final String UPDATED_BY_FIELD = "updatedBy";
 
-    public static String test(String s) {
-        return s;
-    }
-
 }

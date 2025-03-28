@@ -2,12 +2,9 @@ package transcribe.application.core.jpa.grid;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.provider.Query;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import transcribe.application.core.dialog.Dialogs;
 import transcribe.application.core.icon.CustomizedIcon;
 import transcribe.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
 import transcribe.core.core.bean.MoreBeans;
@@ -56,13 +53,6 @@ public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
         var clearFiltersButton = new Button(CustomizedIcon.FILTER_SLASH.create(), _ -> grid.clearFilters());
         clearFiltersButton.setTooltipText("Clear filters");
         addTopLeft(clearFiltersButton);
-
-        var sizeButton = new Button(
-                VaadinIcon.HASH.create(),
-                _ -> Dialogs.info("Total items: " + grid.getDataProvider().size(new Query<>()))
-        );
-        sizeButton.setTooltipText("Size");
-        addTopLeft(sizeButton);
 
         if (grid.getCrudActionsData() != null && grid.getCrudActionsData().isWithCrudActions()) {
             addCreateEntityButton(

@@ -1,4 +1,4 @@
-import {css, html, LitElement, PropertyValues} from 'lit';
+import {css, html, LitElement, PropertyValues, TemplateResult} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 import '@vaadin/icon';
@@ -7,6 +7,7 @@ import '@vaadin/popover';
 import {SpeakerSegmentDto} from "Frontend/element/audio-text-connector/SpeakerSegmentDto";
 import {WordDto} from "Frontend/element/audio-text-connector/WordDto";
 import {CollectionUtils} from "Frontend/utils/CollectionUtils";
+import {SeekSequence} from "Frontend/element/audio-text-connector/SeekSequence";
 
 @customElement('speaker-segment')
 export class SpeakerSegment extends LitElement {
@@ -15,13 +16,16 @@ export class SpeakerSegment extends LitElement {
     segment!: SpeakerSegmentDto;
 
     @property({type: Number})
-    currentTimeMillis = 0;
+    timeMillis = 0;
 
-    @property({type: Number})
-    startAtWordSequence = -1;
+    @property({type: Object})
+    seekPosition: SeekSequence = {sequence: -1};
 
     @property({type: Number})
     maxHighlightedWords = 15;
+
+    @property({type: Boolean})
+    edit = false;
 
     @state({
         hasChanged(value: HighlightedRange, oldValue: HighlightedRange): boolean {
@@ -33,27 +37,25 @@ export class SpeakerSegment extends LitElement {
     private highlightedRange: HighlightedRange = {startIndexInclusive: -1, endIndexExclusive: 0};
 
     static readonly styles = css`
-        .segment {
-            display: flex;
+        :host {
+            height: 100%;
+            width: 100%;
         }
 
-        .speaker {
-            margin-right: 10px;
-            text-align: right;
-            padding: 3px 0;
-            user-select: none;
+        .word-list-container {
+            width: 100%;
+            padding: 10px;
         }
 
-        .words {
+        .word-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 3px;
         }
 
         .word {
             cursor: pointer;
             display: inline;
-            padding: 3px 0;
             position: relative;
             white-space: pre-line;
         }
@@ -66,26 +68,76 @@ export class SpeakerSegment extends LitElement {
             background-color: var(--lumo-primary-color-10pct);
             border-radius: 6px;
         }
+
+        .speaker {
+            margin-right: 10px;
+            text-align: right;
+            padding: 3px 0;
+        }
+
+        .textarea {
+            width: 100%;
+            background-color: var(--lumo-shade-10pct);
+            padding: 8px 10px 9px;
+            border-radius: 10px;
+            font: inherit;
+            resize: none;
+            border: none;
+            color: inherit;
+            field-sizing: content;
+            word-spacing: -0.98px;
+            line-height: 29px;
+        }
+
+        @supports not (field-sizing: content) {
+            .textarea {
+                resize: vertical;
+                height: 150px;
+            }
+        }
+
+        .textarea:focus {
+            outline: none;
+        }
+
     `;
 
     protected render() {
+        return this.edit ? this.renderEditMode() : this.renderReadMode();
+    }
+
+    private renderEditMode(): TemplateResult {
         return html`
-            <div class="segment">
-                <div class="speaker">${this.segment.speakerName}:</div>
-                <div class="words}">
-                    ${this.segment.words.map((word: WordDto, index: number) => {
-                        const wordClassInfo = {
-                            highlighted: index >= this.highlightedRange.startIndexInclusive
-                                    && index < this.highlightedRange.endIndexExclusive
-                        };
-                        return html`
-                            <span id="word-${word.sequence}"
-                                  class="word ${classMap(wordClassInfo)}"
-                                  @click="${() => this.onWordClick(word)}">${word.content}</span>
-                        `;
-                    })}
+            <vaadin-vertical-layout theme="padding">
+                <div class="speaker">${this.segment.speakerName}</div>
+                <textarea class="textarea" @input="${this.onContentChange}"
+                >${this.segment.content}</textarea>
+            </vaadin-vertical-layout>
+        `;
+    }
+
+    private renderReadMode(): TemplateResult {
+        return html`
+            <vaadin-vertical-layout theme="padding">
+                <div class="speaker">${this.segment.speakerName}</div>
+                <div class="word-list-container">
+                    <div class="word-list">
+                        ${this.segment.words.map((word: WordDto, index: number) => {
+                            const wordClassInfo = {
+                                highlighted: index >= this.highlightedRange.startIndexInclusive
+                                        && index < this.highlightedRange.endIndexExclusive,
+                                word: true
+                            };
+                            return html`
+                                <span id="word-${word.sequence}"
+                                      class="${classMap(wordClassInfo)}"
+                                      @click="${() => this.onWordClick(word)}">${word.content}</span>
+                            `;
+                        })}
+                    </div>
                 </div>
-            </div>
+
+            </vaadin-vertical-layout>
         `;
     }
 
@@ -93,14 +145,24 @@ export class SpeakerSegment extends LitElement {
         this.dispatchEvent(new CustomEvent('word-click', {detail: word, bubbles: true}));
     }
 
+    private onContentChange(event: Event) {
+        const textarea = event.target as HTMLTextAreaElement;
+        this.segment.content = textarea.value;
+        this.onSegmentChange();
+    }
+
+    private onSegmentChange() {
+        this.dispatchEvent(new CustomEvent('segment-change', {detail: this.segment, bubbles: true}));
+    }
+
     protected willUpdate(_changedProperties: PropertyValues) {
-        if (_changedProperties.has('startAtWordSequence')
-            && this.startAtWordSequence >= this.segment.words[0].sequence
-            && this.startAtWordSequence <= this.segment.words[this.segment.words.length - 1].sequence) {
+        if (_changedProperties.has('seekPosition')
+            && this.seekPosition.sequence >= this.segment.words[0].sequence
+            && this.seekPosition.sequence <= this.segment.words[this.segment.words.length - 1].sequence) {
 
             const newStartIndex = CollectionUtils.binarySearch(
                 this.segment.words,
-                SpeakerSegment.newSequenceOnlyWordModel(this.startAtWordSequence),
+                SpeakerSegment.newSequenceOnlyWordModel(this.seekPosition.sequence),
                 (a, b) => a.sequence - b.sequence
             );
 
@@ -109,14 +171,14 @@ export class SpeakerSegment extends LitElement {
             }
         }
 
-        if (_changedProperties.has('currentTimeMillis')) {
+        if (_changedProperties.has('timeMillis')) {
             this.highlightedRange = this.getHighlightedRange();
         }
     }
 
     private getHighlightedRange(): HighlightedRange {
-        if (this.currentTimeMillis >= this.segment.endOffsetMillis
-            || this.currentTimeMillis < this.segment.startOffsetMillis) {
+        if (this.timeMillis >= this.segment.endOffsetMillis
+            || this.timeMillis < this.segment.startOffsetMillis) {
 
             return {startIndexInclusive: -1, endIndexExclusive: 0};
         }
@@ -133,7 +195,7 @@ export class SpeakerSegment extends LitElement {
 
         const startIndex = CollectionUtils.binarySearchInRange(
             this.segment.words,
-            this.currentTimeMillis,
+            this.timeMillis,
             word => word.startOffsetMillis,
             word => word.endOffsetMillis
         );
@@ -152,8 +214,8 @@ export class SpeakerSegment extends LitElement {
 
         return start
             && end
-            && this.currentTimeMillis < end.endOffsetMillis
-            && this.currentTimeMillis >= start.startOffsetMillis;
+            && this.timeMillis < end.endOffsetMillis
+            && this.timeMillis >= start.startOffsetMillis;
     }
 
     private newHighlightedRangeFromStartIndex(startIndexInclusive: number): HighlightedRange {

@@ -23,7 +23,7 @@ import transcribe.application.core.operation.OperationSuccessImportance;
 import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcribe.media_provider.MediaValue;
-import transcribe.core.core.utils.MoreEnums;
+import transcribe.core.core.utils.TsEnums;
 import transcribe.core.transcribe.common.Language;
 import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.transcription.data.TranscriptionProjection;
@@ -54,7 +54,7 @@ public class TranscribeDialog extends EnhancedDialog {
 
         var language = new ComboBox<>("Language", Language.values());
         language.setClearButtonVisible(true);
-        language.setItemLabelGenerator(MoreEnums::toDisplayName);
+        language.setItemLabelGenerator(TsEnums::toDisplayName);
         binder.forField(language)
                 .asRequired("Language is required")
                 .bind(Command::getLanguage, Command::setLanguage);

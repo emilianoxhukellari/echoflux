@@ -25,7 +25,7 @@ import transcribe.core.completions.Completions;
 import transcribe.core.completions.Tokens;
 import transcribe.core.core.executor.MoreExecutors;
 import transcribe.core.core.provider.AiProvider;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.core.properties.OpenAiProperties;
 import transcribe.core.settings.SettingsLoader;
 
@@ -128,7 +128,7 @@ public class OpenAiCompletions implements Completions {
                 .runId(run.id())
                 .build();
 
-        var finishedRun = MoreFunctions.pollUntil(
+        var finishedRun = TsFunctions.pollUntil(
                 () -> runService.retrieve(runRetrieveParams),
                 this::isRunFinished,
                 Duration.ofSeconds(5),

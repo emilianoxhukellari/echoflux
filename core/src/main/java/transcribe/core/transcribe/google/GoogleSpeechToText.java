@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import transcribe.core.core.executor.MoreExecutors;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.provider.AiProvider;
-import transcribe.core.core.utils.MoreLists;
+import transcribe.core.core.utils.TsLists;
 import transcribe.core.properties.GoogleCloudProperties;
 import transcribe.core.settings.SettingsLoader;
 import transcribe.core.transcribe.SpeechToText;
@@ -120,7 +120,7 @@ public class GoogleSpeechToText implements SpeechToText {
 
         return RecognitionConfig.newBuilder()
                 .setAutoDecodingConfig(AutoDetectDecodingConfig.newBuilder().build())
-                .addAllLanguageCodes(MoreLists.collect(languages, Language::getBcp47))
+                .addAllLanguageCodes(TsLists.collect(languages, Language::getBcp47))
                 .setModel(settings.getModel())
                 .setFeatures(recognitionFeatures)
                 .build();

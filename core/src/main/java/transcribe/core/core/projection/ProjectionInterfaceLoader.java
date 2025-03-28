@@ -9,7 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import transcribe.annotation.core.ObjectConvertable;
 import transcribe.annotation.projection.ProjectionInterface;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 
 import java.util.Map;
 import java.util.Objects;
@@ -44,7 +44,7 @@ public class ProjectionInterfaceLoader {
         };
         scanner.addIncludeFilter(new AnnotationTypeFilter(ProjectionInterface.class));
 
-        var timedFind = MoreFunctions.getTimed(() -> scanner.findCandidateComponents("transcribe"));
+        var timedFind = TsFunctions.getTimed(() -> scanner.findCandidateComponents("transcribe"));
         var beanDefinitions = timedFind.getResult();
         log.info(
                 "Scanned [{}] projection interfaces in [{}] ms",

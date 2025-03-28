@@ -6,8 +6,8 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
 import transcribe.application.core.jpa.filter.JpaFilterUtils;
-import transcribe.core.core.utils.MoreArrays;
-import transcribe.core.core.utils.MoreEnums;
+import transcribe.core.core.utils.TsArrays;
+import transcribe.core.core.utils.TsEnums;
 
 public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
@@ -18,8 +18,8 @@ public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
         Validate.isTrue(enumClass.isEnum(), "Class must be an enum");
 
         this.comboBox = new ComboBox<>();
-        comboBox.setItems(MoreArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
-        comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
+        comboBox.setItems(TsArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
+        comboBox.setItemLabelGenerator(TsEnums::toDisplayName);
         comboBox.setPlaceholder("Filter");
         comboBox.setWidth("10.6rem");
         comboBox.setClearButtonVisible(true);

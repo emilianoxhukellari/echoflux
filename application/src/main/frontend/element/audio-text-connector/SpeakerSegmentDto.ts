@@ -5,4 +5,5 @@ export interface SpeakerSegmentDto {
     endOffsetMillis: number;
     speakerName: string;
     words: WordDto[];
+    content: string;
 }

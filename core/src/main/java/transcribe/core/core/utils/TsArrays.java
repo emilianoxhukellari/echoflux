@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public final class MoreArrays {
+public final class TsArrays {
 
     /**
      * @return a new list containing the elements of the array. If the array is null, an empty list is returned

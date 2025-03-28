@@ -1,6 +1,7 @@
 package transcribe.application.transcription;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasDynamicTitle;
@@ -29,7 +30,13 @@ public class TranscriptionView extends Composite<VerticalLayout> implements HasU
         this.transcription = transcriptionService.projectById(parameter);
 
         var audioTextConnector = new AudioTextConnector(transcription.id());
-        getContent().addAndExpand(audioTextConnector);
+        audioTextConnector.setHeightFull();
+        audioTextConnector.setMaxWidth("1500px");
+
+        var vl = getContent();
+        vl.setSizeFull();
+        vl.setAlignItems(FlexComponent.Alignment.CENTER);
+        vl.add(audioTextConnector);
     }
 
     @Override

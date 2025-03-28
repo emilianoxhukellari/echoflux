@@ -8,7 +8,7 @@ import transcribe.core.core.display_name.DisplayName;
 @RequiredArgsConstructor
 public enum DocumentType {
 
-    @DisplayName("Microsoft SpeechToTextWord (.docx)")
+    @DisplayName("Microsoft Word Document (.docx)")
     DOCX("docx"),
 
     @DisplayName("PDF Document (.pdf)")

@@ -2,7 +2,7 @@ package transcribe.core.core.progress;
 
 import org.apache.commons.lang3.ThreadUtils;
 import transcribe.core.core.executor.MoreExecutors;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -61,7 +61,7 @@ public class ProgressTrigger {
 
     public void stop() {
         if (running.compareAndSet(true, false)) {
-            MoreFunctions.runSynchronized(() -> progressCallback.onProgress(100), lock);
+            TsFunctions.runSynchronized(() -> progressCallback.onProgress(100), lock);
         }
     }
 

@@ -34,8 +34,8 @@ public class ServiceListener implements VaadinServiceInitListener {
         var configuration = event.getUI().getLoadingIndicatorConfiguration();
 
         configuration.setFirstDelay(250);
-        configuration.setSecondDelay(400);
-        configuration.setThirdDelay(1000);
+        configuration.setSecondDelay(600);
+        configuration.setThirdDelay(2000);
     }
 
 }

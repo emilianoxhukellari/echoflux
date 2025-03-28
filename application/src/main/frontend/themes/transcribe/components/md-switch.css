@@ -1,0 +1,11 @@
+:root {
+    --md-switch-track-color: var(--lumo-contrast);
+    --md-switch-hover-track-color: var(--lumo-contrast);
+    --md-switch-focus-track-color: var(--lumo-contrast);
+    --md-switch-pressed-track-color: var(--lumo-contrast);
+
+    --md-switch-selected-track-color: var(--lumo-primary-color-50pct);
+    --md-switch-selected-hover-track-color: var(--lumo-primary-color-50pct);
+    --md-switch-selected-focus-track-color: var(--lumo-primary-color-50pct);
+    --md-switch-selected-pressed-track-color: var(--lumo-primary-color-50pct);
+}

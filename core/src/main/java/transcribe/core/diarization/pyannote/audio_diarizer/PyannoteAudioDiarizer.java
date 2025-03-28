@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.log.LoggedMethodExecution;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.core.diarization.AudioDiarizer;
 import transcribe.core.diarization.DiarizationEntry;
 import transcribe.core.diarization.SpeakerNameGenerator;
@@ -28,7 +28,7 @@ public class PyannoteAudioDiarizer implements AudioDiarizer {
         var request = new SubmitJobRequest(audioUri.toString());
         var job = client.submitJob(request);
 
-        var response = MoreFunctions.pollUntil(
+        var response = TsFunctions.pollUntil(
                 () -> client.getJob(job.jobId()),
                 r -> r.status().isCompleted(),
                 Duration.ofSeconds(15),

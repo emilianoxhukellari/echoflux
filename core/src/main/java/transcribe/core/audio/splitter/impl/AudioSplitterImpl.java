@@ -22,7 +22,7 @@ import transcribe.core.core.collector.ParallelCollectors;
 import transcribe.core.core.log.LoggedMethodExecution;
 import transcribe.core.core.supplier.MoreSuppliers;
 import transcribe.core.core.temp_file.TempFileNameGenerator;
-import transcribe.core.core.utils.MoreFiles;
+import transcribe.core.core.utils.TsFiles;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -134,7 +134,7 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
         fFmpegWrapper.ffmpeg().run(args);
 
         var silences = parseSilences(silencesFile);
-        MoreFiles.deleteIfExists(silencesFile);
+        TsFiles.deleteIfExists(silencesFile);
 
         return silences;
     }

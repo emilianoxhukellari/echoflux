@@ -1,7 +1,7 @@
 package transcribe.core.core.collector;
 
 import transcribe.core.core.concurrency.ConcurrencyLevel;
-import transcribe.core.core.utils.MoreFunctions;
+import transcribe.core.core.utils.TsFunctions;
 import transcribe.core.core.utils.TimedResult;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public final class ParallelCollectors {
     }
 
     public static <T> Collector<Supplier<T>, ?, List<T>> toList(int concurrency) {
-        return toList(suppliers -> MoreFunctions.getAllParallel(suppliers, concurrency));
+        return toList(suppliers -> TsFunctions.getAllParallel(suppliers, concurrency));
     }
 
     public static <T> Collector<Supplier<T>, ?, TimedResult<List<T>>> toListTimed() {
@@ -26,7 +26,7 @@ public final class ParallelCollectors {
     }
 
     public static <T> Collector<Supplier<T>, ?, TimedResult<List<T>>> toListTimed(int concurrency) {
-        return toList(suppliers -> MoreFunctions.getTimed(() -> MoreFunctions.getAllParallel(suppliers, concurrency)));
+        return toList(suppliers -> TsFunctions.getTimed(() -> TsFunctions.getAllParallel(suppliers, concurrency)));
     }
 
     private static <T, R> Collector<Supplier<T>, ?,R> toList(Function<List<Supplier<T>>, R> finisher) {

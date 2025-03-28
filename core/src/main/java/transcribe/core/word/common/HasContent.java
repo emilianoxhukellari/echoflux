@@ -4,4 +4,6 @@ public interface HasContent {
 
     String getContent();
 
+    void setContent(String content);
+
 }

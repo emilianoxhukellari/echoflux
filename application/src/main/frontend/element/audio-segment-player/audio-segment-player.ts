@@ -161,5 +161,3 @@ class AudioSegmentPlayer extends LitElement {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 }
-
-export default AudioSegmentPlayer;

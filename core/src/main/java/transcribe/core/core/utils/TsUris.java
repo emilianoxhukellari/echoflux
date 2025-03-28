@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.URI;
 import java.nio.file.Path;
 
-public final class MoreUris {
+public final class TsUris {
 
     @Nullable
     public static URI newUri(@Nullable String uri) {

@@ -8,10 +8,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
-public final class MoreFiles {
+public final class TsFiles {
 
     @SneakyThrows
     public static Path newTempDirectory(String prefix) {
@@ -34,7 +33,7 @@ public final class MoreFiles {
                 if (path != null) {
                     var deleted = Files.deleteIfExists(path);
                     if (deleted) {
-                        log.info("Deleted file: [{}]", path);
+                        log.debug("Deleted file: [{}]", path);
                     } else {
                         log.warn("File not found to delete: [{}]", path);
                     }

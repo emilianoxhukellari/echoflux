@@ -5,7 +5,7 @@ import org.apache.commons.lang3.Validate;
 import transcribe.annotation.jpa.JpaDto;
 import transcribe.core.core.bean.FieldProperty;
 import transcribe.core.core.bean.MoreBeans;
-import transcribe.core.core.utils.MoreArrays;
+import transcribe.core.core.utils.TsArrays;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,8 +63,8 @@ public record JpaDtoConfiguration(Class<?> entityBeanType,
                 .entityBeanType(annotation.entityBeanType())
                 .dtoBeanType(jpaDtoBeanType)
                 .idFieldName(annotation.idField())
-                .auditFields(MoreArrays.toList(annotation.auditFields()))
-                .hiddenFields(MoreArrays.toList(annotation.hiddenFields()))
+                .auditFields(TsArrays.toList(annotation.auditFields()))
+                .hiddenFields(TsArrays.toList(annotation.hiddenFields()))
                 .build();
     }
 

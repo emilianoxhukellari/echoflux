@@ -4,7 +4,7 @@ server:
 
 logging:
   level:
-    transcribe: trace
+    transcribe: info
 
 vaadin:
   launch-browser: true
@@ -12,6 +12,8 @@ vaadin:
   async-supported: true
   frontend:
     hotdeploy: true
+  react:
+    enable: false
 
 spring:
   threads:

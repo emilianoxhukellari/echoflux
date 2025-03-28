@@ -12,9 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.temp_file.TempFileNameGenerator;
-import transcribe.core.core.utils.MoreStrings;
-import transcribe.core.document.spi.DocumentExporterSpi;
 import transcribe.core.document.DocumentType;
+import transcribe.core.document.Paragraph;
+import transcribe.core.document.spi.DocumentExporterSpi;
 import transcribe.core.document.spi.DocumentTempDirectory;
 import transcribe.core.settings.Settings;
 import transcribe.core.settings.SettingsLoader;
@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class DocxDocumentExporterSpi implements DocumentExporterSpi, TempFileNam
     private final SettingsLoader settingsLoader;
 
     @Override
-    public Path export(String text) {
+    public Path export(List<Paragraph> paragraphs) {
         var tempPath = DocumentTempDirectory.INSTANCE
                 .locationPath()
                 .resolve("%s.%s".formatted(newFileName(), DocumentType.DOCX.getContainer()));
@@ -40,14 +41,20 @@ public class DocxDocumentExporterSpi implements DocumentExporterSpi, TempFileNam
         var settings = settingsLoader.load(DocxDocumentExporterSpiSettings.class);
 
         try (var document = new XWPFDocument(); var out = Files.newOutputStream(tempPath)) {
-            var paragraph = document.createParagraph();
-            var run = paragraph.createRun();
-            run.setFontFamily(settings.getFontFamily());
-            run.setFontSize(settings.getFontSize());
+            for (var p : paragraphs) {
+                var paragraph = document.createParagraph();
+                var run = paragraph.createRun();
+                run.setFontFamily(settings.getFontFamily());
+                run.setFontSize(settings.getFontSize());
 
-            for (var p : MoreStrings.split(text, StringUtils.LF)) {
-                run.setText(p);
-                run.addCarriageReturn();
+                var parts = StringUtils.splitPreserveAllTokens(p.getContent(), StringUtils.LF);
+
+                for (int i = 0; i < parts.length; i++) {
+                    run.setText(parts[i]);
+                    if (i < parts.length - 1) {
+                        run.addCarriageReturn();
+                    }
+                }
             }
 
             document.write(out);
