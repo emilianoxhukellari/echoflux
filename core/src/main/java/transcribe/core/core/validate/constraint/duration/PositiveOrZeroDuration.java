@@ -1,4 +1,4 @@
-package transcribe.core.core.validate.constraint.duration_range;
+package transcribe.core.core.validate.constraint.duration;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -8,19 +8,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Constraint(validatedBy = DurationValidator.class)
-@Target({ ElementType.FIELD, ElementType.PARAMETER })
+@Constraint(validatedBy = PositiveOrZeroDurationValidator.class)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DurationRange {
+public @interface PositiveOrZeroDuration {
 
-    String message() default "Duration value is out of range";
+    String message() default "Duration must be positive or zero";
 
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
-
-    long minMillis() default Long.MIN_VALUE;
-
-    long maxMillis() default Long.MAX_VALUE;
 
 }

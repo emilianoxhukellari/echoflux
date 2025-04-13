@@ -1,0 +1,7 @@
+vaadin-text-field.clear-button-before-suffix::part(clear-button) {
+    order: 1;
+}
+
+vaadin-text-field.clear-button-before-suffix > [slot="suffix"] {
+    order: 2;
+}

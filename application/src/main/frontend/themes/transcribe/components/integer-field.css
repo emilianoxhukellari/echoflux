@@ -1,0 +1,3 @@
+vaadin-integer-field.column-reverse::part(input-field) {
+    flex-direction: column-reverse;
+}

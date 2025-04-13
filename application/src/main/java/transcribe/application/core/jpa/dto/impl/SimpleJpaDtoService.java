@@ -39,12 +39,12 @@ public class SimpleJpaDtoService<DTO, ENTITY, ID> implements JpaDtoService<DTO, 
         this.jpaDtoConfiguration = JpaDtoConfiguration.ofBeanType(beanType);
 
         @SuppressWarnings("unchecked")
-        var repository = (EnhancedJpaRepository<ENTITY, ID>) SpringContext.getBeanWhen(
+        var repository = (EnhancedJpaRepository<ENTITY, ID>) SpringContext.loadBeanWhen(
                 EnhancedJpaRepository.class,
                 r -> Objects.equals(jpaDtoConfiguration.entityBeanType(), r.getBeanType())
         );
         @SuppressWarnings("unchecked")
-        var mapper = (JpaDtoMapper<DTO, ENTITY>) SpringContext.getBeanWhen(
+        var mapper = (JpaDtoMapper<DTO, ENTITY>) SpringContext.loadBeanWhen(
                 JpaDtoMapper.class,
                 m -> Objects.equals(beanType, m.getBeanType())
         );

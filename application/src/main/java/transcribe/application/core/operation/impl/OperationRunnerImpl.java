@@ -16,6 +16,7 @@ import transcribe.core.core.executor.MoreExecutors;
 import transcribe.domain.operation.service.OperationService;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -62,7 +63,9 @@ public class OperationRunnerImpl implements OperationRunner {
                     });
 
                     operationService.updateSuccess(op.id());
-                }).exceptionally(e -> {
+                })
+                .orTimeout(operation.getTimeout().toMillis(), TimeUnit.MILLISECONDS)
+                .exceptionally(e -> {
                     if (operation.isOnErrorLog()) {
                         log.error("Operation failed: {}", operation.getName(), e);
                     }
@@ -92,11 +95,11 @@ public class OperationRunnerImpl implements OperationRunner {
 
                     operationService.updateFailure(op.id(), e);
                     return null;
-                }).whenComplete((_, _) -> UiUtils.safeAccess(ui, () -> {
+                })
+                .whenComplete((_, _) -> UiUtils.safeAccess(ui, () -> {
                     progress.close();
                     operation.getOnFinally().run();
                 }));
-
     }
 
 }

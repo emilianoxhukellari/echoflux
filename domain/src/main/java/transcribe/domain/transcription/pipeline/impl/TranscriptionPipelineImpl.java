@@ -213,16 +213,16 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        var lengthMillis = ffprobeWrapper.getDuration(originalMedia).toMillis();
-        log.debug("Transcription duration found: [{}]", lengthMillis);
+        var length = ffprobeWrapper.getDuration(originalMedia);
+        log.debug("Transcription duration found: [{}]", length);
 
         var withLength = transcriptionService.patch(
                 PatchTranscriptionCommand.builder()
                         .id(transcription.id())
-                        .lengthMillis(lengthMillis)
+                        .length(length)
                         .build()
         );
-        log.debug("Transcription [{}] patched with duration: [{}]ms", transcription.id(), lengthMillis);
+        log.debug("Transcription [{}] patched with length: [{}]", transcription.id(), length);
 
         broadcaster.publishQuietly(
                 TranscriptionUpdateUserEvent.builder()
@@ -300,12 +300,11 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        var lengthMillis = Objects.requireNonNull(transcription.lengthMillis(), "Length is required");
-        var minSplitThresholdMillis = Duration.ofMinutes(settings.getPartition().getDurationMinutes())
-                .plus(Duration.ofMinutes(settings.getPartition().getToleranceDurationMinutes()))
-                .toMillis();
+        var length = Objects.requireNonNull(transcription.length(), "Length is required");
+        var minSplitThreshold = Duration.ofMinutes(settings.getPartition().getDurationMinutes())
+                .plus(Duration.ofMinutes(settings.getPartition().getToleranceDurationMinutes()));
 
-        if (lengthMillis < minSplitThresholdMillis) {
+        if (length.compareTo(minSplitThreshold) < 0) {
             log.debug("Transcription [{}] will not be split because length <= min split threshold", transcription.id());
             return List.of();
         }
@@ -503,7 +502,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
             var audioSegment = AudioSegment.builder()
                     .startMillis(0L)
-                    .endMillis(transcription.lengthMillis())
+                    .endMillis(transcription.length().toMillis())
                     .build();
 
             return UploadedAudioPartition.builder()

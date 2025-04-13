@@ -15,7 +15,7 @@ import javax.lang.model.element.TypeElement;
 import java.util.Set;
 
 @SupportedAnnotationTypes("transcribe.annotation.jpa.JpaDto")
-@SupportedSourceVersion(SourceVersion.RELEASE_23)
+@SupportedSourceVersion(SourceVersion.RELEASE_24)
 @AutoService(Processor.class)
 @SuppressWarnings("unused")
 public class JpaDtoWithProjectionInterfaceSupportProcessor extends AbstractProcessor {

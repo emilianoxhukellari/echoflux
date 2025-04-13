@@ -1,9 +1,11 @@
-package transcribe.core.core.validate.constraint.duration_range;
+package transcribe.core.core.validate.constraint.duration;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class DurationValidator implements ConstraintValidator<DurationRange, java.time.Duration> {
+import java.time.Duration;
+
+public class DurationRangeValidator implements ConstraintValidator<DurationRange, Duration> {
 
     private long minMillis;
     private long maxMillis;
@@ -15,7 +17,7 @@ public class DurationValidator implements ConstraintValidator<DurationRange, jav
     }
 
     @Override
-    public boolean isValid(java.time.Duration value, ConstraintValidatorContext context) {
+    public boolean isValid(Duration value, ConstraintValidatorContext context) {
         if (value == null) {
             return true;
         }

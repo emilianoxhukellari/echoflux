@@ -1,9 +1,11 @@
 package transcribe.application.operation;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.PersistenceCreator;
 import transcribe.annotation.jpa.JpaDto;
 import transcribe.application.core.annotation.BigText;
@@ -12,6 +14,7 @@ import transcribe.domain.operation.data.OperationEntity;
 import transcribe.domain.operation.data.OperationStatus;
 import transcribe.domain.operation.data.OperationType;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @JpaDto(entityBeanType = OperationEntity.class)
@@ -40,7 +43,8 @@ public class OperationJpaDto {
 
     private LocalDateTime endedAt;
 
-    private Double durationSeconds;
+    @Setter(AccessLevel.NONE)
+    private Duration duration;
 
     @BigText
     private String description;

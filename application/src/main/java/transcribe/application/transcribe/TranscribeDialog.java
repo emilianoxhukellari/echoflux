@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.dialog.EnhancedDialog;
-import transcribe.application.core.field.MediaField;
+import transcribe.application.core.field.media.MediaField;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;

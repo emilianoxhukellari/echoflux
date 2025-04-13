@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import transcribe.application.core.jpa.core.JpaPropertyDefinition;
 import transcribe.application.core.jpa.core.JpaSupportedType;
 import transcribe.application.core.jpa.filter.impl.BooleanJpaFilter;
+import transcribe.application.core.jpa.filter.impl.DurationJpaFilter;
 import transcribe.application.core.jpa.filter.impl.NumberJpaFilter;
 import transcribe.application.core.jpa.filter.impl.EnumJpaFilter;
 import transcribe.application.core.jpa.filter.impl.LocalDateJpaFilter;
@@ -43,6 +44,7 @@ public final class FilterFactory {
             case ENUM -> new EnumJpaFilter<>(attributeName, propertyName, propertyType, asCollection);
             case LOCAL_DATE, LOCAL_DATE_TIME -> new LocalDateJpaFilter<>(attributeName, propertyName, asCollection);
             case DOUBLE, FLOAT, LONG, INTEGER -> new NumberJpaFilter<>(attributeName, propertyName, asCollection);
+            case DURATION -> new DurationJpaFilter<>(attributeName, propertyName, asCollection);
             case COLLECTION -> {
                 if (asCollection) {
                     throw new UnsupportedOperationException("Collection filter does not support nested collections");

@@ -20,9 +20,9 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/transcribe?reWriteBatchedInserts=true
-    username: transcribe
-    password: transcribe
+    url: jdbc:postgresql://localhost:5432/ts?reWriteBatchedInserts=true
+    username: ts
+    password: ts
     driver-class-name: org.postgresql.Driver
     hikari:
       auto-commit: false

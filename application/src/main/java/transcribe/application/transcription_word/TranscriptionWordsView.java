@@ -18,7 +18,6 @@ public class TranscriptionWordsView extends Composite<VerticalLayout> {
         var grid = new JpaGrid<>(TranscriptionWordJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
-        grid.setAllColumnsAutoWidth(true);
         grid.addAllFilters();
         grid.addCrudActions();
 

@@ -25,7 +25,6 @@ public class UsersView extends Composite<VerticalLayout> {
         var grid = new JpaGrid<>(ApplicationUserJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
-        grid.setAllColumnsAutoWidth(true);
         grid.addAllFilters();
 
         grid.addContextMenuItem(

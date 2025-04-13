@@ -14,7 +14,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -22,6 +21,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import transcribe.core.core.validate.constraint.duration.PositiveOrZeroDuration;
 import transcribe.core.transcribe.common.Language;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.audit.data.BaseEntity;
@@ -29,6 +31,7 @@ import transcribe.domain.completion.data.CompletionEntity;
 import transcribe.domain.transcription_word.data.TranscriptionWordEntity;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -77,9 +80,10 @@ public class TranscriptionEntity extends BaseEntity {
     @NotNull
     private Boolean enhanced;
 
-    @Column(name = "length_millis")
-    @Min(0)
-    private Long lengthMillis;
+    @Column(name = "length")
+    @PositiveOrZeroDuration
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
+    private Duration length;
 
     @Column(name = "error")
     private String error;
@@ -100,14 +104,6 @@ public class TranscriptionEntity extends BaseEntity {
 
     public void addWords(List<TranscriptionWordEntity> transcriptionWords) {
         words.addAll(transcriptionWords);
-        words.forEach(w -> w.setTranscription(this));
-    }
-
-    /**
-     * @param index inclusive
-     * */
-    public void addWords(int index, List<TranscriptionWordEntity> transcriptionWords) {
-        words.addAll(index, transcriptionWords);
         words.forEach(w -> w.setTranscription(this));
     }
 

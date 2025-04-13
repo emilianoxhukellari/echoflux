@@ -3,9 +3,12 @@
 @import url('components/tab-sheet.css');
 @import url('components/upload.css');
 @import url('components/custom-field.css');
+@import url('components/integer-field.css');
+@import url('components/number-field.css');
 @import url('components/dialog.css');
 @import url('components/grid.css');
 @import url('components/button.css');
+@import url('components/text-field.css');
 @import url('components/md-switch.css');
 @import url('components/md-outlined-segmented-button.css');
 

@@ -1,5 +1,7 @@
 package transcribe.domain.completion.data;
 
+import java.time.Duration;
+
 public record CompletionProjection(Long id,
                                    String input,
                                    String output,
@@ -9,6 +11,6 @@ public record CompletionProjection(Long id,
                                    Double temperature,
                                    Double topP,
                                    CompletionStatus status,
-                                   Long durationMillis,
+                                   Duration duration,
                                    String error) {
 }

@@ -13,6 +13,7 @@ import transcribe.core.core.annotation.Required;
 import transcribe.domain.completion.data.CompletionEntity;
 import transcribe.domain.completion.data.CompletionStatus;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @JpaDto(entityBeanType = CompletionEntity.class)
@@ -45,7 +46,7 @@ public class CompletionJpaDto {
     @Required
     private CompletionStatus status;
 
-    private Long durationMillis;
+    private Duration duration;
 
     @BigText
     private String error;

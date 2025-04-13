@@ -11,8 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import transcribe.application.core.icon.IconFactory;
 import transcribe.application.core.jpa.core.JpaPropertyDefinition;
+import transcribe.core.core.utils.TsDurations;
 import transcribe.core.core.utils.TsEnums;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -45,9 +47,9 @@ public class JpaGridRendererFactory {
                     if (value == null) {
                         return IconFactory.newIcon(VaadinIcon.MINUS::create, "gray", "1.5rem", "Unknown");
                     } else if (value) {
-                        return IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem",  "Yes");
+                        return IconFactory.newIcon(VaadinIcon.CHECK::create, "green", "1.5rem", "Yes");
                     } else {
-                        return IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem",  "No");
+                        return IconFactory.newIcon(VaadinIcon.CLOSE::create, "red", "1.5rem", "No");
                     }
                 }
         );
@@ -77,6 +79,20 @@ public class JpaGridRendererFactory {
             var value = (Enum<?>) propertyDefinition.getGetter().apply(item);
 
             return TsEnums.toDisplayName(value);
+        });
+    }
+
+    public static <T> TextRenderer<T> newDurationRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
+        Objects.requireNonNull(propertyDefinition, "Property definition is required");
+
+        return new TextRenderer<>(item -> {
+            var duration = (Duration) propertyDefinition.getGetter().apply(item);
+
+            if (duration == null) {
+                return StringUtils.EMPTY;
+            }
+
+            return TsDurations.format(duration);
         });
     }
 

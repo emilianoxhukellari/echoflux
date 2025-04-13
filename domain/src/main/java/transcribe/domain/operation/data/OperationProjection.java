@@ -1,5 +1,6 @@
 package transcribe.domain.operation.data;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 public record OperationProjection(Long id,
@@ -9,6 +10,6 @@ public record OperationProjection(Long id,
                                   String error,
                                   LocalDateTime startedAt,
                                   LocalDateTime endedAt,
-                                  Double durationSeconds,
+                                  Duration duration,
                                   String description) {
 }

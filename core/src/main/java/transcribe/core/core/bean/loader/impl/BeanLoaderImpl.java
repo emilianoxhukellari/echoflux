@@ -25,7 +25,7 @@ public class BeanLoaderImpl implements BeanLoader {
     }
 
     @Override
-    public <T> T getWhen(Class<T> beanType, Predicate<T> predicate) {
+    public <T> T loadWhen(Class<T> beanType, Predicate<T> predicate) {
         return findWhen(beanType, predicate).orElseThrow(
                 () -> new NoSuchElementException("No bean of type [%s] found".formatted(beanType.getName()))
         );

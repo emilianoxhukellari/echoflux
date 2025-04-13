@@ -2,13 +2,18 @@ package transcribe.annotation.projection;
 
 import com.google.auto.service.AutoService;
 
-import javax.annotation.processing.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import java.util.Set;
 
 @SupportedAnnotationTypes("transcribe.annotation.jpa.projection.ProjectionInterfaceSupport")
-@SupportedSourceVersion(SourceVersion.RELEASE_23)
+@SupportedSourceVersion(SourceVersion.RELEASE_24)
 @AutoService(Processor.class)
 @SuppressWarnings("unused")
 public class ProjectionInterfaceSupportProcessor extends AbstractProcessor {

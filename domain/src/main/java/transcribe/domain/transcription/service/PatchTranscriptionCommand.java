@@ -1,14 +1,15 @@
 package transcribe.domain.transcription.service;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import transcribe.core.core.validate.constraint.duration.PositiveOrZeroDuration;
 import transcribe.domain.transcription.data.TranscriptionStatus;
 
 import java.net.URI;
+import java.time.Duration;
 
 @Data
 @Builder
@@ -25,8 +26,8 @@ public class PatchTranscriptionCommand {
 
     private String name;
 
-    @Min(0)
-    private Long lengthMillis;
+    @PositiveOrZeroDuration
+    private Duration length;
 
     private String error;
 

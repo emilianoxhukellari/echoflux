@@ -18,7 +18,6 @@ public class OperationsView extends Composite<VerticalLayout> {
         var grid = new JpaGrid<>(OperationJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
-        grid.setAllColumnsAutoWidth(true);
         grid.addAllFilters();
         grid.addCrudActions();
 

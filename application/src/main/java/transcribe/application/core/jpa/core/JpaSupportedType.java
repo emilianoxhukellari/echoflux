@@ -2,10 +2,12 @@ package transcribe.application.core.jpa.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vaadin.flow.data.renderer.Renderer;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import transcribe.application.core.jpa.grid.JpaGridRendererFactory;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,10 +29,13 @@ public enum JpaSupportedType {
     INTEGER(Integer.class, null),
     URI(java.net.URI.class, null),
     JSON(JsonNode.class, null),
+    DURATION(Duration.class, JpaGridRendererFactory::newDurationRenderer),
     COLLECTION(Collection.class, JpaGridRendererFactory::newCollectionRenderer);
 
     @Getter
     private final Class<?> type;
+
+    @Nullable
     private final Function<JpaPropertyDefinition<?, ?>, Renderer<?>> customRendererFactory;
 
     /**

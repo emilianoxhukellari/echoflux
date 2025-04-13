@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import transcribe.core.core.concurrency.ConcurrencyLevel;
-import transcribe.core.core.validate.constraint.duration_range.DurationRange;
+import transcribe.core.core.validate.constraint.duration.PositiveOrZeroDuration;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -21,15 +21,15 @@ public class SplitAudioCommand {
     private Path audio;
 
     @NotNull
-    @DurationRange(minMillis = 0)
+    @PositiveOrZeroDuration
     private Duration partitionDuration;
 
     @NotNull
-    @DurationRange(minMillis = 0)
+    @PositiveOrZeroDuration
     private Duration toleranceDuration;
 
     @NotNull
-    @DurationRange(minMillis = 0)
+    @PositiveOrZeroDuration
     private Duration minSilenceDuration;
 
     @NotNull

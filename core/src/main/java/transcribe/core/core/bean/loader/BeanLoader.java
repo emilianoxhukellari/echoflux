@@ -11,6 +11,6 @@ public interface BeanLoader {
 
     <T> Optional<T> findWhen(@NotNull Class<T> beanType, @NotNull Predicate<T> predicate);
 
-    <T> T getWhen(@NotNull Class<T> beanType, @NotNull Predicate<T> predicate);
+    <T> T loadWhen(@NotNull Class<T> beanType, @NotNull Predicate<T> predicate);
 
 }

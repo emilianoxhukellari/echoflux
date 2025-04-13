@@ -19,7 +19,7 @@ public class DocumentExporterImpl implements DocumentExporter {
 
     @Override
     public Path export(List<Paragraph> paragraphs, DocumentType type) {
-        var exporter = beanLoader.getWhen(
+        var exporter = beanLoader.loadWhen(
                 DocumentExporterSpi.class,
                 spi -> spi.supports(type)
         );

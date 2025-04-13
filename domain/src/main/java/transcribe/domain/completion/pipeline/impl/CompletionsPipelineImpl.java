@@ -45,7 +45,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
                     command.getAiProvider(),
                     () -> settingsLoader.load(CompletionsPipelineSettings.class).getPreferredAiProvider()
             );
-            var completions = beanLoader.getWhen(
+            var completions = beanLoader.loadWhen(
                     Completions.class,
                     c -> Objects.equals(c.getProvider(), provider)
             );
@@ -78,12 +78,10 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         var timedResult = TsFunctions.getTimed(() -> completions.complete(completion.input()));
         var completionResult = timedResult.getResult();
 
-        var patchCommand = completionMapper.toCommand(
-                completion.id(),
-                CompletionStatus.COMPLETED,
-                timedResult.getDuration().toMillis(),
-                completionResult
-        );
+        var patchCommand = completionMapper.toCommand(completionResult);
+        patchCommand.setId(completion.id());
+        patchCommand.setStatus(completion.status());
+        patchCommand.setDuration(completion.duration());
 
         return completionService.patch(patchCommand);
     }

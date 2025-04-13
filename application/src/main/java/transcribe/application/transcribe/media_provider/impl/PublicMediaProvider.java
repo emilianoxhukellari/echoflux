@@ -25,6 +25,7 @@ import transcribe.core.media.downloader.MediaFindResult;
 import transcribe.core.core.utils.TsFunctions;
 import transcribe.domain.transcription.data.MediaOrigin;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -45,9 +46,10 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
         binder.setBean(new SearchUri());
 
         var searchButton = new Button(LineAwesomeIcon.SEARCH_SOLID.create());
-        Tooltip.forComponent(searchButton).setText("Search media");
+        Tooltip.forComponent(searchButton)
+                .setText("Search media");
         searchButton.addClickListener(_ -> {
-            if (binder.validate().isOk()) {
+            if (binder.writeBeanIfValid(binder.getBean())) {
                 findAndSetMedia();
             }
         });
@@ -97,6 +99,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 .onError(_ -> Dialogs.info("Media not found", "Please make sure the URL is correct."))
                 .onErrorNotify(false)
                 .onSuccessNotify(false)
+                .timeout(Duration.ofMinutes(1))
                 .build();
 
         operationRunner.run(operation, UI.getCurrent());

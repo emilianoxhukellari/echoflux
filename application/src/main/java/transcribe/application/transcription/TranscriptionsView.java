@@ -19,7 +19,6 @@ public class TranscriptionsView extends Composite<VerticalLayout> {
         var grid = new JpaGrid<>(TranscriptionJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
-        grid.setAllColumnsAutoWidth(true);
         grid.addAllFilters();
         grid.addCrudActions();
         grid.addContextMenuItem("Open", t -> UI.getCurrent().navigate(TranscriptionView.class, t.getId()));

@@ -18,9 +18,9 @@ public class TemplatesView extends Composite<VerticalLayout> {
         var grid = new JpaGrid<>(TemplateJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
-        grid.setAllColumnsAutoWidth(true);
         grid.addAllFilters();
         grid.addCrudActions();
+        grid.setColumnWidth("content", "400px");
 
         getContent().addAndExpand(new JpaGridControls<>(grid));
     }

@@ -7,7 +7,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 import transcribe.core.core.bean.loader.BeanLoader;
-import transcribe.core.core.validate.formatter.StrictValidator;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -27,10 +26,6 @@ public class SpringContext implements ApplicationContextAware {
 
     public static ApplicationContext get() {
         return Objects.requireNonNull(REF.get(), "Spring context not initialized");
-    }
-
-    public static StrictValidator getStrictValidator() {
-        return getBean(StrictValidator.class);
     }
 
     public static void runTransactional(Runnable runnable) {
@@ -61,8 +56,8 @@ public class SpringContext implements ApplicationContextAware {
         return getBean(BeanLoader.class).findWhen(beanType, predicate);
     }
 
-    public static <T> T getBeanWhen(Class<T> beanType, Predicate<T> predicate) {
-        return getBean(BeanLoader.class).getWhen(beanType, predicate);
+    public static <T> T loadBeanWhen(Class<T> beanType, Predicate<T> predicate) {
+        return getBean(BeanLoader.class).loadWhen(beanType, predicate);
     }
 
 }

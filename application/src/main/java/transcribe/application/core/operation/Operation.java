@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import transcribe.core.core.no_op.NoOp;
 import transcribe.domain.operation.data.OperationType;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 @Builder
@@ -75,5 +76,9 @@ public class Operation<T> {
 
     @Builder.Default
     private boolean onProgressNotify = true;
+
+    @NotNull
+    @Builder.Default
+    private Duration timeout = Duration.ofHours(4);
 
 }

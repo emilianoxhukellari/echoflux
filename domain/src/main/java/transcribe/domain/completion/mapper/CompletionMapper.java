@@ -12,7 +12,6 @@ import org.mapstruct.ReportingPolicy;
 import transcribe.core.completions.CompletionResult;
 import transcribe.domain.completion.data.CompletionEntity;
 import transcribe.domain.completion.data.CompletionProjection;
-import transcribe.domain.completion.data.CompletionStatus;
 import transcribe.domain.completion.service.CreateCompletionCommand;
 import transcribe.domain.completion.service.PatchCompletionCommand;
 
@@ -32,6 +31,6 @@ public interface CompletionMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     CompletionEntity patch(@MappingTarget CompletionEntity entity, PatchCompletionCommand command);
 
-    PatchCompletionCommand toCommand(Long id, CompletionStatus status, Long durationMillis, CompletionResult result);
+    PatchCompletionCommand toCommand(CompletionResult result);
 
 }

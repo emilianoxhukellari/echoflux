@@ -18,9 +18,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import transcribe.core.core.validate.constraint.double_range.DoubleRange;
+import transcribe.core.core.validate.constraint.duration.PositiveOrZeroDuration;
 import transcribe.domain.audit.data.BaseEntity;
 import transcribe.domain.transcription.data.TranscriptionEntity;
+
+import java.time.Duration;
 
 @Entity
 @Table(name = "completion")
@@ -72,9 +77,10 @@ public class CompletionEntity extends BaseEntity {
     @NotNull
     private CompletionStatus status;
 
-    @Column(name = "duration_millis")
-    @Min(0)
-    private Long durationMillis;
+    @Column(name = "duration")
+    @PositiveOrZeroDuration
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
+    private Duration duration;
 
     @Column(name = "error")
     private String error;

@@ -14,11 +14,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.component.HelperDownloadAnchor;
 import transcribe.application.core.icon.IconFactory;
@@ -74,8 +72,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
         grid.addColumn("language");
         grid.addColumn("createdAt")
                 .setHeader("Date");
-        grid.addColumn("lengthMillis")
-                .setRenderer(new TextRenderer<>(TranscribeView::newDuration))
+        grid.addColumn("length")
                 .setHeader("Length");
         grid.addColumn("status")
                 .setSortable(false);
@@ -101,12 +98,6 @@ public class TranscribeView extends Composite<VerticalLayout> {
         content.setAlignItems(FlexComponent.Alignment.CENTER);
         content.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         content.addAndExpand(controls);
-    }
-
-    private static String newDuration(TranscriptionJpaDto transcription) {
-        long duration = Objects.requireNonNullElse(transcription.getLengthMillis(), 0L);
-
-        return DurationFormatUtils.formatDuration(duration, "H'h' m'm' s's'");
     }
 
     private static Component newProgress(TranscriptionJpaDto transcription) {

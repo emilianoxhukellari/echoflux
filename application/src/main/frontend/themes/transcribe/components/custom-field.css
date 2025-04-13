@@ -1,3 +1,15 @@
-vaadin-custom-field.custom-field::part(error-message)::before {
+vaadin-custom-field.before-error-message::part(error-message)::before {
     height: 0.4em;
+}
+
+.custom-field-icon {
+    transition: color 0.2s ease;
+}
+
+.custom-field-icon:hover {
+    color: var(--lumo-primary-contrast-color);
+}
+
+[readonly] .custom-field-icon {
+    color: var(--lumo-contrast-20pct);
 }

@@ -1,4 +1,4 @@
-package transcribe.application.core.field;
+package transcribe.application.core.field.media;
 
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -52,7 +52,7 @@ public class MediaField extends CustomField<MediaValue> {
         tabSheet.add(newLocalTab(), localMedia);
 
         add(tabSheet);
-        addClassName("custom-field");
+        addClassName("before-error-message");
     }
 
     public void clearAndCleanup() {

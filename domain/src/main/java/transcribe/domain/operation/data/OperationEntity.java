@@ -16,8 +16,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import transcribe.core.core.validate.constraint.duration.PositiveOrZeroDuration;
 import transcribe.domain.audit.data.BaseEntity;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
@@ -58,8 +62,10 @@ public class OperationEntity extends BaseEntity {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
-    @Formula("extract(epoch from (ended_at - started_at))")
-    private Double durationSeconds;
+    @Formula("ended_at - started_at")
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
+    @PositiveOrZeroDuration
+    private Duration duration;
 
     @Column(name = "description")
     private String description;

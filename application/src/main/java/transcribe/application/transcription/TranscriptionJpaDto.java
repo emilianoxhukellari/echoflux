@@ -15,6 +15,7 @@ import transcribe.domain.transcription.data.TranscriptionEntity;
 import transcribe.domain.transcription.data.TranscriptionStatus;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @JpaDto(entityBeanType = TranscriptionEntity.class)
@@ -42,7 +43,7 @@ public class TranscriptionJpaDto {
     @Required
     private Boolean enhanced;
 
-    private Long lengthMillis;
+    private Duration length;
 
     @BigText
     private String error;

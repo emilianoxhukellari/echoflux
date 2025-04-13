@@ -3,6 +3,7 @@ package transcribe.application.home;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
@@ -11,6 +12,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import transcribe.annotation.core.AttributeOverride;
 import transcribe.annotation.core.ParentProperty;
 import transcribe.annotation.projection.AttributeProjectType;
+import transcribe.application.core.field.duration.DurationField;
 import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
 import transcribe.application.core.notification.Notifications;
 import transcribe.application.layout.MainLayout;
@@ -59,7 +61,14 @@ public class HomeView extends Composite<VerticalLayout> {
             Notifications.success(jsonMapper.toString(result));
         });
 
-        getContent().add(new VerticalLayout(button));
+        var timePicker = new TimePicker();
+        timePicker.setClearButtonVisible(true);
+        timePicker.addValueChangeListener(e ->
+                log.info("Time selected: {}", e.getValue()));
+
+        var durationField = new DurationField("Duration");
+        durationField.setClearButtonVisible(true);
+        getContent().add(new VerticalLayout(durationField));
     }
 
     private interface Transcription {

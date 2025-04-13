@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import transcribe.core.core.validate.constraint.duration_range.DurationRange;
+import transcribe.core.core.validate.constraint.duration.PositiveOrZeroDuration;
 
 import java.net.URI;
 import java.time.Duration;
@@ -20,7 +20,7 @@ public class GetSignedUrlOfUriCommand {
     private URI cloudUri;
 
     @NotNull
-    @DurationRange(minMillis = 0)
+    @PositiveOrZeroDuration
     Duration duration;
 
 }

@@ -18,7 +18,6 @@ public class CompletionsView extends Composite<VerticalLayout> {
         var grid = new JpaGrid<>(CompletionJpaDto.class);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
-        grid.setAllColumnsAutoWidth(true);
         grid.addAllFilters();
         grid.addCrudActions();
 

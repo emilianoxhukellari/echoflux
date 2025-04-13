@@ -94,7 +94,7 @@
                 name                text                                    not null,
                 application_user_id bigint references application_user (id) not null,
                 enhanced            boolean                                 not null,
-                length_millis       bigint,
+                length interval,
                 error               text,
 
                 version             integer,
@@ -123,7 +123,7 @@
                 temperature      double precision,
                 top_p            double precision,
                 status           text                                 not null,
-                duration_millis  bigint,
+                duration interval,
                 error            text,
 
                 version          integer,

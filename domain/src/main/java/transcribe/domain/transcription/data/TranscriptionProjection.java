@@ -4,6 +4,7 @@ import lombok.Builder;
 import transcribe.core.transcribe.common.Language;
 
 import java.net.URI;
+import java.time.Duration;
 
 @Builder
 public record TranscriptionProjection(Long id,
@@ -13,6 +14,6 @@ public record TranscriptionProjection(Long id,
                                       Language language,
                                       String name,
                                       Boolean enhanced,
-                                      Long lengthMillis,
+                                      Duration length,
                                       String error) {
 }
