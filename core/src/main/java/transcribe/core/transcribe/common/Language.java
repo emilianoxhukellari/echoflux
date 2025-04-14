@@ -18,7 +18,22 @@ public enum Language {
     ENGLISH_GB("en-GB"),
 
     @DisplayName("English (US)")
-    ENGLISH_US("en-US");
+    ENGLISH_US("en-US"),
+
+    @DisplayName("Latvian")
+    LATVIAN("lv-LV"),
+
+    @DisplayName("Lithuanian")
+    LITHUANIAN("lt-LT"),
+
+    @DisplayName("Estonian")
+    ESTONIAN("et-EE"),
+
+    @DisplayName("Russian")
+    RUSSIAN("ru-RU"),
+
+    @DisplayName("Polish")
+    POLISH("pl-PL");
 
     private final String bcp47;
 

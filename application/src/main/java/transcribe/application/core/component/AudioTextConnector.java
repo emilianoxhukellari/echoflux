@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Tag("ts-audio-text-connector")
+@Tag("audio-text-connector")
 @JsModule("./element/audio-text-connector/audio-text-connector.ts")
 public class AudioTextConnector extends Component implements HasSize, HasComponents {
 

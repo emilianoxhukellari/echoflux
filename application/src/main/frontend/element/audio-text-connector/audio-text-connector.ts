@@ -108,7 +108,7 @@ export class AudioTextConnector extends LitElement {
             <vaadin-vertical-layout theme="spacing-s padding">
                 ${
                         this.speakerSegments.map((s, i) => html`
-                            <ts-speaker-segment .segment="${s}"
+                            <speaker-segment .segment="${s}"
                                                 .timeMillis="${this.timeMillis}"
                                                 .seekPosition="${this.seekPosition}"
                                                 .maxHighlightedWords="${this.maxHighlightedWords}"
