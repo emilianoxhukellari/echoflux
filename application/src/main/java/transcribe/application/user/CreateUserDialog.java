@@ -8,20 +8,29 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import org.apache.commons.lang3.StringUtils;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
+import transcribe.application.core.jpa.dto.JpaDtoService;
 import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
-import transcribe.application.core.spring.SpringContext;
+import transcribe.application.core.operation.OperationRunner;
+import transcribe.core.core.bean.loader.BeanLoader;
+import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.Role;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.application_user.service.CreateApplicationUserCommand;
 
+import java.util.Objects;
+
 public class CreateUserDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
-    private final ApplicationUserService service;
+    private final ApplicationUserService applicationUserService;
+    private final JpaDtoService<ApplicationUserJpaDto, ApplicationUserEntity, Long> jpaDtoService;
     private final Binder<CreateApplicationUserCommand> binder;
 
-    public CreateUserDialog() {
-        super(ApplicationUserJpaDto.class);
-        this.service = SpringContext.getBean(ApplicationUserService.class);
+    public CreateUserDialog(BeanLoader beanLoader) {
+        super(ApplicationUserJpaDto.class, beanLoader.load(OperationRunner.class));
+        Objects.requireNonNull(beanLoader, "beanLoader");
+
+        this.applicationUserService = beanLoader.load(ApplicationUserService.class);
+        this.jpaDtoService = new SimpleJpaDtoService<>(ApplicationUserJpaDto.class, beanLoader);
         this.binder = new Binder<>(CreateApplicationUserCommand.class);
         this.binder.setBean(CreateApplicationUserCommand.builder().build());
 
@@ -63,10 +72,9 @@ public class CreateUserDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
     @Override
     protected ApplicationUserJpaDto save() {
-        var created = service.create(binder.getBean());
+        var created = applicationUserService.create(binder.getBean());
 
-        return SimpleJpaDtoService.ofBeanType(ApplicationUserJpaDto.class)
-                .getById(created.id());
+        return jpaDtoService.getById(created.id());
     }
 
     @Override

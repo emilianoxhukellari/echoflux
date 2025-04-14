@@ -11,7 +11,6 @@ import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.no_op.NoOp;
 import transcribe.core.core.bean.MoreBeans;
 import transcribe.domain.operation.data.OperationType;
@@ -22,7 +21,7 @@ import java.util.function.Function;
 
 public abstract class JpaSaveDialog<T> extends EnhancedDialog {
 
-    protected final OperationRunner operationRunner = SpringContext.getBean(OperationRunner.class);
+    protected final OperationRunner operationRunner;
     protected final Class<T> beanType;
 
     @Setter
@@ -33,8 +32,12 @@ public abstract class JpaSaveDialog<T> extends EnhancedDialog {
     @Accessors(chain = true)
     protected Function<Operation<T>, Operation<T>> operationCustomizer = Function.identity();
 
-    public JpaSaveDialog(Class<T> beanType) {
-        this.beanType = Objects.requireNonNull(beanType, "Bean bean type must not be null");
+    public JpaSaveDialog(Class<T> beanType, OperationRunner operationRunner) {
+        Objects.requireNonNull(beanType, "Bean bean type must not be null");
+        Objects.requireNonNull(operationRunner, "Operation runner must not be null");
+
+        this.beanType = beanType;
+        this.operationRunner = operationRunner;
 
         setHeaderTitle(String.format("Save %s", MoreBeans.getDisplayName(beanType)));
         getFooter().add(newFooterContent());

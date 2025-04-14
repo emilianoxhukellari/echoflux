@@ -30,6 +30,7 @@ import transcribe.application.layout.MainLayout;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcription.TranscriptionJpaDto;
 import transcribe.application.transcription.TranscriptionView;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
 import transcribe.domain.transcription.data.TranscriptionEntity;
@@ -46,21 +47,23 @@ import java.util.Objects;
 public class TranscribeView extends Composite<VerticalLayout> {
 
     private final Broadcaster broadcaster;
+    private final BeanLoader beanLoader;
     private final List<Subscription> subscriptions = new ArrayList<>();
     private final JpaGrid<TranscriptionJpaDto, TranscriptionEntity, Long> grid;
     private final Long applicationUserId;
     private final HelperDownloadAnchor.Factory helperDownloadAnchorFactory;
 
-    public TranscribeView(Broadcaster broadcaster,
-                          AuthenticatedUser authenticatedUser) {
+    public TranscribeView(Broadcaster broadcaster, AuthenticatedUser authenticatedUser, BeanLoader beanLoader) {
         this.broadcaster = broadcaster;
+        this.beanLoader = beanLoader;
         this.applicationUserId = authenticatedUser.get().getId();
         this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(getContent());
 
         this.grid = new JpaGrid<>(
                 JpaGridConfiguration.<TranscriptionJpaDto, TranscriptionEntity, Long>builder()
                         .beanType(TranscriptionJpaDto.class)
-                        .service(SimpleJpaDtoService.ofBeanType(TranscriptionJpaDto.class))
+                        .service(new SimpleJpaDtoService<>(TranscriptionJpaDto.class, beanLoader))
+                        .beanLoader(beanLoader)
                         .defaultSpecification((root, _, criteriaBuilder)
                                 -> criteriaBuilder.equal(root.get("applicationUser").get("id"), applicationUserId))
                         .build()
@@ -68,7 +71,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
         grid.addClassName("body-cell-cursor-pointer");
         grid.addColumn("name")
-                        .setWidth("25rem");
+                .setWidth("25rem");
         grid.addColumn("language");
         grid.addColumn("createdAt")
                 .setHeader("Date");
@@ -89,7 +92,9 @@ public class TranscribeView extends Composite<VerticalLayout> {
 
         var transcribeButton = new Button("Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
         transcribeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        transcribeButton.addClickListener(_ -> new TranscribeDialog().open());
+        transcribeButton.addClickListener(
+                _ -> new TranscribeDialog(beanLoader).open()
+        );
 
         var controls = new JpaGridControls<>(grid);
         controls.addTopLeft(transcribeButton);
@@ -135,15 +140,17 @@ public class TranscribeView extends Composite<VerticalLayout> {
 
         var renameHl = new HorizontalLayout(LineAwesomeIcon.EDIT_SOLID.create(), new Text("Rename"));
         contextMenu.addItem(
-                renameHl, _ -> new RenameTranscriptionDialog(transcription)
-                        .setSaveListener(grid::refreshItem)
-                        .open()
+                renameHl, _ ->
+                        new RenameTranscriptionDialog(transcription, beanLoader)
+                                .setSaveListener(grid::refreshItem)
+                                .open()
         );
 
         var downloadHl = new HorizontalLayout(LineAwesomeIcon.DOWNLOAD_SOLID.create(), new Text("Download"));
         contextMenu.addItem(
                 downloadHl,
-                _ -> new DownloadTranscriptDialog(transcription.getId(), helperDownloadAnchorFactory).open()
+                _ -> new DownloadTranscriptDialog(transcription.getId(), helperDownloadAnchorFactory, beanLoader)
+                        .open()
         );
 
         return button;

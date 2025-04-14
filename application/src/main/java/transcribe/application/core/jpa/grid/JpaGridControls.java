@@ -60,7 +60,8 @@ public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
                             MoreBeans.invokeBuilderOrNoArgsConstructorNested(grid.getBeanType()),
                             grid.getBeanType(),
                             grid.getService(),
-                            grid.getCrudActionsData().getExcludedPropertiesList()
+                            grid.getCrudActionsData().getExcludedPropertiesList(),
+                            grid.getBeanLoader()
                     )
                             .setSaveListener(_ -> grid.refreshAll())
                             .open()

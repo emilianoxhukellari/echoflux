@@ -10,6 +10,7 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import transcribe.application.core.component.AudioTextConnector;
 import transcribe.application.layout.MainLayout;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.transcription.data.TranscriptionProjection;
 import transcribe.domain.transcription.service.TranscriptionService;
 
@@ -19,17 +20,20 @@ import transcribe.domain.transcription.service.TranscriptionService;
 public class TranscriptionView extends Composite<VerticalLayout> implements HasUrlParameter<Long>, HasDynamicTitle {
 
     private final TranscriptionService transcriptionService;
+    private final BeanLoader beanLoader;
+
     private TranscriptionProjection transcription;
 
-    public TranscriptionView(TranscriptionService transcriptionService) {
+    public TranscriptionView(TranscriptionService transcriptionService, BeanLoader beanLoader) {
         this.transcriptionService = transcriptionService;
+        this.beanLoader = beanLoader;
     }
 
     @Override
     public void setParameter(BeforeEvent event, Long parameter) {
         this.transcription = transcriptionService.projectById(parameter);
 
-        var audioTextConnector = new AudioTextConnector(transcription.id());
+        var audioTextConnector = new AudioTextConnector(transcription.id(), beanLoader);
         audioTextConnector.setHeightFull();
         audioTextConnector.setMaxWidth("1500px");
 

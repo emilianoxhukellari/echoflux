@@ -12,6 +12,7 @@ import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.layout.MainLayout;
 import transcribe.application.core.jpa.grid.JpaGrid;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.operation.data.OperationType;
 
@@ -20,21 +21,20 @@ import transcribe.domain.operation.data.OperationType;
 @RolesAllowed("ADMIN")
 public class UsersView extends Composite<VerticalLayout> {
 
-    public UsersView(ApplicationUserService service,
-                     OperationRunner operationRunner) {
-        var grid = new JpaGrid<>(ApplicationUserJpaDto.class);
+    public UsersView(ApplicationUserService applicationUserService, OperationRunner operationRunner, BeanLoader beanLoader) {
+        var grid = new JpaGrid<>(ApplicationUserJpaDto.class, beanLoader);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
         grid.addAllFilters();
 
         grid.addContextMenuItem(
                 "Edit",
-                dto -> new UpdateUserDialog(dto)
+                dto -> new UpdateUserDialog(dto, beanLoader)
                         .setSaveListener(_ -> grid.refreshAll())
                         .open()
         );
         grid.addItemDoubleClickListener(
-                e -> new UpdateUserDialog(e.getItem())
+                e -> new UpdateUserDialog(e.getItem(), beanLoader)
                         .setSaveListener(grid::refreshItem)
                         .open()
         );
@@ -42,18 +42,21 @@ public class UsersView extends Composite<VerticalLayout> {
             var operation = Operation.builder()
                     .name("Deleting application user")
                     .description("User with ID " + e.getId())
-                    .callable(OperationCallable.ofRunnable(() -> service.deleteById(e.getId())))
+                    .callable(OperationCallable.ofRunnable(() -> applicationUserService.deleteById(e.getId())))
                     .onSuccess(_ -> grid.refreshAll())
                     .type(OperationType.NON_BLOCKING)
                     .build();
 
             operationRunner.run(operation, UI.getCurrent());
         });
-        grid.addContextMenuItem("Change password", dto -> new ChangePasswordDialog(dto).open());
+        grid.addContextMenuItem(
+                "Change password",
+                dto -> new ChangePasswordDialog(dto, beanLoader).open()
+        );
 
         var jpaGridControls = new JpaGridControls<>(grid);
         jpaGridControls.addCreateEntityButton(
-                () -> new CreateUserDialog()
+                () -> new CreateUserDialog(beanLoader)
                         .setSaveListener(_ -> grid.refreshAll())
                         .open()
         );

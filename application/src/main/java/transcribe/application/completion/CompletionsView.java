@@ -8,14 +8,15 @@ import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.layout.MainLayout;
+import transcribe.core.core.bean.loader.BeanLoader;
 
 @PageTitle("Completions")
 @Route(value = "completions", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class CompletionsView extends Composite<VerticalLayout> {
 
-    public CompletionsView() {
-        var grid = new JpaGrid<>(CompletionJpaDto.class);
+    public CompletionsView(BeanLoader beanLoader) {
+        var grid = new JpaGrid<>(CompletionJpaDto.class, beanLoader);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
         grid.addAllFilters();

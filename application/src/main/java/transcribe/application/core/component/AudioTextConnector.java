@@ -16,10 +16,10 @@ import org.apache.commons.lang3.Validate;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.core.spring.SpringContext;
 import transcribe.application.transcribe.DownloadTranscriptDialog;
 import transcribe.core.cloud_storage.CloudStorage;
 import transcribe.core.cloud_storage.GetSignedUrlOfUriCommand;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.word.processor.SpeakerSegmentAssembler;
 import transcribe.core.word.processor.WordPatcher;
 import transcribe.domain.operation.data.OperationType;
@@ -39,21 +39,24 @@ import java.util.Objects;
 public class AudioTextConnector extends Component implements HasSize, HasComponents {
 
     private final HelperDownloadAnchor.Factory helperDownloadAnchorFactory;
+    private final BeanLoader beanLoader;
     private final TranscriptionManager transcriptionManager;
     private final CloudStorage cloudStorage;
     private final OperationRunner operationRunner;
     private final TranscriptionProjection transcription;
     private final List<WordDto> wordsState = new ArrayList<>();
 
-    public AudioTextConnector(Long transcriptionId) {
-        Objects.requireNonNull(transcriptionId, "transcriptionId cannot be null");
+    public AudioTextConnector(Long transcriptionId, BeanLoader beanLoader) {
+        Objects.requireNonNull(transcriptionId, "transcriptionId");
+        Objects.requireNonNull(beanLoader, "beanLoader");
 
-        this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(this);
-        this.transcriptionManager = SpringContext.getBean(TranscriptionManager.class);
-        this.cloudStorage = SpringContext.getBean(CloudStorage.class);
-        this.operationRunner = SpringContext.getBean(OperationRunner.class);
-        this.transcription = SpringContext.getBean(TranscriptionService.class)
+        this.beanLoader = beanLoader;
+        this.transcriptionManager = beanLoader.load(TranscriptionManager.class);
+        this.cloudStorage = beanLoader.load(CloudStorage.class);
+        this.operationRunner = beanLoader.load(OperationRunner.class);
+        this.transcription = beanLoader.load(TranscriptionService.class)
                 .projectById(transcriptionId);
+        this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(this);
 
         build();
     }
@@ -125,7 +128,7 @@ public class AudioTextConnector extends Component implements HasSize, HasCompone
     @ClientCallable(DisabledUpdateMode.ALWAYS)
     @AllowInert
     private void downloadTranscript() {
-        new DownloadTranscriptDialog(transcription.id(), helperDownloadAnchorFactory)
+        new DownloadTranscriptDialog(transcription.id(), helperDownloadAnchorFactory, beanLoader)
                 .open();
     }
 

@@ -20,9 +20,9 @@ import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.operation.OperationSuccessImportance;
-import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcribe.media_provider.MediaValue;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.core.utils.TsEnums;
 import transcribe.core.transcribe.common.Language;
 import transcribe.domain.operation.data.OperationType;
@@ -30,16 +30,20 @@ import transcribe.domain.transcription.data.TranscriptionProjection;
 import transcribe.domain.transcription.pipeline.TranscriptionPipeline;
 import transcribe.domain.transcription.pipeline.TranscriptionPipelineCommand;
 
+import java.util.Objects;
+
 public class TranscribeDialog extends EnhancedDialog {
 
     private final TranscriptionPipeline transcriptionPipeline;
     private final OperationRunner operationRunner;
     private final AuthenticatedUser authenticatedUser;
 
-    public TranscribeDialog() {
-        this.transcriptionPipeline = SpringContext.getBean(TranscriptionPipeline.class);
-        this.operationRunner = SpringContext.getBean(OperationRunner.class);
-        this.authenticatedUser = SpringContext.getBean(AuthenticatedUser.class);
+    public TranscribeDialog(BeanLoader beanLoader) {
+        Objects.requireNonNull(beanLoader, "beanLoader");
+
+        this.transcriptionPipeline = beanLoader.load(TranscriptionPipeline.class);
+        this.operationRunner = beanLoader.load(OperationRunner.class);
+        this.authenticatedUser = beanLoader.load(AuthenticatedUser.class);
 
         var binder = new Binder<Command>();
         binder.setBean(
@@ -47,7 +51,7 @@ public class TranscribeDialog extends EnhancedDialog {
                         .build()
         );
 
-        var mediaProviderField = new MediaField();
+        var mediaProviderField = new MediaField(beanLoader);
         binder.forField(mediaProviderField)
                 .asRequired("Media is required")
                 .bind(Command::getMediaValue, Command::setMediaValue);

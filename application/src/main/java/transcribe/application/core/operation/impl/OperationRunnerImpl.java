@@ -5,13 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import transcribe.application.core.dialog.Dialogs;
+import transcribe.application.core.dialog.TsDialogs;
 import transcribe.application.core.error.MoreErrors;
 import transcribe.application.core.notification.Notifications;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationErrorImportance;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.core.ui.UiUtils;
+import transcribe.application.security.AuthenticatedUser;
 import transcribe.core.core.executor.MoreExecutors;
 import transcribe.domain.operation.service.OperationService;
 
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class OperationRunnerImpl implements OperationRunner {
 
     private final OperationService operationService;
+    private final AuthenticatedUser authenticatedUser;
 
     @Override
     public <T> void run(Operation<T> operation, UI ui) {
@@ -75,14 +77,14 @@ public class OperationRunnerImpl implements OperationRunner {
                         if (operation.isOnErrorNotify()) {
                             if (OperationErrorImportance.HIGH.equals(operation.getErrorImportance())) {
                                 if (StringUtils.isNotBlank(operation.getCustomErrorMessage())) {
-                                    Dialogs.error(operation.getCustomErrorMessage());
+                                    TsDialogs.error(operation.getCustomErrorMessage());
                                 } else {
-                                    Dialogs.error(e);
+                                    TsDialogs.error(e, authenticatedUser);
                                 }
                             } else {
                                 var message = StringUtils.defaultIfBlank(
                                         operation.getCustomErrorMessage(),
-                                        MoreErrors.resolveErrorMessage(e)
+                                        MoreErrors.resolveErrorMessage(e, authenticatedUser)
                                 );
                                 Notifications.error(
                                         message,

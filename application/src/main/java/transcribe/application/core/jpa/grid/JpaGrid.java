@@ -19,7 +19,7 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import transcribe.application.core.dialog.Dialogs;
+import transcribe.application.core.dialog.TsDialogs;
 import transcribe.application.core.jpa.core.JpaPropertyCache;
 import transcribe.application.core.jpa.core.JpaPropertyDefinition;
 import transcribe.application.core.jpa.core.JpaPropertyDefinitionUtils;
@@ -33,8 +33,8 @@ import transcribe.application.core.jpa.filter.JpaFilter;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.core.spring.SpringContext;
 import transcribe.core.core.bean.MoreBeans;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.core.executor.MoreExecutors;
 import transcribe.core.core.utils.TsArrays;
 import transcribe.core.core.utils.TsLists;
@@ -52,6 +52,8 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     private static final String COLUMN_WIDTH = "13.5rem";
 
+    @Getter
+    private final BeanLoader beanLoader;
     @Getter
     private final JpaDtoService<DTO, ENTITY, ID> service;
     @Getter
@@ -71,11 +73,12 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     private HeaderRow filterRow;
     private GridContextMenu<DTO> contextMenu;
 
-    public JpaGrid(Class<DTO> beanType) {
+    public JpaGrid(Class<DTO> beanType, BeanLoader beanLoader) {
         this(
                 JpaGridConfiguration.<DTO, ENTITY, ID>builder()
-                        .service(SimpleJpaDtoService.ofBeanType(beanType))
+                        .service(new SimpleJpaDtoService<>(beanType, beanLoader))
                         .beanType(beanType)
+                        .beanLoader(beanLoader)
                         .build()
         );
     }
@@ -85,9 +88,11 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         super(30);
         Objects.requireNonNull(configuration.getBeanType(), "Bean type cannot be null");
         Objects.requireNonNull(configuration.getService(), "Service cannot be null");
+        Objects.requireNonNull(configuration.getBeanLoader(), "Bean loader cannot be null");
 
         this.service = configuration.getService();
         this.beanType = configuration.getBeanType();
+        this.beanLoader = configuration.getBeanLoader();
         this.defaultSpecification = configuration.getDefaultSpecification();
         this.idPropertyDefinition = (JpaPropertyDefinition<DTO, ID>) JpaPropertyCache.getIdProperty(beanType);
         this.defaultSortProperty = configuration.getDefaultSortAttribute();
@@ -149,12 +154,14 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     public Column<DTO> addColumn(String propertyName) {
         var propertyDefinition = getPropertyDefinitionRequired(propertyName);
 
+        var jpaType = JpaSupportedType.ofBeanType(propertyDefinition.getType());
+
         var column = super.addColumn(propertyName)
                 .setHeader(JpaPropertyDefinitionUtils.toDisplayName(propertyDefinition))
+                .setTextAlign(jpaType.getColumnTextAlign())
                 .setWidth(COLUMN_WIDTH);
 
-        JpaSupportedType.ofBeanType(propertyDefinition.getType())
-                .findCustomRendererFactory()
+        jpaType.findCustomRendererFactory()
                 .ifPresent(f -> column.setRenderer((Renderer<DTO>) f.apply(propertyDefinition)));
 
         return column;
@@ -174,10 +181,6 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void setAllColumnsResizable() {
         getColumns().forEach(column -> column.setResizable(true));
-    }
-
-    public void setAllColumnsAutoWidth(boolean autoWidth) {
-        getColumns().forEach(column -> column.setAutoWidth(autoWidth));
     }
 
     public void addCoreAttributeFilters() {
@@ -256,7 +259,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     public void addConfirmedContextMenuItem(String text, Consumer<DTO> onClick) {
         Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
 
-        addContextMenuItem(text, e -> Dialogs.confirm(
+        addContextMenuItem(text, e -> TsDialogs.confirm(
                 String.format("Perform action [%s]?", text),
                 () -> onClick.accept(e)
         ));
@@ -286,13 +289,14 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         var excludedPropertiesList = TsArrays.toList(excludedProperties);
         addContextMenuItem(
                 "Edit",
-                v -> new JpaSaveCorePropertiesDialog<>(v, beanType, service, excludedPropertiesList)
+                v -> new JpaSaveCorePropertiesDialog<>(v, beanType, service, excludedPropertiesList, beanLoader)
                         .setSaveListener(this::refreshItem)
                         .open()
         );
-        addItemDoubleClickListener(v -> new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, service, excludedPropertiesList)
-                .setSaveListener(this::refreshItem)
-                .open()
+        addItemDoubleClickListener(v ->
+                new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, service, excludedPropertiesList, beanLoader)
+                        .setSaveListener(this::refreshItem)
+                        .open()
         );
         addConfirmedContextMenuItem("Delete", e -> {
             var operation = Operation.builder()
@@ -307,7 +311,8 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
                     .type(OperationType.NON_BLOCKING)
                     .build();
 
-            SpringContext.getBean(OperationRunner.class).run(operation, UI.getCurrent());
+            beanLoader.load(OperationRunner.class)
+                    .run(operation, UI.getCurrent());
         });
 
         crudActionsData = JpaGridCrudActionsData.builder()

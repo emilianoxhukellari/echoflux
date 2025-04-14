@@ -6,21 +6,27 @@ import com.vaadin.flow.data.binder.Binder;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
 import transcribe.application.core.jpa.dto.JpaDtoService;
 import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
-import transcribe.application.core.spring.SpringContext;
+import transcribe.application.core.operation.OperationRunner;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.application_user.service.ChangePasswordCommand;
 
+import java.util.Objects;
+
 public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
     private final ApplicationUserService applicationUserService;
-    private final JpaDtoService<ApplicationUserJpaDto, ApplicationUserEntity, Long> jpaDTOService;
+    private final JpaDtoService<ApplicationUserJpaDto, ApplicationUserEntity, Long> jpaDtoService;
     private final Binder<ChangePasswordCommand> binder;
 
-    public ChangePasswordDialog(ApplicationUserJpaDto applicationUser) {
-        super(ApplicationUserJpaDto.class);
-        this.applicationUserService = SpringContext.getBean(ApplicationUserService.class);
-        this.jpaDTOService = SimpleJpaDtoService.ofBeanType(ApplicationUserJpaDto.class);
+    public ChangePasswordDialog(ApplicationUserJpaDto applicationUser, BeanLoader beanLoader) {
+        super(ApplicationUserJpaDto.class, beanLoader.load(OperationRunner.class));
+        Objects.requireNonNull(applicationUser, "applicationUser");
+        Objects.requireNonNull(beanLoader, "beanLoader");
+
+        this.applicationUserService = beanLoader.load(ApplicationUserService.class);
+        this.jpaDtoService = new SimpleJpaDtoService<>(ApplicationUserJpaDto.class, beanLoader);
         this.binder = new Binder<>(ChangePasswordCommand.class);
 
         this.binder.setBean(
@@ -51,7 +57,7 @@ public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
     protected ApplicationUserJpaDto save() {
         var updatedUser = applicationUserService.changePassword(binder.getBean());
 
-        return jpaDTOService.getById(updatedUser.id());
+        return jpaDtoService.getById(updatedUser.id());
     }
 
     @Override

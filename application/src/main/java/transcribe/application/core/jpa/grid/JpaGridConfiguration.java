@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.dto.JpaDtoService;
+import transcribe.core.core.bean.loader.BeanLoader;
 
 @Data
 @Builder
@@ -17,6 +18,7 @@ public class JpaGridConfiguration<DTO, ENTITY, ID> {
 
     private Class<DTO> beanType;
     private JpaDtoService<DTO, ENTITY, ID> service;
+    private BeanLoader beanLoader;
     @Nullable
     private Specification<ENTITY> defaultSpecification;
     @Nullable

@@ -21,7 +21,7 @@ import transcribe.application.core.component.HelperDownloadAnchor;
 import transcribe.application.core.dialog.EnhancedDialog;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.core.spring.SpringContext;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.core.utils.TsEnums;
 import transcribe.core.document.exporter.DocumentExporter;
 import transcribe.domain.operation.data.OperationType;
@@ -42,15 +42,18 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
     private final Binder<DownloadBean> binder;
 
     public DownloadTranscriptDialog(Long transcriptionId,
-                                    HelperDownloadAnchor.Factory helperDownloadAnchorFactory) {
-        Objects.requireNonNull(transcriptionId);
-        this.helperDownloadAnchorFactory = Objects.requireNonNull(helperDownloadAnchorFactory);
-        this.documentExporter = SpringContext.getBean(DocumentExporter.class);
-        this.operationRunner = SpringContext.getBean(OperationRunner.class);
-        this.transcriptionManager = SpringContext.getBean(TranscriptionManager.class);
+                                    HelperDownloadAnchor.Factory helperDownloadAnchorFactory,
+                                    BeanLoader beanLoader) {
+        Objects.requireNonNull(transcriptionId, "transcriptionId");
+        Objects.requireNonNull(helperDownloadAnchorFactory, "helperDownloadAnchorFactory");
+
+        this.helperDownloadAnchorFactory = helperDownloadAnchorFactory;
+        this.documentExporter = beanLoader.load(DocumentExporter.class);
+        this.operationRunner = beanLoader.load(OperationRunner.class);
+        this.transcriptionManager = beanLoader.load(TranscriptionManager.class);
         this.binder = new Binder<>(DownloadBean.class);
 
-        var transcription = SpringContext.getBean(TranscriptionService.class)
+        var transcription = beanLoader.load(TranscriptionService.class)
                 .projectById(transcriptionId);
 
         binder.setBean(

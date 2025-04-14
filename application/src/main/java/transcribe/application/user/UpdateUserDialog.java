@@ -10,11 +10,14 @@ import lombok.SneakyThrows;
 import transcribe.application.core.jpa.dialog.save.JpaSaveDialog;
 import transcribe.application.core.jpa.dto.JpaDtoService;
 import transcribe.application.core.jpa.dto.impl.SimpleJpaDtoService;
-import transcribe.application.core.spring.SpringContext;
+import transcribe.application.core.operation.OperationRunner;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.application_user.data.ApplicationUserEntity;
 import transcribe.domain.application_user.data.Role;
 import transcribe.domain.application_user.service.ApplicationUserService;
 import transcribe.domain.application_user.service.UpdateApplicationUserCommand;
+
+import java.util.Objects;
 
 public class UpdateUserDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
 
@@ -22,13 +25,17 @@ public class UpdateUserDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
     private final JpaDtoService<ApplicationUserJpaDto, ApplicationUserEntity, Long> jpaDtoService;
     private final Binder<UpdateApplicationUserCommand> binder;
 
-    public UpdateUserDialog(ApplicationUserJpaDto applicationUser) {
-        super(ApplicationUserJpaDto.class);
-        this.applicationUserService = SpringContext.getBean(ApplicationUserService.class);
-        this.jpaDtoService = SimpleJpaDtoService.ofBeanType(ApplicationUserJpaDto.class);
+    public UpdateUserDialog(ApplicationUserJpaDto applicationUser, BeanLoader beanLoader) {
+        super(ApplicationUserJpaDto.class, beanLoader.load(OperationRunner.class));
+        Objects.requireNonNull(applicationUser, "applicationUser");
+
+        this.applicationUserService = beanLoader.load(ApplicationUserService.class);
+        this.jpaDtoService = new SimpleJpaDtoService<>(ApplicationUserJpaDto.class, beanLoader);
         this.binder = new Binder<>(UpdateApplicationUserCommand.class);
 
-        this.binder.setBean(SpringContext.getBean(ApplicationUserJpaDtoMapper.class).toUpdateCommand(applicationUser));
+        var command = beanLoader.load(ApplicationUserJpaDtoMapper.class)
+                .toUpdateCommand(applicationUser);
+        this.binder.setBean(command);
 
         var usernameField = new TextField("Username");
         binder.forField(usernameField)

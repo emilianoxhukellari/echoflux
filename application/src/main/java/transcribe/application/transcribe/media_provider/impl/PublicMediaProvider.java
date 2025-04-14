@@ -13,12 +13,12 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import lombok.Data;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import transcribe.application.core.dialog.Dialogs;
+import transcribe.application.core.dialog.TsDialogs;
 import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationRunner;
-import transcribe.application.core.spring.SpringContext;
 import transcribe.application.transcribe.media_provider.MediaProvider;
 import transcribe.application.transcribe.media_provider.MediaValue;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.core.core.utils.TsUris;
 import transcribe.core.media.downloader.MediaDownloader;
 import transcribe.core.media.downloader.MediaFindResult;
@@ -26,6 +26,7 @@ import transcribe.core.core.utils.TsFunctions;
 import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -38,9 +39,11 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     private Consumer<MediaValue> onReady;
     private Runnable onClientCleared;
 
-    public PublicMediaProvider() {
-        this.mediaDownloader = SpringContext.getBean(MediaDownloader.class);
-        this.operationRunner = SpringContext.getBean(OperationRunner.class);
+    public PublicMediaProvider(BeanLoader beanLoader) {
+        Objects.requireNonNull(beanLoader, "beanLoader");
+
+        this.mediaDownloader = beanLoader.load(MediaDownloader.class);
+        this.operationRunner = beanLoader.load(OperationRunner.class);
 
         var binder = new Binder<SearchUri>();
         binder.setBean(new SearchUri());
@@ -87,7 +90,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 .callable(() -> mediaDownloader.find(TsUris.newUri(searchUri.getValue())))
                 .onSuccess(r -> {
                     if (r.isEmpty()) {
-                        Dialogs.info("Media not found", "Please make sure the URL is correct.");
+                        TsDialogs.info("Media not found", "Please make sure the URL is correct.");
                     } else {
                         setMediaResult(r.get());
                         TsFunctions.consumeIfPresent(
@@ -96,7 +99,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                         );
                     }
                 })
-                .onError(_ -> Dialogs.info("Media not found", "Please make sure the URL is correct."))
+                .onError(_ -> TsDialogs.info("Media not found", "Please make sure the URL is correct."))
                 .onErrorNotify(false)
                 .onSuccessNotify(false)
                 .timeout(Duration.ofMinutes(1))

@@ -1,8 +1,9 @@
 package transcribe.application.core.error;
 
-import transcribe.application.core.spring.SpringContext;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.core.core.error.PropagatedException;
+
+import java.util.Objects;
 
 public final class MoreErrors {
 
@@ -18,12 +19,15 @@ public final class MoreErrors {
         return false;
     }
 
-    public static String resolveErrorMessage(Throwable e) {
-        if (SpringContext.getBean(AuthenticatedUser.class).isAdmin()) {
-            return e.getMessage();
+    public static String resolveErrorMessage(Throwable throwable, AuthenticatedUser authenticatedUser) {
+        Objects.requireNonNull(throwable, "throwable");
+        Objects.requireNonNull(authenticatedUser, "authenticatedUser");
+
+        if (authenticatedUser.isAdmin()) {
+            return throwable.getMessage();
         } else {
-            if (isPropagated(e)) {
-                return e.getCause().getMessage();
+            if (isPropagated(throwable)) {
+                return throwable.getCause().getMessage();
             } else {
                 return "An error occurred. Please try again or contact support.";
             }

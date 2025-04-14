@@ -13,4 +13,6 @@ public interface BeanLoader {
 
     <T> T loadWhen(@NotNull Class<T> beanType, @NotNull Predicate<T> predicate);
 
+    <T> T load(@NotNull Class<T> beanType);
+
 }

@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import transcribe.core.core.bean.loader.BeanLoader;
+import transcribe.core.core.validate.guard.Guard;
 
-import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -18,10 +18,15 @@ public class BeanLoaderImpl implements BeanLoader {
 
     @Override
     public <T> Optional<T> findWhen(Class<T> beanType, Predicate<T> predicate) {
-        return Arrays.stream(applicationContext.getBeanNamesForType(beanType))
-                .map(name -> applicationContext.getBean(name, beanType))
+        var all = applicationContext.getBeansOfType(beanType)
+                .values()
+                .stream()
                 .filter(predicate)
-                .findFirst();
+                .toList();
+
+        Guard.singleElement(all, "More than one bean of type [%s] found", beanType.getName());
+
+        return Optional.of(all.getFirst());
     }
 
     @Override
@@ -29,6 +34,15 @@ public class BeanLoaderImpl implements BeanLoader {
         return findWhen(beanType, predicate).orElseThrow(
                 () -> new NoSuchElementException("No bean of type [%s] found".formatted(beanType.getName()))
         );
+    }
+
+    @Override
+    public <T> T load(Class<T> beanType) {
+        var names = applicationContext.getBeanNamesForType(beanType);
+
+        Guard.singleElement(names, "More than one bean of type [%s] found", beanType.getName());
+
+        return applicationContext.getBean(names[0], beanType);
     }
 
 }

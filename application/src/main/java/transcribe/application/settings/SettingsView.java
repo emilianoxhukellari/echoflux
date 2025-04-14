@@ -17,6 +17,7 @@ import transcribe.application.core.operation.Operation;
 import transcribe.application.core.operation.OperationCallable;
 import transcribe.application.core.operation.OperationRunner;
 import transcribe.application.layout.MainLayout;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.operation.data.OperationType;
 import transcribe.domain.settings.data.SettingsEntity;
 import transcribe.domain.settings.data.SettingsProjection;
@@ -29,12 +30,16 @@ public class SettingsView extends Composite<VerticalLayout> {
 
     private final SettingsSynchronizer synchronizer;
     private final OperationRunner operationRunner;
+    private final BeanLoader beanLoader;
     private final SimpleJpaDtoService<SettingsJpaDto, SettingsEntity, Long> jpaDtoService;
 
-    public SettingsView(SettingsSynchronizer synchronizer, OperationRunner operationRunner) {
-        this.jpaDtoService = SimpleJpaDtoService.ofBeanType(SettingsJpaDto.class);
+    public SettingsView(SettingsSynchronizer synchronizer,
+                        OperationRunner operationRunner,
+                        BeanLoader beanLoader) {
         this.synchronizer = synchronizer;
         this.operationRunner = operationRunner;
+        this.beanLoader = beanLoader;
+        this.jpaDtoService = new SimpleJpaDtoService<>(SettingsJpaDto.class, beanLoader);
 
         var grid = newGrid();
         var controls = newGridControls(grid);
@@ -47,6 +52,7 @@ public class SettingsView extends Composite<VerticalLayout> {
                 JpaGridConfiguration.<SettingsJpaDto, SettingsEntity, Long>builder()
                         .beanType(SettingsJpaDto.class)
                         .service(jpaDtoService)
+                        .beanLoader(beanLoader)
                         .defaultSortAttribute("name")
                         .defaultSortDirection(Sort.Direction.ASC)
                         .build()

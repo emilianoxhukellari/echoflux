@@ -9,14 +9,15 @@ import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.layout.MainLayout;
+import transcribe.core.core.bean.loader.BeanLoader;
 
 @PageTitle("Transcriptions")
 @Route(value = "transcriptions", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class TranscriptionsView extends Composite<VerticalLayout> {
 
-    public TranscriptionsView() {
-        var grid = new JpaGrid<>(TranscriptionJpaDto.class);
+    public TranscriptionsView(BeanLoader beanLoader) {
+        var grid = new JpaGrid<>(TranscriptionJpaDto.class, beanLoader);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
         grid.addAllFilters();

@@ -8,14 +8,15 @@ import jakarta.annotation.security.RolesAllowed;
 import transcribe.application.core.jpa.grid.JpaGrid;
 import transcribe.application.core.jpa.grid.JpaGridControls;
 import transcribe.application.layout.MainLayout;
+import transcribe.core.core.bean.loader.BeanLoader;
 
 @PageTitle("Templates")
 @Route(value = "templates", layout = MainLayout.class)
 @RolesAllowed("ADMIN")
 public class TemplatesView extends Composite<VerticalLayout> {
 
-    public TemplatesView() {
-        var grid = new JpaGrid<>(TemplateJpaDto.class);
+    public TemplatesView(BeanLoader beanLoader) {
+        var grid = new JpaGrid<>(TemplateJpaDto.class, beanLoader);
         grid.addAllColumns();
         grid.setAllColumnsResizable();
         grid.addAllFilters();

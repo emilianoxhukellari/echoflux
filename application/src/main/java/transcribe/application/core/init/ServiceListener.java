@@ -5,14 +5,19 @@ import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.SessionInitEvent;
 import com.vaadin.flow.server.UIInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import transcribe.application.core.dialog.Dialogs;
+import transcribe.application.core.dialog.TsDialogs;
 import transcribe.application.core.ui.UiUtils;
+import transcribe.application.security.AuthenticatedUser;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ServiceListener implements VaadinServiceInitListener {
+
+    private final AuthenticatedUser authenticatedUser;
 
     @Override
     public void serviceInit(ServiceInitEvent event) {
@@ -23,11 +28,12 @@ public class ServiceListener implements VaadinServiceInitListener {
     private void initSession(SessionInitEvent event) {
         event.getSession().setErrorHandler(e -> {
                     log.error("Session error: ", e.getThrowable());
-                    UiUtils.safeAccess(UI.getCurrent(), () -> Dialogs.error(e.getThrowable()));
+                    UiUtils.safeAccess(
+                            UI.getCurrent(),
+                            () -> TsDialogs.error(e.getThrowable(), authenticatedUser)
+                    );
                 }
         );
-
-        log.info("Session initialized");
     }
 
     private void initUI(UIInitEvent event) {

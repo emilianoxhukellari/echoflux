@@ -9,6 +9,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.transcribe.media_provider.MediaValue;
 import transcribe.application.transcribe.media_provider.impl.PublicMediaProvider;
 import transcribe.application.transcribe.media_provider.impl.LocalMediaProvider;
+import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.transcription.data.MediaOrigin;
 
 import java.util.Optional;
@@ -19,11 +20,11 @@ public class MediaField extends CustomField<MediaValue> {
     private final PublicMediaProvider publicMedia;
     private final TabSheet tabSheet;
 
-    public MediaField() {
+    public MediaField(BeanLoader beanLoader) {
         localMedia = new LocalMediaProvider();
         localMedia.setHeight("180px");
 
-        publicMedia = new PublicMediaProvider();
+        publicMedia = new PublicMediaProvider(beanLoader);
         publicMedia.setHeight("180px");
 
         localMedia.onReady(r -> {

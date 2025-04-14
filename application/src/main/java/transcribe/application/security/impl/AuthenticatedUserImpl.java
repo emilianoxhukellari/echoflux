@@ -2,7 +2,6 @@ package transcribe.application.security.impl;
 
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import transcribe.application.security.AuthenticatedUser;
@@ -15,7 +14,6 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class AuthenticatedUserImpl implements AuthenticatedUser {
 
     private final ApplicationUserRepository applicationUserRepository;
