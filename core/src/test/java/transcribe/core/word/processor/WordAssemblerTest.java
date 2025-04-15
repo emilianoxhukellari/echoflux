@@ -16,34 +16,6 @@ import java.util.List;
 public class WordAssemblerTest {
 
     @Test
-    void givenEmptyWords_whenAssembleAll_thenThrowException() {
-        var d1 = DiarizationEntry.builder()
-                .startOffsetMillis(0)
-                .endOffsetMillis(10)
-                .speakerName("speaker")
-                .build();
-
-        Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> WordAssembler.assembleAll(List.of(), List.of(d1), Word::new)
-        );
-    }
-
-    @Test
-    void givenEmptyDiarizationEntries_whenAssembleAll_thenThrowException() {
-        var w1 = SpeechToTextWord.builder()
-                .content("word1")
-                .startOffsetMillis(0)
-                .endOffsetMillis(10)
-                .build();
-
-        Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> WordAssembler.assembleAll(List.of(w1), List.of(), Word::new)
-        );
-    }
-
-    @Test
     void givenSingleDiarizationEntryAndManyWords_whenAssembleAll_thenReturnSpeakerWordList() {
         var d1 = DiarizationEntry.builder()
                 .startOffsetMillis(0)

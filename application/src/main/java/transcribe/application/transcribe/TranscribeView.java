@@ -17,6 +17,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.springframework.data.jpa.domain.Specification;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import transcribe.application.core.component.HelperDownloadAnchor;
 import transcribe.application.core.icon.IconFactory;
@@ -31,9 +32,11 @@ import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcription.TranscriptionJpaDto;
 import transcribe.application.transcription.TranscriptionView;
 import transcribe.core.core.bean.loader.BeanLoader;
+import transcribe.domain.application_user.data.ApplicationUserEntity_;
 import transcribe.domain.core.broadcaster.Broadcaster;
 import transcribe.domain.core.broadcaster.Subscription;
 import transcribe.domain.transcription.data.TranscriptionEntity;
+import transcribe.domain.transcription.data.TranscriptionEntity_;
 import transcribe.domain.transcription.event.TranscriptionCreateUserEvent;
 import transcribe.domain.transcription.event.TranscriptionUpdateUserEvent;
 
@@ -59,13 +62,15 @@ public class TranscribeView extends Composite<VerticalLayout> {
         this.applicationUserId = authenticatedUser.get().getId();
         this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(getContent());
 
+        Specification<TranscriptionEntity> defaultSpecification = (r, _, c)
+                -> c.equal(r.get(TranscriptionEntity_.APPLICATION_USER).get(ApplicationUserEntity_.ID), applicationUserId);
+
         this.grid = new JpaGrid<>(
                 JpaGridConfiguration.<TranscriptionJpaDto, TranscriptionEntity, Long>builder()
                         .beanType(TranscriptionJpaDto.class)
                         .service(new SimpleJpaDtoService<>(TranscriptionJpaDto.class, beanLoader))
                         .beanLoader(beanLoader)
-                        .defaultSpecification((root, _, criteriaBuilder)
-                                -> criteriaBuilder.equal(root.get("applicationUser").get("id"), applicationUserId))
+                        .defaultSpecification(defaultSpecification)
                         .build()
         );
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
