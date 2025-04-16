@@ -25,7 +25,9 @@ public final class ProjectionInterfaceGenerator {
 
     public void generate() {
         var elementUtils = processingEnv.getElementUtils();
-        var packageName = elementUtils.getPackageOf(sourceTypeElement).getQualifiedName().toString();
+        var packageName = elementUtils.getPackageOf(sourceTypeElement)
+                .getQualifiedName()
+                .toString();
         var interfaceName = sourceTypeElement.getSimpleName() + "ProjectionInterface";
 
         try {

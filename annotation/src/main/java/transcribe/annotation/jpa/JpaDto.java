@@ -1,5 +1,6 @@
 package transcribe.annotation.jpa;
 
+import transcribe.annotation.metamodel.MetamodelSupport;
 import transcribe.annotation.projection.ProjectionInterfaceSupport;
 
 import java.lang.annotation.ElementType;
@@ -28,5 +29,10 @@ public @interface JpaDto {
      * Equivalent to using {@link ProjectionInterfaceSupport}.
      * */
     boolean withProjectionInterfaceSupport () default true;
+
+    /**
+     * Equivalent to using {@link MetamodelSupport}.
+     * */
+    boolean withMetamodelSupport() default true;
 
 }

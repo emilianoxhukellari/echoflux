@@ -17,7 +17,7 @@ import java.util.Set;
 
 @JpaDto(
         entityBeanType = ApplicationUserEntity.class,
-        hiddenFields = {"password"}
+        hiddenFields = {ApplicationUserJpaDto_.PASSWORD}
 )
 @Data
 @Builder

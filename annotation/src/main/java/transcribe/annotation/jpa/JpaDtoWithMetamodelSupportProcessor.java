@@ -1,8 +1,8 @@
 package transcribe.annotation.jpa;
 
 import com.google.auto.service.AutoService;
-import transcribe.annotation.projection.ProjectionInterfaceGenerator;
-import transcribe.annotation.projection.ProjectionInterfaceSupport;
+import transcribe.annotation.metamodel.MetamodelGenerator;
+import transcribe.annotation.metamodel.MetamodelSupport;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
@@ -18,7 +18,7 @@ import java.util.Set;
 @SupportedSourceVersion(SourceVersion.RELEASE_24)
 @AutoService(Processor.class)
 @SuppressWarnings("unused")
-public class JpaDtoWithProjectionInterfaceSupportProcessor extends AbstractProcessor {
+public class JpaDtoWithMetamodelSupportProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -31,19 +31,20 @@ public class JpaDtoWithProjectionInterfaceSupportProcessor extends AbstractProce
         for (var element : elements) {
             var jpaDto = element.getAnnotation(JpaDto.class);
 
-            if (!jpaDto.withProjectionInterfaceSupport()) {
+            if (!jpaDto.withMetamodelSupport()) {
                 continue;
             }
 
-            if (element.getAnnotation(ProjectionInterfaceSupport.class) != null) {
+            if (element.getAnnotation(MetamodelSupport.class) != null) {
                 continue;
             }
 
-            new ProjectionInterfaceGenerator(element, processingEnv)
+            new MetamodelGenerator(element, processingEnv)
                     .generate();
         }
 
         return false;
     }
+
 
 }

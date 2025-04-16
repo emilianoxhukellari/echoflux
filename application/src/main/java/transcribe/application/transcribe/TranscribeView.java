@@ -30,6 +30,7 @@ import transcribe.application.core.ui.UiUtils;
 import transcribe.application.layout.MainLayout;
 import transcribe.application.security.AuthenticatedUser;
 import transcribe.application.transcription.TranscriptionJpaDto;
+import transcribe.application.transcription.TranscriptionJpaDto_;
 import transcribe.application.transcription.TranscriptionView;
 import transcribe.core.core.bean.loader.BeanLoader;
 import transcribe.domain.application_user.data.ApplicationUserEntity_;
@@ -62,8 +63,9 @@ public class TranscribeView extends Composite<VerticalLayout> {
         this.applicationUserId = authenticatedUser.get().getId();
         this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(getContent());
 
-        Specification<TranscriptionEntity> defaultSpecification = (r, _, c)
-                -> c.equal(r.get(TranscriptionEntity_.APPLICATION_USER).get(ApplicationUserEntity_.ID), applicationUserId);
+        Specification<TranscriptionEntity> defaultSpecification = (root, _, criteriaBuilder) -> criteriaBuilder.equal(
+                root.get(TranscriptionEntity_.APPLICATION_USER).get(ApplicationUserEntity_.ID), applicationUserId
+        );
 
         this.grid = new JpaGrid<>(
                 JpaGridConfiguration.<TranscriptionJpaDto, TranscriptionEntity, Long>builder()
@@ -75,14 +77,14 @@ public class TranscribeView extends Composite<VerticalLayout> {
         );
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
         grid.addClassName("body-cell-cursor-pointer");
-        grid.addColumn("name")
+        grid.addColumn(TranscriptionJpaDto_.NAME)
                 .setWidth("25rem");
-        grid.addColumn("language");
-        grid.addColumn("createdAt")
+        grid.addColumn(TranscriptionJpaDto_.LANGUAGE);
+        grid.addColumn(TranscriptionJpaDto_.CREATED_AT)
                 .setHeader("Date");
-        grid.addColumn("length")
+        grid.addColumn(TranscriptionJpaDto_.LENGTH)
                 .setHeader("Length");
-        grid.addColumn("status")
+        grid.addColumn(TranscriptionJpaDto_.STATUS)
                 .setSortable(false);
         grid.addComponentColumn(TranscribeView::newProgress)
                 .setWidth("6rem");
@@ -90,7 +92,11 @@ public class TranscribeView extends Composite<VerticalLayout> {
                 .setWidth("6rem");
 
         grid.setAllColumnsResizable();
-        grid.addFilters("name", "language", "createdAt");
+        grid.addFilters(
+                TranscriptionJpaDto_.NAME,
+                TranscriptionJpaDto_.LANGUAGE,
+                TranscriptionJpaDto_.CREATED_AT
+        );
         grid.addItemClickListener(
                 e -> UI.getCurrent().navigate(TranscriptionView.class, e.getItem().getId())
         );

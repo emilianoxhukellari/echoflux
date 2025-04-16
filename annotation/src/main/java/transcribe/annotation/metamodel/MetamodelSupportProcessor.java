@@ -1,8 +1,6 @@
-package transcribe.annotation.jpa;
+package transcribe.annotation.metamodel;
 
 import com.google.auto.service.AutoService;
-import transcribe.annotation.projection.ProjectionInterfaceGenerator;
-import transcribe.annotation.projection.ProjectionInterfaceSupport;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
@@ -14,36 +12,25 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import java.util.Set;
 
-@SupportedAnnotationTypes("transcribe.annotation.jpa.JpaDto")
+@SupportedAnnotationTypes("transcribe.annotation.jpa.metamodel.MetamodelSupport")
 @SupportedSourceVersion(SourceVersion.RELEASE_24)
 @AutoService(Processor.class)
 @SuppressWarnings("unused")
-public class JpaDtoWithProjectionInterfaceSupportProcessor extends AbstractProcessor {
+public class MetamodelSupportProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        var elements = roundEnv.getElementsAnnotatedWith(JpaDto.class)
+        var elements = roundEnv.getElementsAnnotatedWith(MetamodelSupport.class)
                 .stream()
                 .filter(e -> e.getKind() == ElementKind.CLASS)
                 .map(TypeElement.class::cast)
                 .toList();
 
         for (var element : elements) {
-            var jpaDto = element.getAnnotation(JpaDto.class);
-
-            if (!jpaDto.withProjectionInterfaceSupport()) {
-                continue;
-            }
-
-            if (element.getAnnotation(ProjectionInterfaceSupport.class) != null) {
-                continue;
-            }
-
-            new ProjectionInterfaceGenerator(element, processingEnv)
-                    .generate();
+            new MetamodelGenerator(element, processingEnv).generate();
         }
 
-        return false;
+        return true;
     }
 
 }

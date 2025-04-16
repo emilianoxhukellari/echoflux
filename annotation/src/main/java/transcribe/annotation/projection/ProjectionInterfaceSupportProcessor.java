@@ -27,8 +27,7 @@ public class ProjectionInterfaceSupportProcessor extends AbstractProcessor {
                 .toList();
 
         for (var element : elements) {
-            new ProjectionInterfaceGenerator(element, processingEnv)
-                    .generate();
+            new ProjectionInterfaceGenerator(element, processingEnv).generate();
         }
 
         return true;

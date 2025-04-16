@@ -53,17 +53,17 @@ public class SettingsView extends Composite<VerticalLayout> {
                         .beanType(SettingsJpaDto.class)
                         .service(jpaDtoService)
                         .beanLoader(beanLoader)
-                        .defaultSortAttribute("name")
+                        .defaultSortAttribute(SettingsJpaDto_.NAME)
                         .defaultSortDirection(Sort.Direction.ASC)
                         .build()
         );
 
-        grid.addCoreAttributeColumnsExcluding("value");
+        grid.addCoreAttributeColumnsExcluding(SettingsJpaDto_.VALUE);
         grid.addAuditColumns();
         grid.addIdColumn();
         grid.setAllColumnsResizable();
 
-        grid.addCoreAttributeFiltersExcluding("value");
+        grid.addCoreAttributeFiltersExcluding(SettingsJpaDto_.VALUE);
         grid.addAuditFilters();
         grid.addIdFilter();
 
