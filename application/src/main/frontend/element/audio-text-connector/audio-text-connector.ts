@@ -12,7 +12,7 @@ import '@vaadin/scroller';
 import {dialogRenderer} from "@vaadin/dialog/lit";
 import 'Frontend/element/audio-text-connector/speaker-segment.ts';
 import 'Frontend/element/la-ball-clip-rotate-pulse.ts';
-import 'Frontend/element/ts-audio/ts-audio.ts';
+import 'Frontend/element/ef-audio/ef-audio.ts';
 import {SpeakerSegmentDto} from 'Frontend/element/audio-text-connector/SpeakerSegmentDto';
 import {WordDto} from 'Frontend/element/audio-text-connector/WordDto';
 import {AudioTextConnectorBackend} from "Frontend/element/audio-text-connector/AudioTextConnectorBackend";
@@ -95,7 +95,7 @@ export class AudioTextConnector extends LitElement {
                                  scroll-direction="vertical">
                     ${this.renderSegments()}
                 </vaadin-scroller>
-                <ts-audio id="tsAudio"
+                <ef-audio id="tsAudio"
                           .src="${this.audioSrc}"
                           .seekPosition="${this.seekPosition}"
                           @time-update="${(e: CustomEvent) => this.timeMillis = e.detail}"/>

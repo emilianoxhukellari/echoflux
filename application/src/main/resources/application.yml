@@ -4,11 +4,11 @@ server:
 
 logging:
   level:
-    transcribe: info
+    echoflux: info
 
 vaadin:
   launch-browser: true
-  allowed-packages: com.vaadin,org.vaadin,transcribe
+  allowed-packages: com.vaadin,org.vaadin,echoflux
   async-supported: true
   frontend:
     hotdeploy: true
