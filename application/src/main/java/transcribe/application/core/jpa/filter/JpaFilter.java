@@ -1,12 +1,10 @@
 package transcribe.application.core.jpa.filter;
-
-
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import lombok.Getter;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
 
-public abstract class JpaFilter<ENTITY> {
+public abstract class JpaFilter<ENTITY> extends HorizontalLayout {
 
     @Getter
     protected final String attribute;
@@ -18,11 +16,12 @@ public abstract class JpaFilter<ENTITY> {
         this.attribute = Validate.notBlank(attribute);
         this.property = Validate.notBlank(property);
         this.asCollection = ofCollection;
+
+        setPadding(false);
+        setSpacing(false);
     }
 
     public abstract Specification<ENTITY> getSpecification();
-
-    public abstract Component getComponent();
 
     public abstract void addValueChangeListener(Runnable listener);
 

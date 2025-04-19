@@ -69,7 +69,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             }
         });
-        searchUri.setValueChangeMode(ValueChangeMode.EAGER);
+        searchUri.setValueChangeMode(ValueChangeMode.LAZY);
 
         this.searchContainer = new HorizontalLayout();
         searchContainer.setPadding(false);

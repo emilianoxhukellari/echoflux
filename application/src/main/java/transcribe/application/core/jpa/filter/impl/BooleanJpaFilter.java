@@ -1,12 +1,13 @@
 package transcribe.application.core.jpa.filter.impl;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.combobox.ComboBox;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import transcribe.application.core.jpa.filter.JpaFilter;
 import transcribe.application.core.jpa.filter.JpaFilterUtils;
+import transcribe.core.core.display_name.DisplayName;
+import transcribe.core.core.utils.TsEnums;
 
 public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
@@ -17,10 +18,11 @@ public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
         this.comboBox = new ComboBox<>();
         comboBox.setItems(BooleanState.values());
-        comboBox.setItemLabelGenerator(BooleanState::getPrettyName);
+        comboBox.setItemLabelGenerator(TsEnums::toDisplayName);
         comboBox.setPlaceholder("Filter");
-        comboBox.setWidth("10.6rem");
         comboBox.setClearButtonVisible(true);
+
+        addAndExpand(comboBox);
     }
 
     @Override
@@ -37,11 +39,6 @@ public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
     }
 
     @Override
-    public Component getComponent() {
-        return comboBox;
-    }
-
-    @Override
     public void addValueChangeListener(Runnable listener) {
         comboBox.addValueChangeListener(_ -> listener.run());
     }
@@ -55,12 +52,16 @@ public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
     @RequiredArgsConstructor
     private enum BooleanState {
 
-        TRUE(Boolean.TRUE, "True"),
-        FALSE(Boolean.FALSE, "False"),
-        UNSET(null, "Unset");
+        @DisplayName("True")
+        TRUE(Boolean.TRUE),
+
+        @DisplayName("False")
+        FALSE(Boolean.FALSE),
+
+        @DisplayName("Unset")
+        UNSET(null);
 
         private final Boolean booleanValue;
-        private final String prettyName;
 
     }
 

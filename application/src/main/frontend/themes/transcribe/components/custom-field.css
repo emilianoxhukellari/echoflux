@@ -2,6 +2,11 @@ vaadin-custom-field.before-error-message::part(error-message)::before {
     height: 0.4em;
 }
 
+
+vaadin-custom-field::part(input-fields) {
+    padding: 0;
+}
+
 .custom-field-icon {
     transition: color 0.2s ease;
 }

@@ -1,6 +1,5 @@
 package transcribe.application.core.jpa.filter.impl;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.datepicker.DatePickerVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -9,7 +8,6 @@ import java.time.LocalDate;
 
 public class LocalDateJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, LocalDate> {
 
-    private final VerticalLayout layout;
     private final DatePicker from;
     private final DatePicker to;
 
@@ -20,15 +18,19 @@ public class LocalDateJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, LocalDa
         from.addThemeVariants(DatePickerVariant.LUMO_SMALL);
         from.setPlaceholder("From date");
         from.setClearButtonVisible(true);
+        from.setWidthFull();
 
         this.to = new DatePicker();
         to.addThemeVariants(DatePickerVariant.LUMO_SMALL);
         to.setPlaceholder("To date");
         to.setClearButtonVisible(true);
+        to.setWidthFull();
 
-        this.layout = new VerticalLayout(from, to);
+        var layout = new VerticalLayout(from, to);
         layout.setPadding(false);
         layout.setSpacing(false);
+
+        addAndExpand(layout);
     }
 
     @Override
@@ -39,11 +41,6 @@ public class LocalDateJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, LocalDa
     @Override
     protected LocalDate getTo() {
         return to.getValue();
-    }
-
-    @Override
-    public Component getComponent() {
-        return layout;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package transcribe.application.core.jpa.filter.impl;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import jakarta.persistence.criteria.JoinType;
@@ -19,9 +18,11 @@ public class TextJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
         this.textField = new TextField();
 
         textField.setPlaceholder("Filter");
-        textField.setWidth("10.6rem");
         textField.setClearButtonVisible(true);
-        textField.setValueChangeMode(ValueChangeMode.EAGER);
+        textField.setValueChangeMode(ValueChangeMode.LAZY);
+        textField.setMinWidth("0");
+
+        addAndExpand(textField);
     }
 
     @Override
@@ -36,11 +37,6 @@ public class TextJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
                 criteriaBuilder.like(criteriaBuilder.lower(root.join(attribute, JoinType.LEFT).as(String.class)), pattern)
                 : (root, _, criteriaBuilder) ->
                 criteriaBuilder.like(criteriaBuilder.lower(JpaFilterUtils.get(root, attribute).as(String.class)), pattern);
-    }
-
-    @Override
-    public Component getComponent() {
-        return textField;
     }
 
     @Override

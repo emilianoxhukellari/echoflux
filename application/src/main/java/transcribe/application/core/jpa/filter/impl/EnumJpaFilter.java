@@ -1,6 +1,5 @@
 package transcribe.application.core.jpa.filter.impl;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.combobox.ComboBox;
 import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,8 +20,10 @@ public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
         comboBox.setItems(TsArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
         comboBox.setItemLabelGenerator(TsEnums::toDisplayName);
         comboBox.setPlaceholder("Filter");
-        comboBox.setWidth("10.6rem");
         comboBox.setClearButtonVisible(true);
+        comboBox.setMinWidth("0");
+
+        addAndExpand(comboBox);
     }
 
     @Override
@@ -36,11 +37,6 @@ public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
                 -> criteriaBuilder.isMember(comboBox.getValue(), JpaFilterUtils.get(root, attribute))
                 : (root, _, criteriaBuilder)
                 -> criteriaBuilder.equal(JpaFilterUtils.get(root, attribute), comboBox.getValue());
-    }
-
-    @Override
-    public Component getComponent() {
-        return comboBox;
     }
 
     @Override

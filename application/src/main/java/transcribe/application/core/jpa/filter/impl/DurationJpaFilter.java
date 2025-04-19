@@ -1,6 +1,5 @@
 package transcribe.application.core.jpa.filter.impl;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import transcribe.application.core.field.duration.DurationField;
 import transcribe.application.core.field.duration.DurationFieldVariant;
@@ -9,7 +8,6 @@ import java.time.Duration;
 
 public class DurationJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Duration> {
 
-    private final VerticalLayout layout;
     private final DurationField from;
     private final DurationField to;
 
@@ -20,15 +18,19 @@ public class DurationJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Duration
         from.addThemeVariants(DurationFieldVariant.LUMO_SMALL);
         from.setClearButtonVisible(true);
         from.setPlaceholder("From duration");
+        from.setWidthFull();
 
         this.to = new DurationField();
         to.addThemeVariants(DurationFieldVariant.LUMO_SMALL);
         to.setClearButtonVisible(true);
         to.setPlaceholder("To duration");
+        to.setWidthFull();
 
-        this.layout = new VerticalLayout(from, to);
+        var layout = new VerticalLayout(from, to);
         layout.setPadding(false);
         layout.setSpacing(false);
+
+        addAndExpand(layout);
     }
 
     @Override
@@ -39,11 +41,6 @@ public class DurationJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Duration
     @Override
     protected Duration getTo() {
         return to.getValue();
-    }
-
-    @Override
-    public Component getComponent() {
-        return layout;
     }
 
     @Override

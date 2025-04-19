@@ -1,37 +1,37 @@
 package transcribe.application.core.jpa.filter.impl;
 
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 
 public class NumberJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Double> {
 
     private final NumberField from;
     private final NumberField to;
-    private final HorizontalLayout layout;
 
     public NumberJpaFilter(String attribute, String property, boolean asCollection) {
         super(attribute, property, asCollection);
 
         this.from = new NumberField();
+        from.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         from.setPlaceholder("From");
-        from.setValueChangeMode(ValueChangeMode.EAGER);
-        from.setMinWidth("0");
+        from.setValueChangeMode(ValueChangeMode.LAZY);
+        from.setClearButtonVisible(true);
+        from.setWidthFull();
 
         this.to = new NumberField();
+        to.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         to.setPlaceholder("To");
-        to.setValueChangeMode(ValueChangeMode.EAGER);
-        to.setMinWidth("0");
+        to.setValueChangeMode(ValueChangeMode.LAZY);
+        to.setClearButtonVisible(true);
+        to.setWidthFull();
 
-        this.layout = new HorizontalLayout(from, to);
+        var layout = new VerticalLayout(from, to);
         layout.setPadding(false);
         layout.setSpacing(false);
-        layout.getThemeList().add("spacing-s");
-        layout.setWidth("10.6rem");
 
-        layout.setFlexGrow(1, from, to);
-        layout.setFlexShrink(1, from, to);
+        addAndExpand(layout);
     }
 
     @Override
@@ -42,11 +42,6 @@ public class NumberJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Double> {
     @Override
     protected Double getTo() {
         return to.getValue();
-    }
-
-    @Override
-    public Component getComponent() {
-        return layout;
     }
 
     @Override

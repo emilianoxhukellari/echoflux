@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
-    private static final String COLUMN_WIDTH = "13.5rem";
+    private static final String COLUMN_WIDTH = "14.2rem";
 
     @Getter
     private final BeanLoader beanLoader;
@@ -205,16 +205,23 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(this::addFilter);
     }
 
-    public void addFilter(String propertyName) {
+    public JpaFilter<ENTITY> addFilter(String propertyName) {
         Validate.notBlank(propertyName, "Property name cannot be blank");
 
-        addFilter(FilterFactory.newFilter(getPropertyDefinitionRequired(propertyName)));
+        var propertyDefinition = getPropertyDefinitionRequired(propertyName);
+        JpaFilter<ENTITY> filter = FilterFactory.newFilter(propertyDefinition);
+        addFilter(filter);
+
+        return filter;
     }
 
-    public void addFilter(JpaPropertyDefinition<DTO, ?> propertyDefinition) {
+    public JpaFilter<ENTITY> addFilter(JpaPropertyDefinition<DTO, ?> propertyDefinition) {
         Objects.requireNonNull(propertyDefinition, "Property definition cannot be null");
 
-        addFilter(FilterFactory.newFilter(propertyDefinition));
+        JpaFilter<ENTITY> filter = FilterFactory.newFilter(propertyDefinition);
+        addFilter(filter);
+
+        return filter;
     }
 
     public void addFilter(JpaFilter<ENTITY> filter) {
@@ -243,10 +250,9 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     private void addFilterComponent(JpaFilter<ENTITY> filter) {
         var column = getColumnByKey(filter.getProperty());
-        var component = filter.getComponent();
 
         ensureFilterRow().getCell(column)
-                .setComponent(component);
+                .setComponent(filter);
     }
 
     public void addContextMenuItem(String text, Consumer<DTO> onClick) {

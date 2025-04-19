@@ -2,6 +2,7 @@ package transcribe.application.core.field.duration;
 
 import com.vaadin.flow.component.HasPlaceholder;
 import com.vaadin.flow.component.customfield.CustomField;
+import com.vaadin.flow.component.customfield.CustomFieldVariant;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.shared.HasClearButton;
 import com.vaadin.flow.component.shared.HasThemeVariant;
@@ -118,6 +119,7 @@ public class DurationField extends CustomField<Duration>
         for (var variant : variants) {
             if (DurationFieldVariant.LUMO_SMALL.equals(variant)) {
                 durationTextField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
+                addThemeVariants(CustomFieldVariant.LUMO_SMALL);
             }
         }
     }
@@ -129,6 +131,7 @@ public class DurationField extends CustomField<Duration>
         for (var variant : variants) {
             if (DurationFieldVariant.LUMO_SMALL.equals(variant)) {
                 durationTextField.removeThemeVariants(TextFieldVariant.LUMO_SMALL);
+                removeThemeVariants(CustomFieldVariant.LUMO_SMALL);
             }
         }
     }
