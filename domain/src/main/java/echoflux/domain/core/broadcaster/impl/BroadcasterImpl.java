@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
 import echoflux.core.core.executor.MoreExecutors;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFunctions;
 import echoflux.domain.core.broadcaster.Broadcaster;
 import echoflux.domain.core.broadcaster.Subscription;
 
@@ -38,7 +38,7 @@ public class BroadcasterImpl implements Broadcaster {
         lock.lock();
         try {
             for (var c : ListUtils.emptyIfNull(eventSubscribersMap.get(event.getClass()))) {
-                TsFunctions.runQuietly(() -> {
+                EfFunctions.runQuietly(() -> {
                     var casted = (EventConsumer<T>) c;
                     if (casted.condition().test(event)) {
                         executor.execute(() -> casted.consumer().accept(event));
@@ -51,14 +51,14 @@ public class BroadcasterImpl implements Broadcaster {
     }
 
     private void addSynchronized(Class<?> event, EventConsumer<?> consumer) {
-        TsFunctions.runSynchronized(
+        EfFunctions.runSynchronized(
                 () -> eventSubscribersMap.computeIfAbsent(event, _ -> new ArrayList<>()).add(consumer),
                 lock
         );
     }
 
     private void removeSynchronized(Class<?> event, Consumer<?> consumer) {
-        TsFunctions.runSynchronized(
+        EfFunctions.runSynchronized(
                 () -> eventSubscribersMap.get(event).removeIf(c -> c.consumer().equals(consumer)),
                 lock
         );

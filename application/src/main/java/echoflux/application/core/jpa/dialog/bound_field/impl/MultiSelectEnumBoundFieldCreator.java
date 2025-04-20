@@ -11,7 +11,7 @@ import echoflux.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import echoflux.application.core.jpa.core.JpaSupportedType;
 import echoflux.application.core.jpa.dialog.bound_field.BoundFieldCreator;
 import echoflux.core.core.bean.MoreBeans;
-import echoflux.core.core.utils.TsEnums;
+import echoflux.core.core.utils.EfEnums;
 import echoflux.core.core.validate.guard.Guard;
 
 import java.util.Set;
@@ -26,7 +26,7 @@ public class MultiSelectEnumBoundFieldCreator implements BoundFieldCreator {
         var enumType = Guard.enumType(genericType);
 
         var multiSelectComboBox = new MultiSelectComboBox<Enum<?>>(JpaPropertyDefinitionUtils.toDisplayName(property));
-        multiSelectComboBox.setItemLabelGenerator(TsEnums::toDisplayName);
+        multiSelectComboBox.setItemLabelGenerator(EfEnums::toDisplayName);
         multiSelectComboBox.setItems(enumType.getEnumConstants());
 
         @SuppressWarnings("unchecked")

@@ -19,10 +19,10 @@ import echoflux.application.core.operation.OperationRunner;
 import echoflux.application.transcribe.media_provider.MediaProvider;
 import echoflux.application.transcribe.media_provider.MediaValue;
 import echoflux.core.core.bean.loader.BeanLoader;
-import echoflux.core.core.utils.TsUris;
+import echoflux.core.core.utils.EfUris;
 import echoflux.core.media.downloader.MediaDownloader;
 import echoflux.core.media.downloader.MediaFindResult;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFunctions;
 import echoflux.domain.transcription.data.MediaOrigin;
 
 import java.time.Duration;
@@ -87,13 +87,13 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     private void findAndSetMedia() {
         var operation = Operation.<Optional<MediaFindResult>>builder()
                 .name("Finding public media")
-                .callable(() -> mediaDownloader.find(TsUris.newUri(searchUri.getValue())))
+                .callable(() -> mediaDownloader.find(EfUris.newUri(searchUri.getValue())))
                 .onSuccess(r -> {
                     if (r.isEmpty()) {
                         TsDialogs.info("Media not found", "Please make sure the URL is correct.");
                     } else {
                         setMediaResult(r.get());
-                        TsFunctions.consumeIfPresent(
+                        EfFunctions.consumeIfPresent(
                                 onReady,
                                 new MediaValue(r.get().getUri(), r.get().getTitle(), MediaOrigin.PUBLIC)
                         );
@@ -133,7 +133,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         closeButton.addClickListener(_ -> {
             clearAndCleanup();
-            TsFunctions.runIfPresent(onClientCleared);
+            EfFunctions.runIfPresent(onClientCleared);
         });
 
         container.add(closeButton);

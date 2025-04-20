@@ -9,7 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import echoflux.annotation.core.ObjectConvertable;
 import echoflux.annotation.projection.ProjectionInterface;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFunctions;
 
 import java.util.Map;
 import java.util.Objects;
@@ -44,7 +44,7 @@ public class ProjectionInterfaceLoader {
         };
         scanner.addIncludeFilter(new AnnotationTypeFilter(ProjectionInterface.class));
 
-        var timedFind = TsFunctions.getTimed(() -> scanner.findCandidateComponents("transcribe"));
+        var timedFind = EfFunctions.getTimed(() -> scanner.findCandidateComponents("echoflux"));
         var beanDefinitions = timedFind.getResult();
         log.info(
                 "Scanned [{}] projection interfaces in [{}] ms",

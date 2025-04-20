@@ -20,9 +20,9 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/ts?reWriteBatchedInserts=true
-    username: ts
-    password: ts
+    url: jdbc:postgresql://localhost:5432/echoflux?reWriteBatchedInserts=true
+    username: echoflux
+    password: echoflux
     driver-class-name: org.postgresql.Driver
     hikari:
       auto-commit: false
@@ -58,16 +58,14 @@ spring:
     check-template-location: true
 
 gcloud:
-  project-id: 'transcribe-dev-444319'
-  bucket-name: 'transcribe-dev-cloud-storage'
-  temp-bucket-name: 'transcribe-dev-temp-cloud-storage'
+  bucket-name: 'echoflux'
+  temp-bucket-name: 'echoflux-temp'
   speech-endpoint: 'europe-west4-speech.googleapis.com:443'
   ai-platform-endpoint: 'europe-west4-aiplatform.googleapis.com:443'
   location: 'europe-west4'
-  private-key: ${GCLOUD_KEY}
 
 openai:
-  api-key: ${OPENAI_API_KEY}
+  api-key: ${sm@openai-api-key}
 
 yt-dlp:
   execution-path: ${YT_DLP_EXECUTION_PATH}
@@ -77,5 +75,5 @@ ffmpeg:
   ffprobe-execution-path: ${FFPROBE_EXECUTION_PATH}
 
 pyannote:
-  api-key: ${PYANNOTE_API_KEY}
+  api-key: ${sm@pyannote-api-key}
   base-url: 'https://api.pyannote.ai/v1'

@@ -1,8 +1,7 @@
 package echoflux.core.completions.google;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.ServiceOptions;
 import com.google.cloud.vertexai.Transport;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.Candidate;
@@ -15,10 +14,8 @@ import com.google.cloud.vertexai.api.PredictionServiceSettings;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
 import com.google.common.collect.Lists;
-import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 import echoflux.core.completions.CompletionResult;
@@ -29,7 +26,6 @@ import echoflux.core.core.provider.AiProvider;
 import echoflux.core.properties.GoogleCloudProperties;
 import echoflux.core.settings.SettingsLoader;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -102,24 +98,20 @@ public class GoogleCompletions implements Completions, DisposableBean {
     }
 
     private static VertexAI newVertexAI(GoogleCloudProperties properties) {
-        var credentials = newCredentials(properties);
         var grpcChannelProvider = InstantiatingGrpcChannelProvider.newBuilder()
                 .setExecutor(MoreExecutors.virtualThreadExecutor())
                 .build();
 
         return new VertexAI.Builder()
-                .setProjectId(properties.getProjectId())
+                .setProjectId(ServiceOptions.getDefaultProjectId())
                 .setLocation(properties.getLocation())
                 .setApiEndpoint(properties.getAiPlatformEndpoint())
                 .setTransport(Transport.GRPC)
-                .setCredentials(credentials)
                 .setPredictionClientSupplier(() -> newPredictionClient(
-                        credentials,
                         grpcChannelProvider,
                         properties.getAiPlatformEndpoint()
                 ))
                 .setLlmClientSupplier(() -> newUtilityClient(
-                        credentials,
                         grpcChannelProvider,
                         properties.getAiPlatformEndpoint()
                 ))
@@ -127,12 +119,10 @@ public class GoogleCompletions implements Completions, DisposableBean {
     }
 
     @SneakyThrows
-    private static LlmUtilityServiceClient newUtilityClient(GoogleCredentials credentials,
-                                                            InstantiatingGrpcChannelProvider grpcChannelProvider,
+    private static LlmUtilityServiceClient newUtilityClient(InstantiatingGrpcChannelProvider grpcChannelProvider,
                                                             String endpoint) {
         var settings = LlmUtilityServiceSettings.newBuilder()
                 .setTransportChannelProvider(grpcChannelProvider)
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .setEndpoint(endpoint)
                 .build();
 
@@ -140,25 +130,14 @@ public class GoogleCompletions implements Completions, DisposableBean {
     }
 
     @SneakyThrows
-    private static PredictionServiceClient newPredictionClient(GoogleCredentials credentials,
-                                                               InstantiatingGrpcChannelProvider grpcChannelProvider,
+    private static PredictionServiceClient newPredictionClient(InstantiatingGrpcChannelProvider grpcChannelProvider,
                                                                String endpoint) {
         var settings = PredictionServiceSettings.newBuilder()
                 .setTransportChannelProvider(grpcChannelProvider)
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .setEndpoint(endpoint)
                 .build();
 
         return PredictionServiceClient.create(settings);
-    }
-
-    @SneakyThrows
-    private static GoogleCredentials newCredentials(GoogleCloudProperties properties) {
-        @Cleanup
-        var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);
-
-        return GoogleCredentials.fromStream(privateKeyStream)
-                .createScoped(PredictionServiceSettings.getDefaultServiceScopes());
     }
 
     private static Tokens toTokens(GenerateContentResponse response) {

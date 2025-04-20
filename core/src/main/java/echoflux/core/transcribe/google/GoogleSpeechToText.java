@@ -1,10 +1,9 @@
 package echoflux.core.transcribe.google;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.ServiceOptions;
 import com.google.cloud.speech.v2.AutoDetectDecodingConfig;
 import com.google.cloud.speech.v2.BatchRecognizeFileMetadata;
 import com.google.cloud.speech.v2.BatchRecognizeRequest;
@@ -22,13 +21,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
 import echoflux.core.core.executor.MoreExecutors;
 import echoflux.core.core.log.LoggedMethodExecution;
 import echoflux.core.core.provider.AiProvider;
-import echoflux.core.core.utils.TsLists;
+import echoflux.core.core.utils.EfLists;
 import echoflux.core.properties.GoogleCloudProperties;
 import echoflux.core.settings.SettingsLoader;
 import echoflux.core.transcribe.SpeechToText;
@@ -36,7 +34,6 @@ import echoflux.core.transcribe.common.Language;
 import echoflux.core.word.common.SpeechToTextWord;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -120,7 +117,7 @@ public class GoogleSpeechToText implements SpeechToText {
 
         return RecognitionConfig.newBuilder()
                 .setAutoDecodingConfig(AutoDetectDecodingConfig.newBuilder().build())
-                .addAllLanguageCodes(TsLists.collect(languages, Language::getBcp47))
+                .addAllLanguageCodes(EfLists.collect(languages, Language::getBcp47))
                 .setModel(settings.getModel())
                 .setFeatures(recognitionFeatures)
                 .build();
@@ -130,10 +127,6 @@ public class GoogleSpeechToText implements SpeechToText {
     private static SpeechClient newSpeechClient(GoogleCloudProperties properties, GoogleSpeechSettings settings) {
         Objects.requireNonNull(properties);
         Objects.requireNonNull(settings);
-
-        @Cleanup
-        var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);
-        var credentials = GoogleCredentials.fromStream(privateKeyStream).createScoped(SpeechSettings.getDefaultServiceScopes());
 
         var retrySettings = RetrySettings.newBuilder()
                 .setInitialRetryDelayDuration(Duration.ofSeconds(settings.getInitialRetryDelayDurationSeconds()))
@@ -148,7 +141,6 @@ public class GoogleSpeechToText implements SpeechToText {
 
         var settingsBuilder = SpeechSettings.newBuilder()
                 .setTransportChannelProvider(grpcChannelProvider)
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
                 .setEndpoint(properties.getSpeechEndpoint());
 
         settingsBuilder.batchRecognizeOperationSettings()
@@ -158,7 +150,7 @@ public class GoogleSpeechToText implements SpeechToText {
     }
 
     private static String newImplicitRecognizer(GoogleCloudProperties properties) {
-        return RecognizerName.of(properties.getProjectId(), properties.getLocation(), "_").toString();
+        return RecognizerName.of(ServiceOptions.getDefaultProjectId(), properties.getLocation(), "_").toString();
     }
 
     private static long protobufDurationToMillis(com.google.protobuf.Duration duration) {

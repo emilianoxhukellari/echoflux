@@ -14,7 +14,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import java.util.Set;
 
-@SupportedAnnotationTypes("transcribe.annotation.jpa.JpaDto")
+@SupportedAnnotationTypes("echoflux.annotation.jpa.JpaDto")
 @SupportedSourceVersion(SourceVersion.RELEASE_24)
 @AutoService(Processor.class)
 @SuppressWarnings("unused")

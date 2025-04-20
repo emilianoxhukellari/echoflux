@@ -12,9 +12,9 @@ import echoflux.application.core.upload.UploadFileFactory;
 import echoflux.application.transcribe.media_provider.MediaProvider;
 import echoflux.application.transcribe.media_provider.MediaValue;
 import echoflux.core.core.error.PropagatedException;
-import echoflux.core.core.utils.TsFiles;
-import echoflux.core.core.utils.TsUris;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFiles;
+import echoflux.core.core.utils.EfUris;
+import echoflux.core.core.utils.EfFunctions;
 import echoflux.domain.transcription.data.MediaOrigin;
 
 import java.io.File;
@@ -52,14 +52,14 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
                 throw new PropagatedException("Unsupported media type. Please upload an audio or video file.");
             }
 
-            TsFunctions.consumeIfPresent(
+            EfFunctions.consumeIfPresent(
                     onReady,
-                    new MediaValue(TsUris.toUri(path), FilenameUtils.getBaseName(e.getFileName()), MediaOrigin.LOCAL)
+                    new MediaValue(EfUris.toUri(path), FilenameUtils.getBaseName(e.getFileName()), MediaOrigin.LOCAL)
             );
         });
         upload.addFileRemovedListener(_ -> {
             cleanup();
-            TsFunctions.runIfPresent(onClientCleared);
+            EfFunctions.runIfPresent(onClientCleared);
         });
 
         add(upload);
@@ -86,7 +86,7 @@ public class LocalMediaProvider extends HorizontalLayout implements MediaProvide
     }
 
     private void cleanup() {
-        TsFiles.deleteIfExists(path);
+        EfFiles.deleteIfExists(path);
         this.path = null;
     }
 

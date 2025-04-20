@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 @Slf4j
-public final class TsFiles {
+public final class EfFiles {
 
     @SneakyThrows
     public static Path newTempDirectory(String prefix) {

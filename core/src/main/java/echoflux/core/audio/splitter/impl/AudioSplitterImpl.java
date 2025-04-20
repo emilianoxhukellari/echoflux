@@ -22,7 +22,7 @@ import echoflux.core.core.collector.ParallelCollectors;
 import echoflux.core.core.log.LoggedMethodExecution;
 import echoflux.core.core.supplier.MoreSuppliers;
 import echoflux.core.core.temp_file.TempFileNameGenerator;
-import echoflux.core.core.utils.TsFiles;
+import echoflux.core.core.utils.EfFiles;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -134,7 +134,7 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
         fFmpegWrapper.ffmpeg().run(args);
 
         var silences = parseSilences(silencesFile);
-        TsFiles.deleteIfExists(silencesFile);
+        EfFiles.deleteIfExists(silencesFile);
 
         return silences;
     }

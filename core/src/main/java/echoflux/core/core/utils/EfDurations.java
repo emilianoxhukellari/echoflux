@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public final class TsDurations {
+public final class EfDurations {
 
     private static final Pattern DAYS_PATTERN;
     private static final Pattern HOURS_PATTERN;
@@ -72,7 +72,7 @@ public final class TsDurations {
 
     public static String format(Duration duration) {
         if (duration == null) {
-            return TsStrings.EMPTY;
+            return EfStrings.EMPTY;
         }
 
         long days = duration.toDaysPart();
@@ -102,7 +102,7 @@ public final class TsDurations {
             parts.add("0s");
         }
 
-        return String.join(TsStrings.SPACE, parts);
+        return String.join(EfStrings.SPACE, parts);
     }
 
     static {

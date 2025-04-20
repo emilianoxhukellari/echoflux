@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import echoflux.core.core.utils.TsStrings;
+import echoflux.core.core.utils.EfStrings;
 import echoflux.core.word.common.HasContent;
 
 @Data
@@ -18,7 +18,7 @@ public class Paragraph implements HasContent {
     private String content;
 
     public static Paragraph empty() {
-        return new Paragraph(TsStrings.EMPTY);
+        return new Paragraph(EfStrings.EMPTY);
     }
 
 }

@@ -13,12 +13,6 @@ import org.springframework.validation.annotation.Validated;
 public class GoogleCloudProperties {
 
     @NotBlank
-    private String projectId;
-
-    @NotBlank
-    private String privateKey;
-
-    @NotBlank
     private String bucketName;
 
     @NotBlank

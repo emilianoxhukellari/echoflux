@@ -36,8 +36,8 @@ import echoflux.application.core.operation.OperationRunner;
 import echoflux.core.core.bean.MoreBeans;
 import echoflux.core.core.bean.loader.BeanLoader;
 import echoflux.core.core.executor.MoreExecutors;
-import echoflux.core.core.utils.TsArrays;
-import echoflux.core.core.utils.TsLists;
+import echoflux.core.core.utils.EfArrays;
+import echoflux.core.core.utils.EfLists;
 import echoflux.domain.operation.data.OperationType;
 
 import java.util.ArrayList;
@@ -131,7 +131,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void addCoreAttributeColumnsExcluding(String... excludedProperties) {
         addColumns(
-                JpaPropertyCache.getCorePropertiesExcluding(beanType, TsArrays.toList(excludedProperties))
+                JpaPropertyCache.getCorePropertiesExcluding(beanType, EfArrays.toList(excludedProperties))
                         .stream()
                         .map(JpaPropertyDefinition::getName)
                         .toArray(String[]::new)
@@ -188,7 +188,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     }
 
     public void addCoreAttributeFiltersExcluding(String... excludedProperties) {
-        JpaPropertyCache.getCorePropertiesExcluding(beanType, TsArrays.toList(excludedProperties))
+        JpaPropertyCache.getCorePropertiesExcluding(beanType, EfArrays.toList(excludedProperties))
                 .forEach(this::addFilter);
     }
 
@@ -226,7 +226,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
 
     public void addFilter(JpaFilter<ENTITY> filter) {
         Objects.requireNonNull(filter, "Filter cannot be null");
-        Validate.isTrue(!TsLists.contains(filters, filter), "Filter already added");
+        Validate.isTrue(!EfLists.contains(filters, filter), "Filter already added");
 
         filters.add(filter);
         addFilterListener(filter);
@@ -292,7 +292,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     }
 
     public void addCrudActionsExcluding(String... excludedProperties) {
-        var excludedPropertiesList = TsArrays.toList(excludedProperties);
+        var excludedPropertiesList = EfArrays.toList(excludedProperties);
         addContextMenuItem(
                 "Edit",
                 v -> new JpaSaveCorePropertiesDialog<>(v, beanType, service, excludedPropertiesList, beanLoader)

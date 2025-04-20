@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import echoflux.application.security.AuthenticatedUser;
 import echoflux.domain.application_user.data.ApplicationUser;
-import echoflux.core.core.utils.TsSets;
+import echoflux.core.core.utils.EfSets;
 import echoflux.domain.application_user.data.ApplicationUserRepository;
 import echoflux.domain.application_user.data.Role;
 
@@ -32,7 +32,7 @@ public class AuthenticatedUserImpl implements AuthenticatedUser {
 
     @Override
     public boolean hasRole(Role role) {
-        return find().map(u -> TsSets.contains(u.getRoles(), role))
+        return find().map(u -> EfSets.contains(u.getRoles(), role))
                 .orElse(false);
     }
 

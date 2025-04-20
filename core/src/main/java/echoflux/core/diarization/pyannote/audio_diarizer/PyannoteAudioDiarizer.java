@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Validate;
 import org.springframework.stereotype.Component;
 import echoflux.core.core.log.LoggedMethodExecution;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFunctions;
 import echoflux.core.diarization.AudioDiarizer;
 import echoflux.core.diarization.DiarizationEntry;
 import echoflux.core.diarization.SpeakerNameGenerator;
@@ -28,7 +28,7 @@ public class PyannoteAudioDiarizer implements AudioDiarizer {
         var request = new SubmitJobRequest(audioUri.toString());
         var job = client.submitJob(request);
 
-        var response = TsFunctions.pollUntil(
+        var response = EfFunctions.pollUntil(
                 () -> client.getJob(job.jobId()),
                 r -> r.status().isCompleted(),
                 Duration.ofSeconds(15),

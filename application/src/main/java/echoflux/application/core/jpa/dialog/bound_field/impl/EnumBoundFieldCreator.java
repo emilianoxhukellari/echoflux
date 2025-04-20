@@ -10,7 +10,7 @@ import echoflux.application.core.jpa.core.JpaPropertyDefinition;
 import echoflux.application.core.jpa.core.JpaSupportedType;
 import echoflux.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import echoflux.application.core.jpa.dialog.bound_field.BoundFieldCreator;
-import echoflux.core.core.utils.TsEnums;
+import echoflux.core.core.utils.EfEnums;
 
 @SpringComponent
 public class EnumBoundFieldCreator implements BoundFieldCreator {
@@ -21,7 +21,7 @@ public class EnumBoundFieldCreator implements BoundFieldCreator {
                                                                           Binder<T> binder,
                                                                           boolean required) {
         var comboBox = new ComboBox<Enum<?>>(JpaPropertyDefinitionUtils.toDisplayName(property));
-        comboBox.setItemLabelGenerator(TsEnums::toDisplayName);
+        comboBox.setItemLabelGenerator(EfEnums::toDisplayName);
 
         var enumType = (Class<Enum<?>>) property.getType();
         comboBox.setItems(enumType.getEnumConstants());

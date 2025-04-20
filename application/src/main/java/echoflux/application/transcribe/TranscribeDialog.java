@@ -23,7 +23,7 @@ import echoflux.application.core.operation.OperationSuccessImportance;
 import echoflux.application.security.AuthenticatedUser;
 import echoflux.application.transcribe.media_provider.MediaValue;
 import echoflux.core.core.bean.loader.BeanLoader;
-import echoflux.core.core.utils.TsEnums;
+import echoflux.core.core.utils.EfEnums;
 import echoflux.core.transcribe.common.Language;
 import echoflux.domain.operation.data.OperationType;
 import echoflux.domain.transcription.data.TranscriptionProjection;
@@ -58,7 +58,7 @@ public class TranscribeDialog extends EnhancedDialog {
 
         var language = new ComboBox<>("Language", Language.values());
         language.setClearButtonVisible(true);
-        language.setItemLabelGenerator(TsEnums::toDisplayName);
+        language.setItemLabelGenerator(EfEnums::toDisplayName);
         binder.forField(language)
                 .asRequired("Language is required")
                 .bind(Command::getLanguage, Command::setLanguage);

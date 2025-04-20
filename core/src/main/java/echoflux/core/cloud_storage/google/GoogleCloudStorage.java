@@ -1,16 +1,12 @@
 package echoflux.core.cloud_storage.google;
 
 import com.github.f4b6a3.ulid.UlidCreator;
-import com.google.api.services.storage.StorageScopes;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import jakarta.validation.Valid;
-import lombok.Cleanup;
 import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.Failable;
@@ -27,8 +23,6 @@ import echoflux.core.properties.GoogleCloudProperties;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Objects;
@@ -38,11 +32,11 @@ import java.util.concurrent.TimeUnit;
 public class GoogleCloudStorage implements CloudStorage, DisposableBean {
 
     private final GoogleCloudProperties googleCloudProperties;
-    private final Storage googleStorage;
+    private final Storage storage;
 
     public GoogleCloudStorage(@Valid GoogleCloudProperties googleCloudProperties) {
         this.googleCloudProperties = googleCloudProperties;
-        this.googleStorage = newGoogleStorage(googleCloudProperties);
+        this.storage = StorageOptions.newBuilder().build().getService();
     }
 
     @LoggedMethodExecution
@@ -62,13 +56,7 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
                 .setContentType(contentType)
                 .build();
 
-        try (var is = Files.newInputStream(command.getPath()); var writer = googleStorage.writer(blobInfo)) {
-            var buffer = new byte[4096];
-            int length;
-            while ((length = is.read(buffer)) >= 0) {
-                writer.write(ByteBuffer.wrap(buffer, 0, length));
-            }
-        }
+        storage.createFrom(blobInfo, command.getPath());
 
         return ResourceInfo.ofBlobId(blobId);
     }
@@ -79,7 +67,7 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
         var bucketName = resolveBucketName(command.isTemp());
         var blobId = BlobId.of(bucketName, command.getResourceName());
 
-        return googleStorage.delete(blobId);
+        return storage.delete(blobId);
     }
 
     @LoggedMethodExecution
@@ -102,33 +90,19 @@ public class GoogleCloudStorage implements CloudStorage, DisposableBean {
     @LoggedMethodExecution
     @Override
     public void destroy() throws Exception {
-        googleStorage.close();
+        storage.close();
     }
 
     private URL getSignedUrl(BlobId blobId, Duration duration) {
         Objects.requireNonNull(blobId, "blobId cannot be null");
         Objects.requireNonNull(duration, "duration cannot be null");
 
-        return googleStorage.signUrl(
+        return storage.signUrl(
                 BlobInfo.newBuilder(blobId).build(),
                 duration.toSeconds(),
                 TimeUnit.SECONDS,
                 Storage.SignUrlOption.withV4Signature()
         );
-    }
-
-    @SneakyThrows({IOException.class})
-    private static Storage newGoogleStorage(GoogleCloudProperties properties) {
-        @Cleanup
-        var privateKeyStream = IOUtils.toInputStream(properties.getPrivateKey(), StandardCharsets.UTF_8);
-        var credentials = GoogleCredentials.fromStream(privateKeyStream).createScoped(StorageScopes.all());
-
-        var storageSettings = StorageOptions.newBuilder()
-                .setProjectId(properties.getProjectId())
-                .setCredentials(credentials)
-                .build();
-
-        return storageSettings.getService();
     }
 
     private String resolveBucketName(boolean temp) {

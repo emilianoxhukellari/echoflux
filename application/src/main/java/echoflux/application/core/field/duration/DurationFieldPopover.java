@@ -10,7 +10,7 @@ import com.vaadin.flow.component.popover.PopoverPosition;
 import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.textfield.IntegerField;
 import lombok.Setter;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFunctions;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -97,7 +97,7 @@ class DurationFieldPopover extends Popover {
                 : Duration.ZERO;
 
         setValue(nonNegativeDuration);
-        TsFunctions.consumeIfPresent(valueChangedFromClient, nonNegativeDuration);
+        EfFunctions.consumeIfPresent(valueChangedFromClient, nonNegativeDuration);
     }
 
     private IntegerField newIntegerField() {

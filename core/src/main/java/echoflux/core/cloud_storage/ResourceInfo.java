@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import echoflux.core.core.utils.TsUris;
+import echoflux.core.core.utils.EfUris;
 
 import java.net.URI;
 
@@ -21,7 +21,7 @@ public class ResourceInfo {
     public static ResourceInfo ofBlobId(BlobId blobId) {
         return ResourceInfo.builder()
                 .resourceName(blobId.getName())
-                .uri(TsUris.newUri(blobId.toGsUtilUri()))
+                .uri(EfUris.newUri(blobId.toGsUtilUri()))
                 .build();
     }
 

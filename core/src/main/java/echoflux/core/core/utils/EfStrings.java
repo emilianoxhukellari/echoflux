@@ -1,7 +1,7 @@
 package echoflux.core.core.utils;
 
 
-public final class TsStrings {
+public final class EfStrings {
 
     public static final String LINE_SEPARATOR = System.lineSeparator();
     public static final String EMPTY_LINE = LINE_SEPARATOR.repeat(2);

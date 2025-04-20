@@ -22,7 +22,7 @@ import echoflux.application.core.dialog.EnhancedDialog;
 import echoflux.application.core.operation.Operation;
 import echoflux.application.core.operation.OperationRunner;
 import echoflux.core.core.bean.loader.BeanLoader;
-import echoflux.core.core.utils.TsEnums;
+import echoflux.core.core.utils.EfEnums;
 import echoflux.core.document.exporter.DocumentExporter;
 import echoflux.domain.operation.data.OperationType;
 import echoflux.domain.transcription.manager.TranscriptionManager;
@@ -67,7 +67,7 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
 
         var format = new ComboBox<TranscriptExportableDocumentType>("Format");
         format.setItems(TranscriptExportableDocumentType.values());
-        format.setItemLabelGenerator(t -> TsEnums.toDisplayName(t.getDocumentType()));
+        format.setItemLabelGenerator(t -> EfEnums.toDisplayName(t.getDocumentType()));
         binder.forField(format)
                 .asRequired("Format is required")
                 .bind(DownloadBean::getFormat, DownloadBean::setFormat);

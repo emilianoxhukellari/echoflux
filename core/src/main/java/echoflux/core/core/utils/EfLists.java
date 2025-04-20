@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public final class TsLists {
+public final class EfLists {
 
     public static <T> List<T> toSorted(@Nullable List<T> list, Comparator<? super T> comparator) {
         Objects.requireNonNull(comparator);

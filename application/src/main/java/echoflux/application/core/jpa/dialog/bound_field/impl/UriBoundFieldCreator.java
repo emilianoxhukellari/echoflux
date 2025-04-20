@@ -13,7 +13,7 @@ import echoflux.application.core.jpa.core.JpaPropertyDefinition;
 import echoflux.application.core.jpa.core.JpaSupportedType;
 import echoflux.application.core.jpa.core.JpaPropertyDefinitionUtils;
 import echoflux.application.core.jpa.dialog.bound_field.BoundFieldCreator;
-import echoflux.core.core.utils.TsUris;
+import echoflux.core.core.utils.EfUris;
 
 import java.net.URI;
 import java.util.Objects;
@@ -31,7 +31,7 @@ public class UriBoundFieldCreator implements BoundFieldCreator {
         var setter = (Setter<T, URI>) property.getSetter().orElse(null);
         var builder = binder.forField(field).withConverter(
                 Converter.from(
-                        v -> Result.ok(TsUris.newUri(v)),
+                        v -> Result.ok(EfUris.newUri(v)),
                         v -> Objects.toString(v, StringUtils.EMPTY)
                 )
         );

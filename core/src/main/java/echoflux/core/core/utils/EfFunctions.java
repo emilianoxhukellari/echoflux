@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @Slf4j
-public final class TsFunctions {
+public final class EfFunctions {
 
     private final static ExecutorService virtualThreadExecutor = MoreExecutors.virtualThreadExecutor();
 

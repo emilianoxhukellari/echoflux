@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import echoflux.core.completions.Completions;
 import echoflux.core.core.bean.loader.BeanLoader;
 import echoflux.core.core.log.LoggedMethodExecution;
-import echoflux.core.core.utils.TsFunctions;
+import echoflux.core.core.utils.EfFunctions;
 import echoflux.core.settings.SettingsLoader;
 import echoflux.domain.completion.data.CompletionProjection;
 import echoflux.domain.completion.data.CompletionStatus;
@@ -75,7 +75,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
                         .build()
         );
 
-        var timedResult = TsFunctions.getTimed(() -> completions.complete(completion.input()));
+        var timedResult = EfFunctions.getTimed(() -> completions.complete(completion.input()));
         var completionResult = timedResult.getResult();
 
         var patchCommand = completionMapper.toCommand(completionResult);
