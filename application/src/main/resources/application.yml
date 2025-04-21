@@ -16,6 +16,8 @@ vaadin:
     enable: false
 
 spring:
+  config:
+    import: sm@
   threads:
     virtual:
       enabled: true

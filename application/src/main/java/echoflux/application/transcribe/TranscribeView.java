@@ -77,8 +77,7 @@ public class TranscribeView extends Composite<VerticalLayout> {
         );
         grid.removeThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
         grid.addClassName("body-cell-cursor-pointer");
-        grid.addColumn(TranscriptionJpaDto_.NAME)
-                .setWidth("25rem");
+        grid.addColumn(TranscriptionJpaDto_.NAME);
         grid.addColumn(TranscriptionJpaDto_.LANGUAGE);
         grid.addColumn(TranscriptionJpaDto_.CREATED_AT)
                 .setHeader("Date");
