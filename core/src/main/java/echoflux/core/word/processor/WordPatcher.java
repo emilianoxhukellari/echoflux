@@ -8,7 +8,7 @@ import echoflux.core.core.diff.DiffRowGenerator;
 import echoflux.core.core.diff.DiffTag;
 import echoflux.core.core.diff.Equalizer;
 import echoflux.core.core.diff.SimilarityEqualizer;
-import echoflux.core.core.utils.EfLists;
+import echoflux.core.core.utils.MoreLists;
 import echoflux.core.word.common.BaseSpeakerSegmentInfo;
 import echoflux.core.word.common.BaseWordInfo;
 import echoflux.core.word.common.HasContent;
@@ -118,8 +118,8 @@ public final class WordPatcher {
                     } while (i < rows.size() && rows.get(i).tag() == DiffTag.INSERT);
                     i--;
 
-                    W leftAnchor = EfLists.getSafe(patchedWords, patchedWords.size() - 1);
-                    W rightAnchor = EfLists.getSafe(original, originalIndex);
+                    W leftAnchor = MoreLists.getSafe(patchedWords, patchedWords.size() - 1);
+                    W rightAnchor = MoreLists.getSafe(original, originalIndex);
 
                     patchedWords.addAll(
                             applyAnchor(leftAnchor, rightAnchor, seqInserts, newWord, useRevisedSpeaker)
@@ -263,8 +263,8 @@ public final class WordPatcher {
     }
 
     private static <W extends WordInfo, C extends HasContent> List<DiffRow> generateDiffRows(List<W> original, List<C> revised) {
-        var originalTokens = EfLists.collect(original, W::getContent);
-        var revisedTokens = EfLists.collect(revised, C::getContent);
+        var originalTokens = MoreLists.collect(original, W::getContent);
+        var revisedTokens = MoreLists.collect(revised, C::getContent);
 
         return DiffRowGenerator.generate(originalTokens, revisedTokens, EQUALIZER);
     }

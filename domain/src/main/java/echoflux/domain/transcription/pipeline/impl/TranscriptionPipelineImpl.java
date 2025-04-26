@@ -25,9 +25,9 @@ import echoflux.core.core.iterable.DoublyLinkedIterable;
 import echoflux.core.core.log.LoggedMethodExecution;
 import echoflux.core.core.supplier.MoreSuppliers;
 import echoflux.core.core.tuple.Tuple2;
-import echoflux.core.core.utils.EfEnums;
-import echoflux.core.core.utils.EfFiles;
-import echoflux.core.core.utils.EfFunctions;
+import echoflux.core.core.utils.MoreEnums;
+import echoflux.core.core.utils.MoreFiles;
+import echoflux.core.core.utils.MoreFunctions;
 import echoflux.core.diarization.AudioDiarizer;
 import echoflux.core.diarization.DiarizationEntry;
 import echoflux.core.media.downloader.MediaDownloader;
@@ -133,7 +133,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         );
         var uri = publicUri.toURI();
 
-        return EfFunctions.getAsync(() -> audioDiarizer.diarize(uri));
+        return MoreFunctions.getAsync(() -> audioDiarizer.diarize(uri));
     }
 
     private TranscriptionProjection transcribeCreated(TranscriptionProjection transcription, TranscriptionPipelineCommand command) {
@@ -156,7 +156,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
 
         var uploadedSplits = split(uploadedTranscription, transcodeResult.audio(), settings, command.getApplicationUserId());
 
-        EfFiles.deleteIfExists(originalMedia, transcodeResult.audio());
+        MoreFiles.deleteIfExists(originalMedia, transcodeResult.audio());
 
         var transcribed = transcribe(uploadedTranscription, uploadedSplits, diarizeFuture, settings, command.getApplicationUserId());
 
@@ -339,7 +339,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 )
                 .collect(ParallelCollectors.toList());
 
-        EfFiles.deleteIfExists(
+        MoreFiles.deleteIfExists(
                 partitions.stream()
                         .map(AudioPartition::getAudio)
                         .toList()
@@ -398,7 +398,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         var words = WordAssembler.assembleAll(speechToTextWords, diarizationEntries, Word::new);
 
         log.debug("Saving original words for transcription [{}]", transcription.id());
-        var duration = EfFunctions.runTimed(
+        var duration = MoreFunctions.runTimed(
                 () -> transcriptionManager.saveWords(transcription.id(), words)
         );
         log.debug("Original words saved for transcription [{}] in [{}]ms", transcription.id(), duration.toMillis());
@@ -424,7 +424,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                                 settings.getEnhanceCompletionContentDataModelKey(),
                                 partition.content(),
                                 settings.getEnhanceCompletionLanguageDataModelKey(),
-                                EfEnums.toDisplayName(transcription.language())
+                                MoreEnums.toDisplayName(transcription.language())
                         )
                 ).map(dataModel -> templateService.render(
                                 RenderTemplateCommand.builder()
@@ -455,7 +455,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         log.debug("Saving enhanced words for transcription [{}]", transcription.id());
         var words = transcriptionManager.getTranscriptionSpeakerWords(transcription.id());
         var patchedWords = WordPatcher.patchAllFromText(words, combinedOutput, WordDto::new);
-        var duration = EfFunctions.runTimed(
+        var duration = MoreFunctions.runTimed(
                 () -> transcriptionManager.saveWords(transcription.id(), patchedWords)
         );
         log.debug("Enhanced words saved for transcription [{}] in [{}]ms", transcription.id(), duration.toMillis());
@@ -491,7 +491,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                         .build()
         );
 
-        EfFunctions.executeAllParallel(resourcesToDelete, deleteFunc);
+        MoreFunctions.executeAllParallel(resourcesToDelete, deleteFunc);
     }
 
     @Builder

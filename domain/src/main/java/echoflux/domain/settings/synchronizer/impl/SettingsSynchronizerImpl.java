@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import echoflux.core.core.bean.MoreBeans;
 import echoflux.core.core.initialize.Initialize;
 import echoflux.core.core.initialize.InitializeOrder;
-import echoflux.core.core.utils.EfFunctions;
+import echoflux.core.core.utils.MoreFunctions;
 import echoflux.core.settings.Settings;
 import echoflux.domain.settings.data.SettingsEntity;
 import echoflux.domain.settings.data.SettingsProjection;
@@ -122,7 +122,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(Settings.class));
 
-        var timedFind = EfFunctions.getTimed(() -> scanner.findCandidateComponents("echoflux"));
+        var timedFind = MoreFunctions.getTimed(() -> scanner.findCandidateComponents("echoflux"));
         var beanDefinitions = timedFind.getResult();
         log.info("Scanned [{}] settings in [{}] ms", beanDefinitions.size(), timedFind.getDuration().toMillis());
 

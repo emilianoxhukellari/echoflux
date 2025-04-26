@@ -11,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import echoflux.application.core.icon.IconFactory;
 import echoflux.application.core.jpa.core.JpaPropertyDefinition;
-import echoflux.core.core.utils.EfDurations;
-import echoflux.core.core.utils.EfEnums;
+import echoflux.core.core.utils.MoreDurations;
+import echoflux.core.core.utils.MoreEnums;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -78,7 +78,7 @@ public class JpaGridRendererFactory {
         return new TextRenderer<>(item -> {
             var value = (Enum<?>) propertyDefinition.getGetter().apply(item);
 
-            return EfEnums.toDisplayName(value);
+            return MoreEnums.toDisplayName(value);
         });
     }
 
@@ -92,7 +92,7 @@ public class JpaGridRendererFactory {
                 return StringUtils.EMPTY;
             }
 
-            return EfDurations.format(duration);
+            return MoreDurations.format(duration);
         });
     }
 

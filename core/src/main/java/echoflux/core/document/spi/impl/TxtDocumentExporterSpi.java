@@ -6,7 +6,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import echoflux.core.core.temp_file.TempFileNameGenerator;
-import echoflux.core.core.utils.EfStrings;
+import echoflux.core.core.utils.MoreStrings;
 import echoflux.core.document.DocumentType;
 import echoflux.core.document.Paragraph;
 import echoflux.core.document.spi.DocumentExporterSpi;
@@ -32,7 +32,7 @@ public class TxtDocumentExporterSpi implements DocumentExporterSpi, TempFileName
 
         var text = paragraphs.stream()
                 .map(Paragraph::getContent)
-                .collect(Collectors.joining(EfStrings.LINE_SEPARATOR));
+                .collect(Collectors.joining(MoreStrings.LINE_SEPARATOR));
 
         Files.write(tempPath, text.getBytes());
 

@@ -6,7 +6,7 @@ import org.apache.commons.text.WordUtils;
 import echoflux.core.core.bean.MoreBeans;
 import echoflux.core.core.display_name.DisplayName;
 
-public final class EfEnums {
+public final class MoreEnums {
 
     public static <T extends Enum<?>> String toDisplayName(@Nullable T enumValue) {
         if (enumValue == null) {

@@ -25,7 +25,7 @@ import echoflux.core.completions.Completions;
 import echoflux.core.completions.Tokens;
 import echoflux.core.core.executor.MoreExecutors;
 import echoflux.core.core.provider.AiProvider;
-import echoflux.core.core.utils.EfFunctions;
+import echoflux.core.core.utils.MoreFunctions;
 import echoflux.core.properties.OpenAiProperties;
 import echoflux.core.settings.SettingsLoader;
 
@@ -128,7 +128,7 @@ public class OpenAiCompletions implements Completions {
                 .runId(run.id())
                 .build();
 
-        var finishedRun = EfFunctions.pollUntil(
+        var finishedRun = MoreFunctions.pollUntil(
                 () -> runService.retrieve(runRetrieveParams),
                 this::isRunFinished,
                 Duration.ofSeconds(5),

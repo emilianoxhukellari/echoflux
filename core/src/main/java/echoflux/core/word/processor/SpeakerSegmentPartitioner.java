@@ -2,7 +2,7 @@ package echoflux.core.word.processor;
 
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.Validate;
-import echoflux.core.core.utils.EfStrings;
+import echoflux.core.core.utils.MoreStrings;
 import echoflux.core.word.common.HasContent;
 import echoflux.core.word.common.SimpleContent;
 import echoflux.core.word.common.SpeakerSegmentInfo;
@@ -27,7 +27,7 @@ public final class SpeakerSegmentPartitioner {
         for (var segment : segments) {
             if (currentContents.size() + segment.getWords().size() <= wordLimit) {
                 currentContents.addAll(segment.getWords());
-                currentContents.add(SimpleContent.of(EfStrings.EMPTY_LINE));
+                currentContents.add(SimpleContent.of(MoreStrings.EMPTY_LINE));
             } else {
                 if (!currentContents.isEmpty()) {
                     partitions.add(SpeakerSegmentPartition.ofContents(currentContents));
@@ -40,7 +40,7 @@ public final class SpeakerSegmentPartitioner {
                     );
                 } else {
                     currentContents.addAll(segment.getWords());
-                    currentContents.add(SimpleContent.of(EfStrings.EMPTY_LINE));
+                    currentContents.add(SimpleContent.of(MoreStrings.EMPTY_LINE));
                 }
             }
         }

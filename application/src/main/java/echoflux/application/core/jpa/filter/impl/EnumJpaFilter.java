@@ -5,8 +5,8 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.data.jpa.domain.Specification;
 import echoflux.application.core.jpa.filter.JpaFilter;
 import echoflux.application.core.jpa.filter.JpaFilterUtils;
-import echoflux.core.core.utils.EfArrays;
-import echoflux.core.core.utils.EfEnums;
+import echoflux.core.core.utils.MoreArrays;
+import echoflux.core.core.utils.MoreEnums;
 
 public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
@@ -17,8 +17,8 @@ public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
         Validate.isTrue(enumClass.isEnum(), "Class must be an enum");
 
         this.comboBox = new ComboBox<>();
-        comboBox.setItems(EfArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
-        comboBox.setItemLabelGenerator(EfEnums::toDisplayName);
+        comboBox.setItems(MoreArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
+        comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
         comboBox.setPlaceholder("Filter");
         comboBox.setClearButtonVisible(true);
         comboBox.setMinWidth("0");

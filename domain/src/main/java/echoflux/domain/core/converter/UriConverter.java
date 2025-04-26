@@ -2,7 +2,7 @@ package echoflux.domain.core.converter;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import echoflux.core.core.utils.EfUris;
+import echoflux.core.core.utils.MoreUris;
 
 import java.net.URI;
 import java.util.Objects;
@@ -17,7 +17,7 @@ public class UriConverter implements AttributeConverter<URI, String> {
 
     @Override
     public URI convertToEntityAttribute(String dbData) {
-        return EfUris.newUri(dbData);
+        return MoreUris.newUri(dbData);
     }
 
 }

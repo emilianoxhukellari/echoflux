@@ -5,7 +5,7 @@ import org.apache.commons.lang3.Validate;
 import echoflux.annotation.jpa.JpaDto;
 import echoflux.core.core.bean.FieldProperty;
 import echoflux.core.core.bean.MoreBeans;
-import echoflux.core.core.utils.EfArrays;
+import echoflux.core.core.utils.MoreArrays;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,8 +63,8 @@ public record JpaDtoConfiguration(Class<?> entityBeanType,
                 .entityBeanType(annotation.entityBeanType())
                 .dtoBeanType(jpaDtoBeanType)
                 .idFieldName(annotation.idField())
-                .auditFields(EfArrays.toList(annotation.auditFields()))
-                .hiddenFields(EfArrays.toList(annotation.hiddenFields()))
+                .auditFields(MoreArrays.toList(annotation.auditFields()))
+                .hiddenFields(MoreArrays.toList(annotation.hiddenFields()))
                 .build();
     }
 

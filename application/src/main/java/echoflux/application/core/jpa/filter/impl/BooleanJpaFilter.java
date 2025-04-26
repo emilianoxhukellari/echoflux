@@ -7,7 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import echoflux.application.core.jpa.filter.JpaFilter;
 import echoflux.application.core.jpa.filter.JpaFilterUtils;
 import echoflux.core.core.display_name.DisplayName;
-import echoflux.core.core.utils.EfEnums;
+import echoflux.core.core.utils.MoreEnums;
 
 public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
@@ -18,7 +18,7 @@ public class BooleanJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
         this.comboBox = new ComboBox<>();
         comboBox.setItems(BooleanState.values());
-        comboBox.setItemLabelGenerator(EfEnums::toDisplayName);
+        comboBox.setItemLabelGenerator(MoreEnums::toDisplayName);
         comboBox.setPlaceholder("Filter");
         comboBox.setClearButtonVisible(true);
 

@@ -1,6 +1,6 @@
 package echoflux.core.word.processor;
 
-import echoflux.core.core.utils.EfLists;
+import echoflux.core.core.utils.MoreLists;
 import echoflux.core.diarization.DiarizationEntry;
 import echoflux.core.word.common.SpeechToTextWord;
 import echoflux.core.word.common.WordInfo;
@@ -20,8 +20,8 @@ public final class WordAssembler {
         Objects.requireNonNull(diarizationEntries, "diarizationEntries");
         Objects.requireNonNull(newWord, "newWord");
 
-        var wList = EfLists.toSorted(words, SpeechToTextWord::getStartOffsetMillis);
-        var dList = EfLists.toSorted(diarizationEntries, DiarizationEntry::getStartOffsetMillis);
+        var wList = MoreLists.toSorted(words, SpeechToTextWord::getStartOffsetMillis);
+        var dList = MoreLists.toSorted(diarizationEntries, DiarizationEntry::getStartOffsetMillis);
         var swList = new ArrayList<T>(wList.size());
 
         var dItr = dList.iterator();

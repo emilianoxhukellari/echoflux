@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 import echoflux.core.core.executor.MoreExecutors;
 import echoflux.core.core.log.LoggedMethodExecution;
 import echoflux.core.core.provider.AiProvider;
-import echoflux.core.core.utils.EfLists;
+import echoflux.core.core.utils.MoreLists;
 import echoflux.core.properties.GoogleCloudProperties;
 import echoflux.core.settings.SettingsLoader;
 import echoflux.core.transcribe.SpeechToText;
@@ -117,7 +117,7 @@ public class GoogleSpeechToText implements SpeechToText {
 
         return RecognitionConfig.newBuilder()
                 .setAutoDecodingConfig(AutoDetectDecodingConfig.newBuilder().build())
-                .addAllLanguageCodes(EfLists.collect(languages, Language::getBcp47))
+                .addAllLanguageCodes(MoreLists.collect(languages, Language::getBcp47))
                 .setModel(settings.getModel())
                 .setFeatures(recognitionFeatures)
                 .build();

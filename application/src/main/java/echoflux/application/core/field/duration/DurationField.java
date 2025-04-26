@@ -9,7 +9,7 @@ import com.vaadin.flow.component.shared.HasThemeVariant;
 import com.vaadin.flow.component.textfield.Autocomplete;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
-import echoflux.core.core.utils.EfDurations;
+import echoflux.core.core.utils.MoreDurations;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -39,13 +39,13 @@ public class DurationField extends CustomField<Duration>
                 return;
             }
 
-            var parsed = EfDurations.tryParse(e.getValue());
+            var parsed = MoreDurations.tryParse(e.getValue());
 
             if (parsed.isEmpty()) {
                 durationTextField.clear();
                 durationFieldPopover.clear();
             } else {
-                var formatted = EfDurations.format(parsed.get());
+                var formatted = MoreDurations.format(parsed.get());
                 durationTextField.setValue(formatted);
                 durationFieldPopover.setValue(parsed.get());
             }
@@ -53,7 +53,7 @@ public class DurationField extends CustomField<Duration>
 
         durationFieldPopover.setTarget(durationTextField);
         durationFieldPopover.setValueChangedFromClient(duration -> {
-            var formatted = EfDurations.format(duration);
+            var formatted = MoreDurations.format(duration);
             durationTextField.setValue(formatted);
             updateValue();
         });
@@ -63,7 +63,7 @@ public class DurationField extends CustomField<Duration>
 
     @Override
     protected Duration generateModelValue() {
-        var parsed = EfDurations.tryParse(durationTextField.getValue());
+        var parsed = MoreDurations.tryParse(durationTextField.getValue());
 
         return parsed.orElse(null);
     }
@@ -74,7 +74,7 @@ public class DurationField extends CustomField<Duration>
             durationTextField.clear();
             durationFieldPopover.clear();
         } else {
-            var formatted = EfDurations.format(newPresentationValue);
+            var formatted = MoreDurations.format(newPresentationValue);
             durationTextField.setValue(formatted);
             durationFieldPopover.setValue(newPresentationValue);
         }
