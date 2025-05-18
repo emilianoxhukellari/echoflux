@@ -4,7 +4,7 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import echoflux.application.core.error.MoreErrors;
 import echoflux.application.security.AuthenticatedUser;
 
-public final class TsDialogs {
+public final class Dialogs {
 
     public static void confirm(String message, Runnable onConfirm) {
         var dialog = new ConfirmDialog();

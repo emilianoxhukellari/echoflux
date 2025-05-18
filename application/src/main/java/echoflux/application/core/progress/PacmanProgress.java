@@ -5,6 +5,6 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 
 @Tag("la-pacman")
-@JsModule("./element/la-pacman.ts")
+@JsModule("./element/progress/la-pacman.ts")
 public class PacmanProgress extends Component {
 }

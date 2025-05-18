@@ -8,7 +8,7 @@ import com.vaadin.flow.server.VaadinServiceInitListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import echoflux.application.core.dialog.TsDialogs;
+import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.ui.UiUtils;
 import echoflux.application.security.AuthenticatedUser;
 
@@ -30,7 +30,7 @@ public class ServiceListener implements VaadinServiceInitListener {
                     log.error("Session error: ", e.getThrowable());
                     UiUtils.safeAccess(
                             UI.getCurrent(),
-                            () -> TsDialogs.error(e.getThrowable(), authenticatedUser)
+                            () -> Dialogs.error(e.getThrowable(), authenticatedUser)
                     );
                 }
         );

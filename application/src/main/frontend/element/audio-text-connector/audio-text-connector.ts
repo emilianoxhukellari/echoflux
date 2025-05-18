@@ -11,7 +11,7 @@ import '@vaadin/horizontal-layout';
 import '@vaadin/scroller';
 import {dialogRenderer} from "@vaadin/dialog/lit";
 import 'Frontend/element/audio-text-connector/speaker-segment.ts';
-import 'Frontend/element/la-ball-clip-rotate-pulse.ts';
+import 'Frontend/element/progress/la-ball-clip-rotate-pulse.ts';
 import 'Frontend/element/ef-audio/ef-audio.ts';
 import {SpeakerSegmentDto} from 'Frontend/element/audio-text-connector/SpeakerSegmentDto';
 import {WordDto} from 'Frontend/element/audio-text-connector/WordDto';
@@ -56,7 +56,7 @@ export class AudioTextConnector extends LitElement {
             align-items: center;
             background-color: var(--lumo-base-color);
             padding: 8px 14px;
-            border-radius: 10px;
+            border-radius: var(--lumo-border-radius-xl);
             border: 1px solid var(--lumo-contrast-10pct);
         }
 
@@ -64,7 +64,7 @@ export class AudioTextConnector extends LitElement {
             width: 100%;
             height: 100%;
             background-color: var(--lumo-base-color);
-            border-radius: 10px;
+            border-radius: var(--lumo-border-radius-xl);
             border: 1px solid var(--lumo-contrast-10pct);
         }
 
@@ -72,9 +72,9 @@ export class AudioTextConnector extends LitElement {
             height: 100%;
             width: 100%;
             background-color: var(--lumo-shade-5pct);
-            border-radius: 15px;
+            border-radius: var(--lumo-border-radius-xl);
             align-items: center;
-            padding: 30px;
+            padding: var(--lumo-space-l);
         }
 
         .button {

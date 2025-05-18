@@ -19,7 +19,7 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import echoflux.application.core.dialog.TsDialogs;
+import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.jpa.core.JpaPropertyCache;
 import echoflux.application.core.jpa.core.JpaPropertyDefinition;
 import echoflux.application.core.jpa.core.JpaPropertyDefinitionUtils;
@@ -265,7 +265,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
     public void addConfirmedContextMenuItem(String text, Consumer<DTO> onClick) {
         Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
 
-        addContextMenuItem(text, e -> TsDialogs.confirm(
+        addContextMenuItem(text, e -> Dialogs.confirm(
                 String.format("Perform action [%s]?", text),
                 () -> onClick.accept(e)
         ));

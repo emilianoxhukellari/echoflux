@@ -1,6 +1,5 @@
 package echoflux.core.document.spi.impl;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,7 @@ public class TxtDocumentExporterSpi implements DocumentExporterSpi, TempFileName
 
     @SneakyThrows(IOException.class)
     @Override
-    public Path export(List<@NotNull Paragraph> paragraphs) {
+    public Path export(List<Paragraph> paragraphs) {
         var tempPath = DocumentTempDirectory.INSTANCE
                 .locationPath()
                 .resolve("%s.%s".formatted(newFileName(), DocumentType.TXT.getContainer()));

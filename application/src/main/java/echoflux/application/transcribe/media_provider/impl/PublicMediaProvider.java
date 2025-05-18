@@ -13,7 +13,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import lombok.Data;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import echoflux.application.core.dialog.TsDialogs;
+import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.operation.Operation;
 import echoflux.application.core.operation.OperationRunner;
 import echoflux.application.transcribe.media_provider.MediaProvider;
@@ -90,7 +90,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 .callable(() -> mediaDownloader.find(MoreUris.newUri(searchUri.getValue())))
                 .onSuccess(r -> {
                     if (r.isEmpty()) {
-                        TsDialogs.info("Media not found", "Please make sure the URL is correct.");
+                        Dialogs.info("Media not found", "Please make sure the URL is correct.");
                     } else {
                         setMediaResult(r.get());
                         MoreFunctions.consumeIfPresent(
@@ -99,7 +99,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                         );
                     }
                 })
-                .onError(_ -> TsDialogs.info("Media not found", "Please make sure the URL is correct."))
+                .onError(_ -> Dialogs.info("Media not found", "Please make sure the URL is correct."))
                 .onErrorNotify(false)
                 .onSuccessNotify(false)
                 .timeout(Duration.ofMinutes(1))

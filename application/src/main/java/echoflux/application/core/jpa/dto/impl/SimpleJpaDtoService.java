@@ -101,7 +101,7 @@ public class SimpleJpaDtoService<DTO, ENTITY, ID> implements JpaDtoService<DTO, 
     public DTO perform(Supplier<ENTITY> action) {
         Objects.requireNonNull(action, "Action must not be null");
 
-        return transactionExecutor.executeReadOnly(_ -> {
+        return transactionExecutor.execute(_ -> {
             var entity = action.get();
             return mapper.toDto(entity);
         });

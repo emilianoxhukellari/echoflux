@@ -13,4 +13,7 @@
 @import url('components/md-outlined-segmented-button.css');
 
 :root {
+
+    --lumo-border-radius-xl: 0.75em;
+
 }

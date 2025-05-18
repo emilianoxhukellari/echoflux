@@ -33,6 +33,7 @@ import echoflux.core.transcribe.SpeechToText;
 import echoflux.core.transcribe.common.Language;
 import echoflux.core.word.common.SpeechToTextWord;
 
+import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -53,7 +54,6 @@ public class GoogleSpeechToText implements SpeechToText {
         this.implicitRecognizer = newImplicitRecognizer(googleCloudProperties);
     }
 
-    @SneakyThrows
     @LoggedMethodExecution(logReturn = false)
     public List<SpeechToTextWord> transcribe(URI cloudUri, List<Language> languages) {
         var settings = settingsLoader.load(GoogleSpeechSettings.class);
@@ -123,7 +123,7 @@ public class GoogleSpeechToText implements SpeechToText {
                 .build();
     }
 
-    @SneakyThrows
+    @SneakyThrows({IOException.class})
     private static SpeechClient newSpeechClient(GoogleCloudProperties properties, GoogleSpeechSettings settings) {
         Objects.requireNonNull(properties);
         Objects.requireNonNull(settings);

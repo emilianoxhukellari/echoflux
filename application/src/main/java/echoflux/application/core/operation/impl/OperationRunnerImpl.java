@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import echoflux.application.core.dialog.TsDialogs;
+import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.error.MoreErrors;
 import echoflux.application.core.notification.Notifications;
 import echoflux.application.core.operation.Operation;
@@ -77,9 +77,9 @@ public class OperationRunnerImpl implements OperationRunner {
                         if (operation.isOnErrorNotify()) {
                             if (OperationErrorImportance.HIGH.equals(operation.getErrorImportance())) {
                                 if (StringUtils.isNotBlank(operation.getCustomErrorMessage())) {
-                                    TsDialogs.error(operation.getCustomErrorMessage());
+                                    Dialogs.error(operation.getCustomErrorMessage());
                                 } else {
-                                    TsDialogs.error(e, authenticatedUser);
+                                    Dialogs.error(e, authenticatedUser);
                                 }
                             } else {
                                 var message = StringUtils.defaultIfBlank(
