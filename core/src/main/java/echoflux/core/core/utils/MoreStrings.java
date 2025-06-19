@@ -1,6 +1,5 @@
 package echoflux.core.core.utils;
 
-
 public final class MoreStrings {
 
     public static final String LINE_SEPARATOR = System.lineSeparator();

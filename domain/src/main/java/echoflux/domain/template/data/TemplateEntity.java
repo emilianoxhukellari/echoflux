@@ -1,21 +1,31 @@
 package echoflux.domain.template.data;
 
-import jakarta.persistence.*;
+import io.hypersistence.utils.hibernate.id.Tsid;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
-import echoflux.domain.audit.data.BaseEntity;
+import echoflux.domain.core.data.BaseEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "template")
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class TemplateEntity extends BaseEntity {
+@EqualsAndHashCode(callSuper = false, of = "name")
+public class TemplateEntity extends BaseEntity<Long> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Tsid
     @Column(name = "id")
     private Long id;
 

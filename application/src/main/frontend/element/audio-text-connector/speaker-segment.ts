@@ -4,16 +4,17 @@ import {classMap} from 'lit/directives/class-map.js';
 import '@vaadin/icon';
 import '@vaadin/icons';
 import '@vaadin/popover';
-import {SpeakerSegmentDto} from "Frontend/element/audio-text-connector/SpeakerSegmentDto";
-import {WordDto} from "Frontend/element/audio-text-connector/WordDto";
+import {SpeakerSegmentInfo} from "Frontend/element/audio-text-connector/SpeakerSegmentInfo";
+import {WordInfo} from "Frontend/element/audio-text-connector/WordInfo";
 import {CollectionUtils} from "Frontend/utils/CollectionUtils";
 import {SeekSequence} from "Frontend/element/audio-text-connector/SeekSequence";
+import {HighlightedRange} from "Frontend/element/audio-text-connector/HighlightedRange";
 
 @customElement('speaker-segment')
 export class SpeakerSegment extends LitElement {
 
     @property({type: Object})
-    segment!: SpeakerSegmentDto;
+    segment!: SpeakerSegmentInfo;
 
     @property({type: Number})
     timeMillis = 0;
@@ -42,17 +43,6 @@ export class SpeakerSegment extends LitElement {
             width: 100%;
         }
 
-        .word-list-container {
-            width: 100%;
-            padding: 10px;
-        }
-
-        .word-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-        }
-
         .word {
             cursor: pointer;
             display: inline;
@@ -66,7 +56,7 @@ export class SpeakerSegment extends LitElement {
 
         .word:hover {
             background-color: var(--lumo-primary-color-10pct);
-            border-radius: 6px;
+            border-radius: var(--lumo-border-radius-l);
         }
 
         .speaker {
@@ -75,34 +65,15 @@ export class SpeakerSegment extends LitElement {
             padding: 3px 0;
         }
 
-        .textarea {
+        .editable-area {
             width: 100%;
+            padding: var(--lumo-space-s);
             background-color: var(--lumo-shade-10pct);
-            padding: 8px 10px 9px;
-            border-radius: 10px;
-            font: inherit;
-            resize: none;
-            border: none;
-            color: inherit;
-            field-sizing: content;
-            word-spacing: -0.98px;
-            line-height: 29px;
+            border-radius: var(--lumo-border-radius-l);
         }
-
-        @supports not (field-sizing: content) {
-            .textarea {
-                resize: vertical;
-                height: 150px;
-            }
-        }
-
-        .textarea:focus {
-            outline: none;
-        }
-
     `;
 
-    protected render() {
+    protected render(): TemplateResult {
         return this.edit ? this.renderEditMode() : this.renderReadMode();
     }
 
@@ -110,8 +81,12 @@ export class SpeakerSegment extends LitElement {
         return html`
             <vaadin-vertical-layout theme="padding">
                 <div class="speaker">${this.segment.speakerName}</div>
-                <textarea class="textarea" @input="${this.onContentChange}"
-                >${this.segment.content}</textarea>
+                <div class="editable-area"
+                     contenteditable="true"
+                     role="textbox"
+                     @input="${this.onContentChange}"
+                >${this.segment.content}
+                </div>
             </vaadin-vertical-layout>
         `;
     }
@@ -120,42 +95,39 @@ export class SpeakerSegment extends LitElement {
         return html`
             <vaadin-vertical-layout theme="padding">
                 <div class="speaker">${this.segment.speakerName}</div>
-                <div class="word-list-container">
-                    <div class="word-list">
-                        ${this.segment.words.map((word: WordDto, index: number) => {
-                            const wordClassInfo = {
-                                highlighted: index >= this.highlightedRange.startIndexInclusive
-                                        && index < this.highlightedRange.endIndexExclusive,
-                                word: true
-                            };
-                            return html`
-                                <span id="word-${word.sequence}"
-                                      class="${classMap(wordClassInfo)}"
-                                      @click="${() => this.onWordClick(word)}">${word.content}</span>
-                            `;
-                        })}
-                    </div>
+                <div style="padding: var(--lumo-space-s); width: 100%;">
+                    ${this.segment.words.map((word: WordInfo, index: number) => {
+                        const wordClassInfo = {
+                            highlighted: index >= this.highlightedRange.startIndexInclusive
+                                    && index < this.highlightedRange.endIndexExclusive,
+                            word: true
+                        };
+                        return html`
+                            <span id="word-${word.sequence}"
+                                  class="${classMap(wordClassInfo)}"
+                                  @click="${() => this.onWordClick(word)}">${word.content}</span>
+                        `;
+                    })}
                 </div>
-
             </vaadin-vertical-layout>
         `;
     }
 
-    private onWordClick(word: WordDto) {
+    private onWordClick(word: WordInfo): void {
         this.dispatchEvent(new CustomEvent('word-click', {detail: word, bubbles: true}));
     }
 
-    private onContentChange(event: Event) {
-        const textarea = event.target as HTMLTextAreaElement;
-        this.segment.content = textarea.value;
+    private onContentChange(event: Event): void {
+        const editableDiv = event.target as HTMLDivElement;
+        this.segment.content = editableDiv.textContent ?? '';
         this.onSegmentChange();
     }
 
-    private onSegmentChange() {
+    private onSegmentChange(): void {
         this.dispatchEvent(new CustomEvent('segment-change', {detail: this.segment, bubbles: true}));
     }
 
-    protected willUpdate(_changedProperties: PropertyValues) {
+    protected willUpdate(_changedProperties: PropertyValues): void {
         if (_changedProperties.has('seekPosition')
             && this.seekPosition.sequence >= this.segment.words[0].sequence
             && this.seekPosition.sequence <= this.segment.words[this.segment.words.length - 1].sequence) {
@@ -225,14 +197,14 @@ export class SpeakerSegment extends LitElement {
         };
     }
 
-    private static newSequenceOnlyWordModel(sequence: number) {
+    private static newSequenceOnlyWordModel(sequence: number): WordInfo {
         return {
             content: '',
             sequence: sequence,
             startOffsetMillis: -1,
             endOffsetMillis: -1,
             speakerName: ''
-        } as WordDto;
+        };
     }
 
 }

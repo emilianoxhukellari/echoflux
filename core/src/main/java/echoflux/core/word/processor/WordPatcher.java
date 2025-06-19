@@ -56,7 +56,9 @@ public final class WordPatcher {
         return patchAll(original, revised, newWord, true);
     }
 
-    public static <T extends WordInfo> List<T> patchAllFromText(List<T> original, String revised, Supplier<T> newWord) {
+    public static <T extends WordInfo> List<T> patchAllFromText(List<T> original,
+                                                                String revised,
+                                                                Supplier<T> newWord) {
         Objects.requireNonNull(revised, "revised");
         Objects.requireNonNull(newWord, "newWord");
 
@@ -73,10 +75,10 @@ public final class WordPatcher {
         return patchAll(original, revisedBaseWords, newWord, false);
     }
 
-    private static <W extends WordInfo, B extends BaseWordInfo> List<W> patchAll(List<W> original,
-                                                                                 List<B> revised,
-                                                                                 Supplier<W> newWord,
-                                                                                 boolean useRevisedSpeaker) {
+    public static <W extends WordInfo, B extends BaseWordInfo> List<W> patchAll(List<W> original,
+                                                                                List<B> revised,
+                                                                                Supplier<W> newWord,
+                                                                                boolean useRevisedSpeaker) {
         Objects.requireNonNull(original, "original");
         Objects.requireNonNull(revised, "revised");
         Objects.requireNonNull(newWord, "newWord");

@@ -1,18 +1,15 @@
 package echoflux.domain.completion.service;
 
+import echoflux.domain.completion.data.ScalarCompletionProjection;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
-import echoflux.domain.completion.data.CompletionEntity;
-import echoflux.domain.completion.data.CompletionProjection;
 
 @Validated
 public interface CompletionService {
 
-    CompletionEntity getById(@NotNull Long completionId);
+    ScalarCompletionProjection create(@Valid @NotNull CreateCompletionCommand command);
 
-    CompletionProjection create(@Valid @NotNull CreateCompletionCommand command);
-
-    CompletionProjection patch(@Valid @NotNull PatchCompletionCommand command);
+    ScalarCompletionProjection patch(@Valid @NotNull PatchCompletionCommand command);
 
 }

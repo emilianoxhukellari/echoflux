@@ -1,8 +1,9 @@
-import {SpeakerSegmentDto} from "Frontend/element/audio-text-connector/SpeakerSegmentDto";
+import {BaseSpeakerSegmentInfo} from "Frontend/element/audio-text-connector/BaseSpeakerSegmentInfo";
+import {WordInfo} from "Frontend/element/audio-text-connector/WordInfo";
 
 export interface AudioTextConnectorBackend {
 
-    saveAllSpeakerSegments(speakerSegments: SpeakerSegmentDto[]): Promise<SpeakerSegmentDto[]>;
+    saveAllSpeakerSegments(speakerSegments: BaseSpeakerSegmentInfo[]): Promise<WordInfo[]>;
 
     downloadTranscript(): Promise<void>;
 

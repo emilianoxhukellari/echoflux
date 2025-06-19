@@ -6,13 +6,13 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import java.time.LocalDate;
 
-public class LocalDateJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, LocalDate> {
+public class LocalDateJpaFilter<E> extends BetweenJpaFilter<E, LocalDate> {
 
     private final DatePicker from;
     private final DatePicker to;
 
-    public LocalDateJpaFilter(String attribute, String property, boolean asCollection) {
-        super(attribute, property, asCollection);
+    public LocalDateJpaFilter(String property, boolean asCollection) {
+        super(property, asCollection);
 
         this.from = new DatePicker();
         from.addThemeVariants(DatePickerVariant.LUMO_SMALL);

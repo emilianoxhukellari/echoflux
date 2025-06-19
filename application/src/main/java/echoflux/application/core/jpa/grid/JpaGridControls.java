@@ -4,21 +4,23 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import echoflux.domain.core.data.BaseEntity;
+import echoflux.domain.core.data.BaseProjection;
+import lombok.Getter;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import echoflux.application.core.icon.CustomizedIcon;
-import echoflux.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import echoflux.core.core.bean.MoreBeans;
 
 import java.util.Objects;
 
-public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
+public class JpaGridControls<P extends BaseProjection<ID>, E extends BaseEntity<ID>, ID> extends VerticalLayout {
 
-    private final JpaGrid<DTO, ENTITY, ID> grid;
+    @Getter
+    private final JpaGrid<P, E, ID> grid;
 
     private final HorizontalLayout topLeft;
     private final HorizontalLayout topRight;
 
-    public JpaGridControls(JpaGrid<DTO, ENTITY, ID> grid) {
+    public JpaGridControls(JpaGrid<P, E, ID> grid) {
         this.grid = grid;
         grid.setSizeFull();
 
@@ -53,23 +55,9 @@ public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
         var clearFiltersButton = new Button(CustomizedIcon.FILTER_SLASH.create(), _ -> grid.clearFilters());
         clearFiltersButton.setTooltipText("Clear filters");
         addTopLeft(clearFiltersButton);
-
-        if (grid.getCrudActionsData() != null && grid.getCrudActionsData().isWithCrudActions()) {
-            addCreateEntityButton(
-                    () -> new JpaSaveCorePropertiesDialog<>(
-                            MoreBeans.invokeBuilderOrNoArgsConstructorNested(grid.getBeanType()),
-                            grid.getBeanType(),
-                            grid.getService(),
-                            grid.getCrudActionsData().getExcludedPropertiesList(),
-                            grid.getBeanLoader()
-                    )
-                            .setSaveListener(_ -> grid.refreshAll())
-                            .open()
-            );
-        }
     }
 
-    public JpaGridControls<DTO, ENTITY, ID> addCreateEntityButton(Runnable onClick) {
+    public JpaGridControls<P, E, ID> addCreateButton(Runnable onClick) {
         Objects.requireNonNull(onClick, "On click action must not be null");
 
         var button = new Button(LineAwesomeIcon.PLUS_SOLID.create(), _ -> onClick.run());
@@ -80,13 +68,13 @@ public class JpaGridControls<DTO, ENTITY, ID> extends VerticalLayout {
         return this;
     }
 
-    public JpaGridControls<DTO, ENTITY, ID> addTopLeft(Component component) {
+    public JpaGridControls<P, E, ID> addTopLeft(Component component) {
         topLeft.add(component);
 
         return this;
     }
 
-    public JpaGridControls<DTO, ENTITY, ID> addTopRight(Component component) {
+    public JpaGridControls<P, E, ID> addTopRight(Component component) {
         topRight.addComponentAsFirst(component);
 
         return this;

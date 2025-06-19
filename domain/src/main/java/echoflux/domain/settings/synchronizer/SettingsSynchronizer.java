@@ -1,8 +1,8 @@
 package echoflux.domain.settings.synchronizer;
 
+import echoflux.domain.settings.data.SettingsProjection;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
-import echoflux.domain.settings.data.SettingsProjection;
 
 @Validated
 public interface SettingsSynchronizer {

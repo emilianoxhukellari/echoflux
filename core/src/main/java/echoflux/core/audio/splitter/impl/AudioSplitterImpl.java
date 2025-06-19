@@ -20,10 +20,10 @@ import echoflux.core.audio.splitter.SplitAudioCommand;
 import echoflux.core.audio.splitter.temp_file.AudioSplitterTempDirectory;
 import echoflux.core.core.collector.ParallelCollectors;
 import echoflux.core.core.log.LoggedMethodExecution;
-import echoflux.core.core.supplier.MoreSuppliers;
 import echoflux.core.core.temp_file.TempFileNameGenerator;
 import echoflux.core.core.utils.MoreFiles;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -70,7 +71,7 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
                         .audioSegment(p)
                         .build()
                 )
-                .map(c -> MoreSuppliers.of(() -> copy(c)))
+                .<Supplier<AudioPartition>>map(c -> () -> copy(c))
                 .collect(ParallelCollectors.toList(command.getConcurrency()));
     }
 
@@ -107,7 +108,7 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
         return "split";
     }
 
-    @SneakyThrows
+    @SneakyThrows({IOException.class})
     private List<AudioSegment> findSilences(Path audio, long minSilenceDuration) {
         var minSilenceDurationSeconds = minSilenceDuration / 1000.0;
         var silencesFile = AudioSplitterTempDirectory.INSTANCE
@@ -139,7 +140,7 @@ public class AudioSplitterImpl implements AudioSplitter, TempFileNameGenerator {
         return silences;
     }
 
-    @SneakyThrows
+    @SneakyThrows({IOException.class})
     private static List<AudioSegment> parseSilences(Path silencesFile) {
         Objects.requireNonNull(silencesFile, "Segments file cannot be null");
 

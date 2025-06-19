@@ -1,7 +1,6 @@
 package echoflux.application.transcribe.media_provider.impl;
 
 import com.vaadin.flow.component.Text;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Image;
@@ -15,7 +14,6 @@ import lombok.Data;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.operation.Operation;
-import echoflux.application.core.operation.OperationRunner;
 import echoflux.application.transcribe.media_provider.MediaProvider;
 import echoflux.application.transcribe.media_provider.MediaValue;
 import echoflux.core.core.bean.loader.BeanLoader;
@@ -33,7 +31,6 @@ import java.util.function.Consumer;
 public class PublicMediaProvider extends HorizontalLayout implements MediaProvider {
 
     private final MediaDownloader mediaDownloader;
-    private final OperationRunner operationRunner;
     private final TextField searchUri;
     private final HorizontalLayout searchContainer;
     private Consumer<MediaValue> onReady;
@@ -43,7 +40,6 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
         Objects.requireNonNull(beanLoader, "beanLoader");
 
         this.mediaDownloader = beanLoader.load(MediaDownloader.class);
-        this.operationRunner = beanLoader.load(OperationRunner.class);
 
         var binder = new Binder<SearchUri>();
         binder.setBean(new SearchUri());
@@ -85,7 +81,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     }
 
     private void findAndSetMedia() {
-        var operation = Operation.<Optional<MediaFindResult>>builder()
+        Operation.<Optional<MediaFindResult>>builder()
                 .name("Finding public media")
                 .callable(() -> mediaDownloader.find(MoreUris.newUri(searchUri.getValue())))
                 .onSuccess(r -> {
@@ -103,9 +99,8 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 .onErrorNotify(false)
                 .onSuccessNotify(false)
                 .timeout(Duration.ofMinutes(1))
-                .build();
-
-        operationRunner.run(operation, UI.getCurrent());
+                .build()
+                .run();
     }
 
     private void setMediaResult(MediaFindResult result) {

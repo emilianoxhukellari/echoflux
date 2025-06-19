@@ -1,12 +1,6 @@
 package echoflux.domain.completion.data;
 
-import echoflux.domain.core.repository.EnhancedJpaRepository;
+import echoflux.domain.core.repository.CoreJpaRepository;
 
-public interface CompletionRepository extends EnhancedJpaRepository<CompletionEntity, Long> {
-
-    @Override
-    default Class<CompletionEntity> getBeanType() {
-        return CompletionEntity.class;
-    }
-
+public interface CompletionRepository extends CoreJpaRepository<CompletionEntity, Long> {
 }

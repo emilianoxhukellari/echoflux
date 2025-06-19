@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import echoflux.domain.settings.data.SettingsEntity;
-import echoflux.domain.settings.data.SettingsProjection;
 import echoflux.domain.settings.data.SettingsRepository;
 import echoflux.domain.settings.mapper.SettingsMapper;
 import echoflux.domain.settings.service.CreateSettingsCommand;
@@ -23,13 +22,12 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Transactional
     @Override
-    public List<SettingsProjection> createAll(Collection<CreateSettingsCommand> commandCollection) {
+    public List<SettingsEntity> createAll(Collection<CreateSettingsCommand> commandCollection) {
         var entities = commandCollection.stream()
                 .map(settingsMapper::toEntity)
                 .toList();
-        var savedEntities = settingsRepository.saveAll(entities);
 
-        return settingsMapper.toProjections(savedEntities);
+        return settingsRepository.saveAll(entities);
     }
 
     @Transactional

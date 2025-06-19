@@ -1,5 +1,6 @@
 package echoflux.domain.completion.mapper;
 
+import echoflux.domain.completion.data.ScalarCompletionProjection;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.CollectionMappingStrategy;
 import org.mapstruct.Mapper;
@@ -11,7 +12,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import echoflux.core.completions.CompletionResult;
 import echoflux.domain.completion.data.CompletionEntity;
-import echoflux.domain.completion.data.CompletionProjection;
 import echoflux.domain.completion.service.CreateCompletionCommand;
 import echoflux.domain.completion.service.PatchCompletionCommand;
 
@@ -25,7 +25,7 @@ public interface CompletionMapper {
     CompletionEntity toEntity(CreateCompletionCommand command);
 
     @BeanMapping(unmappedTargetPolicy = ReportingPolicy.ERROR)
-    CompletionProjection toProjection(CompletionEntity entity);
+    ScalarCompletionProjection toProjection(CompletionEntity entity);
 
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

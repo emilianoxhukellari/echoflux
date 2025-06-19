@@ -33,7 +33,7 @@ public class LoggingAspect {
             result = proceedingJoinPoint.proceed();
         } catch (Throwable e) {
             if (logMethodExecution.logError()) {
-                log.error("Error on [{}] err: [{}]", methodName, e.getMessage());
+                log.error("Error on [{}] error: [{}]", methodName, e.getMessage());
             }
             throw e;
         }

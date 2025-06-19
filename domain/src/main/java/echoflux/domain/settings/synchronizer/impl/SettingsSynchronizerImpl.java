@@ -1,6 +1,9 @@
 package echoflux.domain.settings.synchronizer.impl;
 
 import com.google.common.collect.Maps;
+import echoflux.domain.settings.data.SettingsProjection;
+import echoflux.domain.settings.mapper.SettingsMapper;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,8 +18,6 @@ import echoflux.core.core.initialize.InitializeOrder;
 import echoflux.core.core.utils.MoreFunctions;
 import echoflux.core.settings.Settings;
 import echoflux.domain.settings.data.SettingsEntity;
-import echoflux.domain.settings.data.SettingsProjection;
-import echoflux.domain.settings.mapper.SettingsMapper;
 import echoflux.domain.settings.schema_processor.SettingsSchemaProcessor;
 import echoflux.domain.settings.service.CreateSettingsCommand;
 import echoflux.domain.settings.service.SettingsService;
@@ -36,6 +37,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     private final SettingsSchemaProcessor schemaProcessor;
     private final SettingsService settingsService;
     private final SettingsMapper settingsMapper;
+    private final EntityManager entityManager;
     private final Map<String, Class<?>> keyBeanTypeMap = newKeyBeanTypeMap();
 
     @Override
@@ -60,6 +62,7 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
         var settings = settingsService.getByKey(key);
         settings.setName(MoreBeans.getDisplayName(keyBeanTypeMap.get(key)));
         settings.setValue(schemaProcessor.create(keyBeanTypeMap.get(key)));
+        entityManager.merge(settings);
 
         return settingsMapper.toProjection(settings);
     }
@@ -104,6 +107,8 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
             if (!StringUtils.equals(dbName, codeName) || !Objects.equals(dbValue, mergedValue)) {
                 entity.setName(codeName);
                 entity.setValue(mergedValue);
+                entityManager.merge(entity);
+
                 updated++;
             }
         }

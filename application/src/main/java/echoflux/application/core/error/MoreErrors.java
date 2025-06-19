@@ -19,11 +19,10 @@ public final class MoreErrors {
         return false;
     }
 
-    public static String resolveErrorMessage(Throwable throwable, AuthenticatedUser authenticatedUser) {
+    public static String resolveErrorMessage(Throwable throwable) {
         Objects.requireNonNull(throwable, "throwable");
-        Objects.requireNonNull(authenticatedUser, "authenticatedUser");
 
-        if (authenticatedUser.isAdmin()) {
+        if (AuthenticatedUser.isAdmin()) {
             return throwable.getMessage();
         } else {
             if (isPropagated(throwable)) {

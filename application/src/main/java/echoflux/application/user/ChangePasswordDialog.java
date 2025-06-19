@@ -3,30 +3,24 @@ package echoflux.application.user;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.data.binder.Binder;
-import echoflux.application.core.jpa.dialog.save.JpaSaveDialog;
-import echoflux.application.core.jpa.dto.JpaDtoService;
-import echoflux.application.core.jpa.dto.impl.SimpleJpaDtoService;
-import echoflux.application.core.operation.OperationRunner;
+import echoflux.application.core.jpa.dialog.SaveDialog;
 import echoflux.core.core.bean.loader.BeanLoader;
-import echoflux.domain.application_user.data.ApplicationUserEntity;
+import echoflux.domain.application_user.data.ApplicationUserProjection;
 import echoflux.domain.application_user.service.ApplicationUserService;
 import echoflux.domain.application_user.service.ChangePasswordCommand;
 
 import java.util.Objects;
 
-public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
+public class ChangePasswordDialog extends SaveDialog<Long> {
 
     private final ApplicationUserService applicationUserService;
-    private final JpaDtoService<ApplicationUserJpaDto, ApplicationUserEntity, Long> jpaDtoService;
     private final Binder<ChangePasswordCommand> binder;
 
-    public ChangePasswordDialog(ApplicationUserJpaDto applicationUser, BeanLoader beanLoader) {
-        super(ApplicationUserJpaDto.class, beanLoader.load(OperationRunner.class));
+    public ChangePasswordDialog(ApplicationUserProjection applicationUser, BeanLoader beanLoader) {
         Objects.requireNonNull(applicationUser, "applicationUser");
         Objects.requireNonNull(beanLoader, "beanLoader");
 
         this.applicationUserService = beanLoader.load(ApplicationUserService.class);
-        this.jpaDtoService = new SimpleJpaDtoService<>(ApplicationUserJpaDto.class, beanLoader);
         this.binder = new Binder<>(ChangePasswordCommand.class);
 
         this.binder.setBean(
@@ -54,10 +48,8 @@ public class ChangePasswordDialog extends JpaSaveDialog<ApplicationUserJpaDto> {
     }
 
     @Override
-    protected ApplicationUserJpaDto save() {
-        var updatedUser = applicationUserService.changePassword(binder.getBean());
-
-        return jpaDtoService.getById(updatedUser.id());
+    protected Long save() {
+        return applicationUserService.changePassword(binder.getBean()).getId();
     }
 
     @Override

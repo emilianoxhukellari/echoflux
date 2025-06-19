@@ -1,13 +1,15 @@
 package echoflux.domain.transcription.data;
 
+import echoflux.core.storage.StorageProvider;
+import echoflux.domain.completion.data.CompletionEntity_;
+import echoflux.domain.transcription_word.data.TranscriptionWordEntity_;
+import io.hypersistence.utils.hibernate.id.Tsid;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -18,15 +20,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import echoflux.core.core.validate.constraint.duration.PositiveOrZeroDuration;
-import echoflux.core.transcribe.common.Language;
+import echoflux.core.transcribe.Language;
 import echoflux.domain.application_user.data.ApplicationUserEntity;
-import echoflux.domain.audit.data.BaseEntity;
+import echoflux.domain.core.data.BaseEntity;
 import echoflux.domain.completion.data.CompletionEntity;
 import echoflux.domain.transcription_word.data.TranscriptionWordEntity;
 
@@ -39,15 +42,16 @@ import java.util.Set;
 
 @Entity
 @Table(name = "transcription")
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class TranscriptionEntity extends BaseEntity {
+@EqualsAndHashCode(callSuper = false, of = "id")
+public class TranscriptionEntity extends BaseEntity<Long> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Tsid
     @Column(name = "id")
     private Long id;
 
@@ -59,8 +63,12 @@ public class TranscriptionEntity extends BaseEntity {
     @Column(name = "source_uri")
     private URI sourceUri;
 
-    @Column(name = "cloud_uri")
-    private URI cloudUri;
+    @Column(name = "uri")
+    private URI uri;
+
+    @Column(name = "storage_provider")
+    @Enumerated(EnumType.STRING)
+    private StorageProvider storageProvider;
 
     @Column(name = "language")
     @Enumerated(EnumType.STRING)
@@ -76,10 +84,6 @@ public class TranscriptionEntity extends BaseEntity {
     @NotNull
     private ApplicationUserEntity applicationUser;
 
-    @Column(name = "enhanced")
-    @NotNull
-    private Boolean enhanced;
-
     @Column(name = "length")
     @PositiveOrZeroDuration
     @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
@@ -89,16 +93,19 @@ public class TranscriptionEntity extends BaseEntity {
     private String error;
 
     @OneToMany(
-            mappedBy = "transcription",
+            mappedBy = TranscriptionWordEntity_.TRANSCRIPTION,
             orphanRemoval = true,
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
-    @OrderColumn(name = "sequence")
+    @OrderColumn(name = TranscriptionWordEntity_.SEQUENCE)
     @Builder.Default
     private List<TranscriptionWordEntity> words = new ArrayList<>();
 
-    @OneToMany(mappedBy = "transcription", fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = CompletionEntity_.TRANSCRIPTION,
+            fetch = FetchType.LAZY
+    )
     @Builder.Default
     private Set<CompletionEntity> completions = new HashSet<>();
 

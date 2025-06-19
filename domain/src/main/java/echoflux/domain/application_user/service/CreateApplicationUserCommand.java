@@ -1,5 +1,6 @@
 package echoflux.domain.application_user.service;
 
+import echoflux.core.core.country.Country;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import echoflux.domain.application_user.service.impl.HasPassword;
 import echoflux.domain.core.password.Password;
 import echoflux.domain.core.password.PasswordMatch;
 
+import java.time.ZoneId;
 import java.util.Set;
 
 @Builder
@@ -37,6 +39,12 @@ public class CreateApplicationUserCommand implements HasPassword {
     @NotNull
     @Builder.Default
     private Boolean enabled = true;
+
+    @NotNull
+    private Country country;
+
+    @NotNull
+    private ZoneId zoneId;
 
     @NotNull
     private Set<Role> roles;

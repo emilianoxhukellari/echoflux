@@ -1,5 +1,6 @@
 package echoflux.domain.application_user.service;
 
+import echoflux.core.core.country.Country;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import echoflux.domain.application_user.data.Role;
 
+import java.time.ZoneId;
 import java.util.Set;
 
 @Data
@@ -27,6 +29,12 @@ public class UpdateApplicationUserCommand {
 
     @NotNull
     private Boolean enabled;
+
+    @NotNull
+    private Country country;
+
+    @NotNull
+    private ZoneId zoneId;
 
     @NotNull
     private Set<Role> roles;

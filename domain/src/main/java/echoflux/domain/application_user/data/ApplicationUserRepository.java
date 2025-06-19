@@ -1,18 +1,13 @@
 package echoflux.domain.application_user.data;
 
+import echoflux.domain.core.repository.CoreJpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
-import echoflux.domain.core.repository.EnhancedJpaRepository;
 
 import java.util.Optional;
 
-public interface ApplicationUserRepository extends EnhancedJpaRepository<ApplicationUserEntity, Long> {
+public interface ApplicationUserRepository extends CoreJpaRepository<ApplicationUserEntity, Long> {
 
-    @EntityGraph(attributePaths = {"roles"})
-    Optional<ApplicationUser> findByUsername(String username);
-
-    @Override
-    default Class<ApplicationUserEntity> getBeanType() {
-        return ApplicationUserEntity.class;
-    }
+    @EntityGraph(attributePaths = {ApplicationUserEntity_.ROLES})
+    Optional<ApplicationUserProjection> findProjectedByUsername(String username);
 
 }

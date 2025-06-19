@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import echoflux.core.transcribe.common.Language;
+import echoflux.core.transcribe.Language;
 import echoflux.domain.transcription.data.MediaOrigin;
 
 import java.net.URI;
@@ -25,9 +25,6 @@ public class TranscriptionPipelineCommand {
 
     @NotNull
     private Long applicationUserId;
-
-    @NotNull
-    private Boolean enhanced;
 
     @NotNull
     private URI sourceUri;

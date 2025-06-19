@@ -1,5 +1,5 @@
-import {html, css, LitElement, type TemplateResult} from 'lit';
-import {customElement, property, state, queryAsync} from 'lit/decorators.js';
+import {html, css, LitElement, type TemplateResult, PropertyValues} from 'lit';
+import {customElement, property, state} from 'lit/decorators.js';
 import '@material/web/labs/segmentedbuttonset/outlined-segmented-button-set.js';
 import '@material/web/labs/segmentedbutton/outlined-segmented-button.js';
 import '@vaadin/icon';
@@ -13,10 +13,12 @@ import {dialogRenderer} from "@vaadin/dialog/lit";
 import 'Frontend/element/audio-text-connector/speaker-segment.ts';
 import 'Frontend/element/progress/la-ball-clip-rotate-pulse.ts';
 import 'Frontend/element/ef-audio/ef-audio.ts';
-import {SpeakerSegmentDto} from 'Frontend/element/audio-text-connector/SpeakerSegmentDto';
-import {WordDto} from 'Frontend/element/audio-text-connector/WordDto';
+import {SpeakerSegmentInfo} from 'Frontend/element/audio-text-connector/SpeakerSegmentInfo';
+import {WordInfo} from 'Frontend/element/audio-text-connector/WordInfo';
 import {AudioTextConnectorBackend} from "Frontend/element/audio-text-connector/AudioTextConnectorBackend";
 import {SeekSequenceAndTime} from "Frontend/element/audio-text-connector/SeekSequenceAndTime";
+import {BaseSpeakerSegmentInfo} from "Frontend/element/audio-text-connector/BaseSpeakerSegmentInfo";
+import {WordUtils} from "Frontend/element/audio-text-connector/WordUtils";
 
 @customElement('audio-text-connector')
 export class AudioTextConnector extends LitElement {
@@ -25,10 +27,13 @@ export class AudioTextConnector extends LitElement {
     audioSrc = '';
 
     @property({type: Array})
-    speakerSegments: SpeakerSegmentDto[] = [];
+    words: WordInfo[] = [];
 
     @property({type: Number})
     maxHighlightedWords = 15;
+
+    @state()
+    speakerSegments: SpeakerSegmentInfo[] = [];
 
     @state()
     private seekPosition: SeekSequenceAndTime = {timeMillis: 0, sequence: -1};
@@ -95,8 +100,7 @@ export class AudioTextConnector extends LitElement {
                                  scroll-direction="vertical">
                     ${this.renderSegments()}
                 </vaadin-scroller>
-                <ef-audio id="tsAudio"
-                          .src="${this.audioSrc}"
+                <ef-audio .src="${this.audioSrc}"
                           .seekPosition="${this.seekPosition}"
                           @time-update="${(e: CustomEvent) => this.timeMillis = e.detail}"/>
             </vaadin-vertical-layout>
@@ -109,12 +113,12 @@ export class AudioTextConnector extends LitElement {
                 ${
                         this.speakerSegments.map((s, i) => html`
                             <speaker-segment .segment="${s}"
-                                                .timeMillis="${this.timeMillis}"
-                                                .seekPosition="${this.seekPosition}"
-                                                .maxHighlightedWords="${this.maxHighlightedWords}"
-                                                .edit="${this.edit}"
-                                                @segment-change="${(e: CustomEvent) => this.handleSegmentChange((e.detail as SpeakerSegmentDto), i)}"
-                                                @word-click="${(e: CustomEvent) => this.handleWordClick((e.detail as WordDto))}">`
+                                             .timeMillis="${this.timeMillis}"
+                                             .seekPosition="${this.seekPosition}"
+                                             .maxHighlightedWords="${this.maxHighlightedWords}"
+                                             .edit="${this.edit}"
+                                             @segment-change="${(e: CustomEvent) => this.handleSegmentChange((e.detail as SpeakerSegmentInfo), i)}"
+                                             @word-click="${(e: CustomEvent) => this.handleWordClick((e.detail as WordInfo))}">`
                         )
                 }
             </vaadin-vertical-layout>
@@ -165,22 +169,31 @@ export class AudioTextConnector extends LitElement {
         `;
     }
 
+    protected willUpdate(_changedProperties: PropertyValues) {
+        if(_changedProperties.has('words')) {
+            this.speakerSegments = WordUtils.buildSegmentsFromWords(this.words);
+        }
+    }
+
     private async handleSaveClick() {
         if (!this.edit) {
             return;
         }
 
         this.saving = true;
-        this.speakerSegments = await this.$server.saveAllSpeakerSegments(this.speakerSegments);
+        const baseSpeakerSegments = this.speakerSegments.map(
+            s => ({speakerName: s.speakerName, content: s.content}) as BaseSpeakerSegmentInfo
+        );
+        this.words = await this.$server.saveAllSpeakerSegments(baseSpeakerSegments);
         this.saving = false;
         this.edit = false;
     }
 
-    private handleSegmentChange(segment: SpeakerSegmentDto, index: number): void {
+    private handleSegmentChange(segment: SpeakerSegmentInfo, index: number): void {
         this.speakerSegments[index] = segment;
     }
 
-    private handleWordClick(word: WordDto): void {
+    private handleWordClick(word: WordInfo): void {
         this.seekPosition = {timeMillis: word.startOffsetMillis, sequence: word.sequence};
     }
 

@@ -1,5 +1,6 @@
 package echoflux.domain.transcription.pipeline;
 
+import echoflux.core.storage.StorageProvider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -34,6 +35,9 @@ public class TranscriptionPipelineSettings {
 
     @Builder.Default
     private AiProvider completionsAiProvider = AiProvider.OPENAI;
+
+    @Builder.Default
+    private StorageProvider storageProvider = StorageProvider.GOOGLE;
 
     @Builder.Default
     @NotNull

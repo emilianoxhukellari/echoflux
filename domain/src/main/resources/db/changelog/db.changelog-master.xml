@@ -9,29 +9,31 @@
         <sql>
             create table application_user
             (
-                id         bigserial primary key,
+                id         bigint primary key,
                 username   text    not null unique,
                 name       text    not null,
                 password   text    not null,
                 enabled    boolean not null default true,
+                country    text    not null,
+                zone_id    text    not null,
 
                 version    integer,
-                created_at timestamp,
+                created_at timestamp with time zone,
                 created_by text,
-                updated_at timestamp,
+                updated_at timestamp with time zone,
                 updated_by text
             );
 
             create table application_user_role
             (
-                id                  bigserial primary key,
+                id                  bigint primary key,
                 application_user_id bigint not null references application_user (id),
                 role                text   not null,
 
                 version             integer,
-                created_at          timestamp,
+                created_at          timestamp with time zone,
                 created_by          text,
-                updated_at          timestamp,
+                updated_at          timestamp with time zone,
                 updated_by          text
             );
             create index application_user_role_application_user_id_index on application_user_role (application_user_id);
@@ -41,9 +43,15 @@
 
     <changeSet id="create_admin_user" author="emiliano">
         <sql>
-            insert into application_user (username, name, enabled, password, version, created_at, created_by)
-            values ('admin', 'Emiliano Xhukellari', true,
+            insert into application_user (id, username, name, enabled, password, country, zone_id, version, created_at,
+                                          created_by)
+            values (1,
+                    'admin',
+                    'Emiliano Xhukellari',
+                    true,
                     '$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.',
+                    'LATVIA',
+                    'Europe/Riga',
                     0,
                     now(),
                     'system');
@@ -52,11 +60,11 @@
 
     <changeSet id="add_roles_to_admin_user" author="emiliano">
         <sql>
-            insert into application_user_role (application_user_id, role, created_at, created_by)
-            values ((select id from application_user where username = 'admin'), 'ADMIN', now(), 'system');
+            insert into application_user_role (id, application_user_id, role, created_at, created_by)
+            values (1, (select id from application_user where username = 'admin'), 'ADMIN', now(), 'system');
 
-            insert into application_user_role (application_user_id, role, created_at, created_by)
-            values ((select id from application_user where username = 'admin'), 'USER', now(), 'system');
+            insert into application_user_role (id, application_user_id, role, created_at, created_by)
+            values (2, (select id from application_user where username = 'admin'), 'USER', now(), 'system');
         </sql>
     </changeSet>
 
@@ -64,19 +72,19 @@
         <sql>
             create table operation
             (
-                id          bigserial primary key,
-                name        text      not null,
-                type        text      not null,
-                status      text      not null,
+                id          bigint primary key,
+                name        text                     not null,
+                type        text                     not null,
+                status      text                     not null,
                 error       text,
-                started_at  timestamp not null,
-                ended_at    timestamp,
+                started_at  timestamp with time zone not null,
+                ended_at    timestamp with time zone,
                 description text,
 
                 version     integer,
-                created_at  timestamp,
+                created_at  timestamp with time zone,
                 created_by  text,
-                updated_at  timestamp,
+                updated_at  timestamp with time zone,
                 updated_by  text
             );
         </sql>
@@ -86,21 +94,21 @@
         <sql>
             create table transcription
             (
-                id                  bigserial primary key,
+                id                  bigint primary key,
                 status              text                                    not null,
                 source_uri          text                                    not null,
-                cloud_uri           text,
+                uri                 text,
+                storage_provider    text,
                 language            text                                    not null,
                 name                text                                    not null,
                 application_user_id bigint references application_user (id) not null,
-                enhanced            boolean                                 not null,
                 length interval,
                 error               text,
 
                 version             integer,
-                created_at          timestamp,
+                created_at          timestamp with time zone,
                 created_by          text,
-                updated_at          timestamp,
+                updated_at          timestamp with time zone,
                 updated_by          text
             );
 
@@ -113,7 +121,7 @@
         <sql>
             create table completion
             (
-                id               bigserial primary key,
+                id               bigint primary key,
                 transcription_id bigint references transcription (id) not null,
                 input            text                                 not null,
                 output           text,
@@ -127,9 +135,9 @@
                 error            text,
 
                 version          integer,
-                created_at       timestamp,
+                created_at       timestamp with time zone,
                 created_by       text,
-                updated_at       timestamp,
+                updated_at       timestamp with time zone,
                 updated_by       text
             );
             create index completion_transcription_id_index on completion (transcription_id);
@@ -140,15 +148,15 @@
         <sql>
             create table settings
             (
-                id         bigserial primary key,
+                id         bigint primary key,
                 key        text  not null unique,
                 name       text  not null,
                 value      jsonb not null,
 
                 version    integer,
-                created_at timestamp,
+                created_at timestamp with time zone,
                 created_by text,
-                updated_at timestamp,
+                updated_at timestamp with time zone,
                 updated_by text
             );
             create index settings_key_index on settings (key);
@@ -159,14 +167,14 @@
         <sql>
             create table template
             (
-                id         bigserial primary key,
+                id         bigint primary key,
                 name       text not null unique,
                 content    text not null,
 
                 version    integer,
-                created_at timestamp,
+                created_at timestamp with time zone,
                 created_by text,
-                updated_at timestamp,
+                updated_at timestamp with time zone,
                 updated_by text
             );
             create index template_name_index on template (name);
@@ -177,21 +185,20 @@
         <sql>
             create table transcription_word
             (
-                id                  bigserial primary key,
+                id                  bigint primary key,
                 transcription_id    bigint references transcription (id) not null,
                 speaker_name        text                                 not null,
                 start_offset_millis bigint                               not null,
                 end_offset_millis   bigint                               not null,
                 content             text                                 not null,
-
                 sequence            integer,
+
                 version             integer,
-                created_at          timestamp,
+                created_at          timestamp with time zone,
                 created_by          text,
-                updated_at          timestamp,
+                updated_at          timestamp with time zone,
                 updated_by          text
             );
-            alter sequence transcription_word_id_seq increment by 30;
             create index transcription_word_transcription_id_index on transcription_word (transcription_id);
             create index transcription_word_sequence_index on transcription_word (sequence);
         </sql>

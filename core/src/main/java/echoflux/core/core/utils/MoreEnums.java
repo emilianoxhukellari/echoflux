@@ -13,7 +13,7 @@ public final class MoreEnums {
             return null;
         }
 
-        var displayNameAnnotation = MoreBeans.findAnnotationNested(
+        var displayNameAnnotation = MoreBeans.findAnnotation(
                 enumValue.getDeclaringClass(),
                 enumValue.name(),
                 DisplayName.class

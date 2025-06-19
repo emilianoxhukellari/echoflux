@@ -5,13 +5,13 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 
-public class NumberJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Double> {
+public class NumberJpaFilter<E> extends BetweenJpaFilter<E, Double> {
 
     private final NumberField from;
     private final NumberField to;
 
-    public NumberJpaFilter(String attribute, String property, boolean asCollection) {
-        super(attribute, property, asCollection);
+    public NumberJpaFilter(String property, boolean asCollection) {
+        super(property, asCollection);
 
         this.from = new NumberField();
         from.addThemeVariants(TextFieldVariant.LUMO_SMALL);

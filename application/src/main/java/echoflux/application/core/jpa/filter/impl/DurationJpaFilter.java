@@ -6,13 +6,13 @@ import echoflux.application.core.field.duration.DurationFieldVariant;
 
 import java.time.Duration;
 
-public class DurationJpaFilter<ENTITY> extends BetweenJpaFilter<ENTITY, Duration> {
+public class DurationJpaFilter<E> extends BetweenJpaFilter<E, Duration> {
 
     private final DurationField from;
     private final DurationField to;
 
-    public DurationJpaFilter(String attribute, String property, boolean asCollection) {
-        super(attribute, property, asCollection);
+    public DurationJpaFilter(String property, boolean asCollection) {
+        super(property, asCollection);
 
         this.from = new DurationField();
         from.addThemeVariants(DurationFieldVariant.LUMO_SMALL);

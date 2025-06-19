@@ -18,7 +18,7 @@ public final class ParallelCollectors {
     }
 
     public static <T> Collector<Supplier<T>, ?, List<T>> toList(int concurrency) {
-        return toList(suppliers -> MoreFunctions.getAllParallel(suppliers, concurrency));
+        return toList(suppliers -> MoreFunctions.executeAllParallelAbortOnFailure(suppliers, concurrency));
     }
 
     public static <T> Collector<Supplier<T>, ?, TimedResult<List<T>>> toListTimed() {
@@ -26,7 +26,7 @@ public final class ParallelCollectors {
     }
 
     public static <T> Collector<Supplier<T>, ?, TimedResult<List<T>>> toListTimed(int concurrency) {
-        return toList(suppliers -> MoreFunctions.getTimed(() -> MoreFunctions.getAllParallel(suppliers, concurrency)));
+        return toList(suppliers -> MoreFunctions.getTimed(() -> MoreFunctions.executeAllParallelAbortOnFailure(suppliers, concurrency)));
     }
 
     private static <T, R> Collector<Supplier<T>, ?,R> toList(Function<List<Supplier<T>>, R> finisher) {

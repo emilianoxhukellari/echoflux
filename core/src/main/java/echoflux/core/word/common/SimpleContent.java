@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor(staticName = "of")
+@AllArgsConstructor
 public class SimpleContent implements HasContent {
 
     private String content;

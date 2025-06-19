@@ -1,14 +1,15 @@
 package echoflux.template.renderer;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.Map;
 
 @Validated
 public interface TemplateRenderer {
 
-    String render(@Valid @NotNull RenderTemplateFromFileCommand command);
+    String renderFromFile(@NotBlank String templateName,  Map<String, Object> dataModel);
 
-    String render(@Valid @NotNull RenderTemplateFromStringCommand command);
+    String renderFromString(@NotBlank String template, Map<String, Object> dataModel);
 
 }

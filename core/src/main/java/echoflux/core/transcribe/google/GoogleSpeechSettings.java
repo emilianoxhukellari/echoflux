@@ -21,10 +21,6 @@ public class GoogleSpeechSettings {
     private String model = "chirp";
 
     @Builder.Default
-    @NotNull
-    private Boolean enableAutomaticPunctuation = true;
-
-    @Builder.Default
     @Positive
     @NotNull
     private Integer initialRetryDelayDurationSeconds = 30;

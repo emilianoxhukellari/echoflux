@@ -7,13 +7,12 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
+import echoflux.domain.transcription.data.ScalarTranscriptionProjection;
 import jakarta.annotation.security.PermitAll;
 import echoflux.application.core.component.AudioTextConnector;
 import echoflux.application.layout.MainLayout;
 import echoflux.core.core.bean.loader.BeanLoader;
-import echoflux.domain.transcription.data.TranscriptionProjection;
 import echoflux.domain.transcription.service.TranscriptionService;
-
 
 @Route(value = "transcription", layout = MainLayout.class)
 @PermitAll
@@ -22,7 +21,7 @@ public class TranscriptionView extends Composite<VerticalLayout> implements HasU
     private final TranscriptionService transcriptionService;
     private final BeanLoader beanLoader;
 
-    private TranscriptionProjection transcription;
+    private ScalarTranscriptionProjection transcription;
 
     public TranscriptionView(TranscriptionService transcriptionService, BeanLoader beanLoader) {
         this.transcriptionService = transcriptionService;
@@ -31,9 +30,9 @@ public class TranscriptionView extends Composite<VerticalLayout> implements HasU
 
     @Override
     public void setParameter(BeforeEvent event, Long parameter) {
-        this.transcription = transcriptionService.projectById(parameter);
+        this.transcription = transcriptionService.getScalarProjectedById(parameter);
 
-        var audioTextConnector = new AudioTextConnector(transcription.id(), beanLoader);
+        var audioTextConnector = new AudioTextConnector(transcription, beanLoader);
         audioTextConnector.setHeightFull();
         audioTextConnector.setMaxWidth("1500px");
 
@@ -45,7 +44,7 @@ public class TranscriptionView extends Composite<VerticalLayout> implements HasU
 
     @Override
     public String getPageTitle() {
-        return transcription.name();
+        return transcription.getName();
     }
 
 }

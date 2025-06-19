@@ -1,11 +1,12 @@
 package echoflux.domain.application_user.data;
 
+import org.immutables.value.Value;
+
 import java.util.Set;
 
-public record ApplicationUserProjection(Long id,
-                                        String username,
-                                        String name,
-                                        String password,
-                                        Boolean enabled,
-                                        Set<Role> roles) {
+@Value.Immutable
+public interface ApplicationUserProjection extends ScalarApplicationUserProjection {
+
+    Set<Role> getRoles();
+
 }

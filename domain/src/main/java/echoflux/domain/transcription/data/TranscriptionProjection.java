@@ -1,19 +1,9 @@
 package echoflux.domain.transcription.data;
 
-import lombok.Builder;
-import echoflux.core.transcribe.common.Language;
+import echoflux.domain.application_user.data.ScalarApplicationUserProjection;
 
-import java.net.URI;
-import java.time.Duration;
+public interface TranscriptionProjection extends ScalarTranscriptionProjection {
 
-@Builder
-public record TranscriptionProjection(Long id,
-                                      TranscriptionStatus status,
-                                      URI sourceUri,
-                                      URI cloudUri,
-                                      Language language,
-                                      String name,
-                                      Boolean enhanced,
-                                      Duration length,
-                                      String error) {
+    ScalarApplicationUserProjection getApplicationUser();
+
 }

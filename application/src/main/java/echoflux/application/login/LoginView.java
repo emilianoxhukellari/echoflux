@@ -16,15 +16,12 @@ import echoflux.application.security.AuthenticatedUser;
 @AnonymousAllowed
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
-    private final AuthenticatedUser authenticatedUser;
-
-    public LoginView(AuthenticatedUser authenticatedUser) {
-        this.authenticatedUser = authenticatedUser;
+    public LoginView() {
         setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
 
         var i18n = LoginI18n.createDefault();
         i18n.setHeader(new LoginI18n.Header());
-        i18n.getHeader().setTitle("Echoflux");
+        i18n.getHeader().setTitle("echoflux");
         i18n.setAdditionalInformation("If you have any issues logging in, please contact the administrator.");
         setI18n(i18n);
 
@@ -34,7 +31,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        if (authenticatedUser.find().isPresent()) {
+        if (AuthenticatedUser.isPresent()) {
             setOpened(false);
             event.forwardTo("");
         }

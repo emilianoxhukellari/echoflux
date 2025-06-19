@@ -1,5 +1,6 @@
 package echoflux.domain.transcription.service;
 
+import echoflux.core.storage.StorageProvider;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,9 @@ public class PatchTranscriptionCommand {
 
     private TranscriptionStatus status;
 
-    private URI cloudUri;
+    private URI uri;
+
+    private StorageProvider storageProvider;
 
     private String name;
 

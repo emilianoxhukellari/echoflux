@@ -2,7 +2,6 @@ package echoflux.application.core.dialog;
 
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import echoflux.application.core.error.MoreErrors;
-import echoflux.application.security.AuthenticatedUser;
 
 public final class Dialogs {
 
@@ -30,8 +29,8 @@ public final class Dialogs {
         dialog.open();
     }
 
-    public static void error(Throwable e, AuthenticatedUser authenticatedUser) {
-        error(MoreErrors.resolveErrorMessage(e, authenticatedUser));
+    public static void error(Throwable e) {
+        error(MoreErrors.resolveErrorMessage(e));
     }
 
     public static void error(String error) {

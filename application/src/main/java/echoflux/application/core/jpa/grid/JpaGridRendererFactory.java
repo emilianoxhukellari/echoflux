@@ -2,33 +2,38 @@ package echoflux.application.core.jpa.grid;
 
 import com.vaadin.flow.component.icon.AbstractIcon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.data.binder.PropertyDefinition;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.renderer.LocalDateRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.function.ValueProvider;
+import echoflux.application.security.AuthenticatedUser;
+import echoflux.core.core.validate.guard.Guard;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import echoflux.application.core.icon.IconFactory;
-import echoflux.application.core.jpa.core.JpaPropertyDefinition;
 import echoflux.core.core.utils.MoreDurations;
 import echoflux.core.core.utils.MoreEnums;
+import org.springframework.data.util.TypeInformation;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class JpaGridRendererFactory {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.MEDIUM);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
 
-    public static <T> LocalDateTimeRenderer<T> newLocalDateTimeRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
-        Objects.requireNonNull(propertyDefinition, "Property definition is required");
-        Validate.isTrue(LocalDateTime.class.isAssignableFrom(propertyDefinition.getType()),
-                "Property definition must be of assignable to LocalDateTime");
+    public static <T> LocalDateTimeRenderer<T> newLocalDateTimeRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+        Guard.assignableFrom(LocalDateTime.class, propertyDefinition.getType());
 
         return new LocalDateTimeRenderer<>(
                 (ValueProvider<T, LocalDateTime>) item -> (LocalDateTime) propertyDefinition.getGetter().apply(item),
@@ -36,10 +41,48 @@ public class JpaGridRendererFactory {
         );
     }
 
-    public static <T> ComponentRenderer<AbstractIcon<?>, T> newBooleanRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
-        Objects.requireNonNull(propertyDefinition, "Property definition is required");
-        Validate.isTrue(Boolean.class.isAssignableFrom(propertyDefinition.getType()),
-                "Property definition must be of assignable to Boolean");
+    public static <T> LocalDateRenderer<T> newLocalDateRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+        Guard.assignableFrom(LocalDate.class, propertyDefinition.getType());
+
+        return new LocalDateRenderer<>(
+                (ValueProvider<T, LocalDate>) item -> (LocalDate) propertyDefinition.getGetter().apply(item),
+                () -> DATE_FORMATTER
+        );
+    }
+
+    public static <T> TextRenderer<T> newGenericRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+
+        return new TextRenderer<>(item -> {
+            var value = propertyDefinition.getGetter().apply(item);
+            if (value == null) {
+                return StringUtils.EMPTY;
+            }
+
+            return value.toString();
+        });
+    }
+
+    public static <T> TextRenderer<T> newInstantRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+        Guard.assignableFrom(Instant.class, propertyDefinition.getType());
+
+        return new TextRenderer<>(item -> {
+            var value = (Instant) propertyDefinition.getGetter().apply(item);
+            if (value == null) {
+                return StringUtils.EMPTY;
+            }
+
+            var zonedDateTime = value.atZone(AuthenticatedUser.getZoneId());
+
+            return zonedDateTime.format(DATE_TIME_FORMATTER);
+        });
+    }
+
+    public static <T> ComponentRenderer<AbstractIcon<?>, T> newBooleanRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+        Guard.assignableFrom(Boolean.class, propertyDefinition.getType());
 
         return new ComponentRenderer<>(
                 item -> {
@@ -55,25 +98,31 @@ public class JpaGridRendererFactory {
         );
     }
 
-    public static <T> TextRenderer<T> newCollectionRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
-        Objects.requireNonNull(propertyDefinition, "Property definition is required");
-        Validate.isTrue(Collection.class.isAssignableFrom(propertyDefinition.getType()),
-                "Property definition must be of assignable to Collection");
+    public static <T> TextRenderer<T> newCollectionRenderer(PropertyDefinition<T, ?> propertyDefinition, TypeInformation<?> typeInformation) {
+        Guard.notNull(typeInformation);
+        Guard.assignableFrom(Collection.class, propertyDefinition.getType());
 
         return new TextRenderer<>(item -> {
             var value = (Collection<?>) propertyDefinition.getGetter().apply(item);
             if (CollectionUtils.isEmpty(value)) {
                 return StringUtils.EMPTY;
             } else {
+                var genericType = typeInformation.getRequiredComponentType().getType();
+
+                if (genericType.isEnum()) {
+                    return value.stream()
+                            .map(v -> MoreEnums.toDisplayName((Enum<?>) v))
+                            .collect(Collectors.joining(", "));
+                }
+
                 return StringUtils.join(value, ", ");
             }
         });
     }
 
-    public static <T> TextRenderer<T> newEnumRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
-        Objects.requireNonNull(propertyDefinition, "Property definition is required");
-        Validate.isTrue(Enum.class.isAssignableFrom(propertyDefinition.getType()),
-                "Property definition must be of assignable to Enum");
+    public static <T> TextRenderer<T> newEnumRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+        Guard.assignableFrom(Enum.class, propertyDefinition.getType());
 
         return new TextRenderer<>(item -> {
             var value = (Enum<?>) propertyDefinition.getGetter().apply(item);
@@ -82,8 +131,9 @@ public class JpaGridRendererFactory {
         });
     }
 
-    public static <T> TextRenderer<T> newDurationRenderer(JpaPropertyDefinition<T, ?> propertyDefinition) {
-        Objects.requireNonNull(propertyDefinition, "Property definition is required");
+    public static <T> TextRenderer<T> newDurationRenderer(PropertyDefinition<T, ?> propertyDefinition) {
+        Guard.notNull(propertyDefinition);
+        Guard.assignableFrom(Duration.class, propertyDefinition.getType());
 
         return new TextRenderer<>(item -> {
             var duration = (Duration) propertyDefinition.getGetter().apply(item);

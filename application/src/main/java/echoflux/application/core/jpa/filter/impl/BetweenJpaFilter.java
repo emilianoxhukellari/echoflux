@@ -1,14 +1,15 @@
 package echoflux.application.core.jpa.filter.impl;
 
+import echoflux.domain.core.criteria.CriteriaPathResolver;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Path;
 import org.springframework.data.jpa.domain.Specification;
 import echoflux.application.core.jpa.filter.JpaFilter;
-import echoflux.application.core.jpa.filter.JpaFilterUtils;
 
-public abstract class BetweenJpaFilter<ENTITY, V extends Comparable<? super V>> extends JpaFilter<ENTITY> {
+public abstract class BetweenJpaFilter<E, V extends Comparable<? super V>> extends JpaFilter<E> {
 
-    public BetweenJpaFilter(String attribute, String property, boolean asCollection) {
-        super(attribute, property, asCollection);
+    public BetweenJpaFilter(String property, boolean asCollection) {
+        super(property, asCollection);
     }
 
     protected abstract V getFrom();
@@ -16,25 +17,23 @@ public abstract class BetweenJpaFilter<ENTITY, V extends Comparable<? super V>> 
     protected abstract V getTo();
 
     @Override
-    public Specification<ENTITY> getSpecification() {
-        Specification<ENTITY> fromSpecification = (root, _, criteriaBuilder) -> {
+    public Specification<E> getSpecification() {
+        Specification<E> fromSpecification = (root, _, cb) -> {
             if (getFrom() == null) {
-                return criteriaBuilder.conjunction();
+                return cb.conjunction();
             }
+            Path<V> path = CriteriaPathResolver.resolve(root, property, JoinType.LEFT, asCollection);
 
-            return asCollection
-                    ? criteriaBuilder.greaterThanOrEqualTo(root.join(attribute, JoinType.LEFT), getFrom())
-                    : criteriaBuilder.greaterThanOrEqualTo(JpaFilterUtils.get(root, attribute), getFrom());
+            return cb.greaterThanOrEqualTo(path, getFrom());
         };
 
-        Specification<ENTITY> toSpecification = (root, _, criteriaBuilder) -> {
+        Specification<E> toSpecification = (root, _, cb) -> {
             if (getTo() == null) {
-                return criteriaBuilder.conjunction();
+                return cb.conjunction();
             }
+            Path<V> path = CriteriaPathResolver.resolve(root, property, JoinType.LEFT, asCollection);
 
-            return asCollection
-                    ? criteriaBuilder.lessThanOrEqualTo(root.join(attribute, JoinType.LEFT), getTo())
-                    : criteriaBuilder.lessThanOrEqualTo(JpaFilterUtils.get(root, attribute), getTo());
+            return cb.lessThanOrEqualTo(path, getTo());
         };
 
         return fromSpecification.and(toSpecification);

@@ -1,16 +1,17 @@
 package echoflux.domain.application_user.service.impl;
 
+import echoflux.domain.application_user.data.ApplicationUserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import echoflux.domain.application_user.data.ApplicationUserProjection;
 import echoflux.domain.application_user.data.ApplicationUserRepository;
-import echoflux.domain.application_user.service.ApplicationUserMapper;
 import echoflux.domain.application_user.service.ApplicationUserService;
 import echoflux.domain.application_user.service.ChangePasswordCommand;
 import echoflux.domain.application_user.service.CreateApplicationUserCommand;
 import echoflux.domain.application_user.service.UpdateApplicationUserCommand;
+
+import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -19,37 +20,45 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationUserRepository applicationUserRepository;
-    private final ApplicationUserMapper applicationUserMapper;
 
     @Override
     @Transactional
-    public ApplicationUserProjection create(CreateApplicationUserCommand command) {
+    public ApplicationUserEntity create(CreateApplicationUserCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
-        var user = applicationUserMapper.toEntity(command, hashedPassword);
-        var saved = applicationUserRepository.save(user);
+        var user = new ApplicationUserEntity();
+        user.setPassword(hashedPassword);
+        user.setUsername(command.getUsername());
+        user.setName(command.getName());
+        user.setEnabled(command.getEnabled());
+        user.setCountry(command.getCountry());
+        user.setZoneId(command.getZoneId());
+        user.setRoles(command.getRoles());
 
-        return applicationUserMapper.toProjection(saved);
+        return applicationUserRepository.save(user);
     }
 
     @Override
     @Transactional
-    public ApplicationUserProjection patch(UpdateApplicationUserCommand command) {
+    public ApplicationUserEntity update(UpdateApplicationUserCommand command) {
         var user = applicationUserRepository.getReferenceById(command.getId());
-        var patched = applicationUserMapper.patch(user, command);
-        var saved = applicationUserRepository.save(patched);
+        user.setUsername(command.getUsername());
+        user.setName(command.getName());
+        user.setEnabled(command.getEnabled());
+        user.setCountry(command.getCountry());
+        user.setZoneId(command.getZoneId());
+        user.setRoles(new HashSet<>(command.getRoles()));
 
-        return applicationUserMapper.toProjection(saved);
+        return applicationUserRepository.save(user);
     }
 
     @Override
     @Transactional
-    public ApplicationUserProjection changePassword(ChangePasswordCommand command) {
+    public ApplicationUserEntity changePassword(ChangePasswordCommand command) {
         var hashedPassword = passwordEncoder.encode(command.getPassword());
         var user = applicationUserRepository.getReferenceById(command.getId());
-        var patched = applicationUserMapper.patch(user, hashedPassword);
-        var saved = applicationUserRepository.save(patched);
+        user.setPassword(hashedPassword);
 
-        return applicationUserMapper.toProjection(saved);
+        return applicationUserRepository.save(user);
     }
 
     @Override

@@ -12,7 +12,7 @@ import echoflux.core.diarization.pyannote.client.DiarizationJobStatus;
 import echoflux.core.diarization.pyannote.client.PyannoteDiarizationClient;
 import echoflux.core.diarization.pyannote.client.SubmitJobRequest;
 
-import java.net.URI;
+import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 
@@ -24,8 +24,8 @@ public class PyannoteAudioDiarizer implements AudioDiarizer {
 
     @LoggedMethodExecution(logReturn = false)
     @Override
-    public List<DiarizationEntry> diarize(URI audioUri) {
-        var request = new SubmitJobRequest(audioUri.toString());
+    public List<DiarizationEntry> diarize(URL url) {
+        var request = new SubmitJobRequest(url.toString());
         var job = client.submitJob(request);
 
         var response = MoreFunctions.pollUntil(

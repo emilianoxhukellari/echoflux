@@ -1,10 +1,10 @@
 package echoflux.application.core.jpa.filter.impl;
 
 import com.vaadin.flow.component.combobox.ComboBox;
-import org.apache.commons.lang3.Validate;
+import echoflux.core.core.validate.guard.Guard;
+import echoflux.domain.core.criteria.CriteriaPathResolver;
 import org.springframework.data.jpa.domain.Specification;
 import echoflux.application.core.jpa.filter.JpaFilter;
-import echoflux.application.core.jpa.filter.JpaFilterUtils;
 import echoflux.core.core.utils.MoreArrays;
 import echoflux.core.core.utils.MoreEnums;
 
@@ -12,9 +12,9 @@ public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
 
     private final ComboBox<Enum<?>> comboBox;
 
-    public EnumJpaFilter(String attribute, String property, Class<?> enumClass, boolean asCollection) {
-        super(attribute, property, asCollection);
-        Validate.isTrue(enumClass.isEnum(), "Class must be an enum");
+    public EnumJpaFilter(String property, Class<?> enumClass, boolean asCollection) {
+        super(property, asCollection);
+        Guard.enumType(enumClass);
 
         this.comboBox = new ComboBox<>();
         comboBox.setItems(MoreArrays.collect(enumClass.getEnumConstants(), v -> (Enum<?>) v));
@@ -32,11 +32,11 @@ public class EnumJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
             return (_, _, criteriaBuilder) -> criteriaBuilder.conjunction();
         }
 
-        return asCollection
-                ? (root, _, criteriaBuilder)
-                -> criteriaBuilder.isMember(comboBox.getValue(), JpaFilterUtils.get(root, attribute))
-                : (root, _, criteriaBuilder)
-                -> criteriaBuilder.equal(JpaFilterUtils.get(root, attribute), comboBox.getValue());
+        if (asCollection) {
+            return (root, _, cb) -> cb.isMember(comboBox.getValue(), CriteriaPathResolver.resolve(root, property));
+        }
+
+        return (root, _, cb) -> cb.equal(CriteriaPathResolver.resolve(root, property), comboBox.getValue());
     }
 
     @Override

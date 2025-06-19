@@ -2,19 +2,19 @@ package echoflux.application.core.jpa.filter.impl;
 
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import echoflux.domain.core.criteria.CriteriaPathResolver;
 import jakarta.persistence.criteria.JoinType;
 import lombok.Getter;
 import org.springframework.data.jpa.domain.Specification;
 import echoflux.application.core.jpa.filter.JpaFilter;
-import echoflux.application.core.jpa.filter.JpaFilterUtils;
 
 @Getter
-public class TextJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
+public class TextJpaFilter<E> extends JpaFilter<E> {
 
     private final TextField textField;
 
-    public TextJpaFilter(String attribute, String property, boolean asCollection) {
-        super(attribute, property, asCollection);
+    public TextJpaFilter(String property, boolean asCollection) {
+        super(property, asCollection);
         this.textField = new TextField();
 
         textField.setPlaceholder("Filter");
@@ -26,17 +26,17 @@ public class TextJpaFilter<ENTITY> extends JpaFilter<ENTITY> {
     }
 
     @Override
-    public Specification<ENTITY> getSpecification() {
+    public Specification<E> getSpecification() {
         if (textField.isEmpty()) {
-            return (_, _, criteriaBuilder) -> criteriaBuilder.conjunction();
+            return (_, _, cb) -> cb.conjunction();
         }
         var pattern = "%" + textField.getValue().toLowerCase() + "%";
 
-        return asCollection
-                ? (root, _, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.join(attribute, JoinType.LEFT).as(String.class)), pattern)
-                : (root, _, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(JpaFilterUtils.get(root, attribute).as(String.class)), pattern);
+        return (root, _, cb) -> {
+            var path = CriteriaPathResolver.resolve(root, property, JoinType.LEFT, asCollection);
+
+            return cb.like(cb.lower(path.as(String.class)), pattern);
+        };
     }
 
     @Override

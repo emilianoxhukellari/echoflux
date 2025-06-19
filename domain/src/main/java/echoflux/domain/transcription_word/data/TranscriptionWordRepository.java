@@ -1,16 +1,11 @@
 package echoflux.domain.transcription_word.data;
 
-import echoflux.domain.core.repository.EnhancedJpaRepository;
+import echoflux.domain.core.repository.CoreJpaRepository;
 
 import java.util.List;
 
-public interface TranscriptionWordRepository extends EnhancedJpaRepository<TranscriptionWordEntity, Long> {
+public interface TranscriptionWordRepository extends CoreJpaRepository<TranscriptionWordEntity, Long> {
 
-    List<WordDto> findAllByTranscriptionIdOrderBySequence(Long transcriptionId);
-
-    @Override
-    default Class<TranscriptionWordEntity> getBeanType() {
-        return TranscriptionWordEntity.class;
-    }
+    <T> List<T> findAllByTranscriptionIdOrderBySequence(Long transcriptionId, Class<T> type);
 
 }

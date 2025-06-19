@@ -10,14 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.ui.UiUtils;
-import echoflux.application.security.AuthenticatedUser;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ServiceListener implements VaadinServiceInitListener {
-
-    private final AuthenticatedUser authenticatedUser;
 
     @Override
     public void serviceInit(ServiceInitEvent event) {
@@ -30,7 +27,7 @@ public class ServiceListener implements VaadinServiceInitListener {
                     log.error("Session error: ", e.getThrowable());
                     UiUtils.safeAccess(
                             UI.getCurrent(),
-                            () -> Dialogs.error(e.getThrowable(), authenticatedUser)
+                            () -> Dialogs.error(e.getThrowable())
                     );
                 }
         );

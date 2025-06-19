@@ -24,7 +24,7 @@ public class BeanLoaderImpl implements BeanLoader {
                 .filter(predicate)
                 .toList();
 
-        Guard.singleElement(all, "More than one bean of type [%s] found", beanType.getName());
+        Guard.single(all);
 
         return Optional.of(all.getFirst());
     }
@@ -38,11 +38,7 @@ public class BeanLoaderImpl implements BeanLoader {
 
     @Override
     public <T> T load(Class<T> beanType) {
-        var names = applicationContext.getBeanNamesForType(beanType);
-
-        Guard.singleElement(names, "More than one bean of type [%s] found", beanType.getName());
-
-        return applicationContext.getBean(names[0], beanType);
+        return applicationContext.getBean(beanType);
     }
 
 }

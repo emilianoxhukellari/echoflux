@@ -20,14 +20,13 @@ import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
+import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.LumoIcon;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import echoflux.application.completion.CompletionsView;
 import echoflux.application.home.HomeView;
-import echoflux.application.operation.OperationsView;
-import echoflux.application.security.AuthenticatedUser;
 import echoflux.application.settings.SettingsView;
 import echoflux.application.template.TemplatesView;
 import echoflux.application.transcribe.TranscribeView;
@@ -40,11 +39,11 @@ public class MainLayout extends AppLayout {
 
     private H1 viewTitle;
 
-    private final AuthenticatedUser authenticatedUser;
+    private final AuthenticationContext authenticationContext;
     private final AccessAnnotationChecker accessChecker;
 
-    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker) {
-        this.authenticatedUser = authenticatedUser;
+    public MainLayout(AuthenticationContext authenticationContext, AccessAnnotationChecker accessChecker) {
+        this.authenticationContext = authenticationContext;
         this.accessChecker = accessChecker;
 
         setPrimarySection(Section.DRAWER);
@@ -63,7 +62,7 @@ public class MainLayout extends AppLayout {
     }
 
     private void addDrawerContent() {
-        var appName = new Span("Echoflux");
+        var appName = new Span("echoflux");
         appName.addClassNames(LumoUtility.FontWeight.EXTRABOLD, LumoUtility.FontSize.XXLARGE);
         var header = new Header(appName);
         var scroller = new Scroller(newSideNav());
@@ -81,7 +80,6 @@ public class MainLayout extends AppLayout {
         addIfHasAccess(nav, TranscriptionWordsView.class, "Transcription Words", LineAwesomeIcon.FONT_SOLID.create());
         addIfHasAccess(nav, TemplatesView.class, "Templates", LineAwesomeIcon.FILE_CODE_SOLID.create());
         addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
-        addIfHasAccess(nav, OperationsView.class, "Operations", LineAwesomeIcon.PLAY_SOLID.create());
         addIfHasAccess(nav, SettingsView.class, "Settings", LineAwesomeIcon.COG_SOLID.create());
 
         return nav;
@@ -90,16 +88,16 @@ public class MainLayout extends AppLayout {
     private Footer newFooter() {
         var footer = new Footer();
 
-        var user = authenticatedUser.find();
-        if (user.isPresent()) {
+        var principalName = authenticationContext.getPrincipalName();
+        if (principalName.isPresent()) {
             var userMenu = new MenuBar();
             userMenu.addThemeVariants(MenuBarVariant.LUMO_CONTRAST, MenuBarVariant.LUMO_TERTIARY_INLINE);
 
-            var userSpan = new HorizontalLayout(new Text(user.get().getName()), LumoIcon.DROPDOWN.create());
+            var userSpan = new HorizontalLayout(new Text(principalName.get()), LumoIcon.DROPDOWN.create());
             userSpan.getStyle().set("gap", "var(--lumo-space-xs)");
             var userItem = userMenu.addItem(userSpan);
 
-            userItem.getSubMenu().addItem("Sign out", _ -> authenticatedUser.logout());
+            userItem.getSubMenu().addItem("Sign out", _ -> authenticationContext.logout());
             footer.add(userMenu);
         } else {
             var loginLink = new Anchor("login", "Sign in");

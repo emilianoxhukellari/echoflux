@@ -1,6 +1,5 @@
 package echoflux.application.transcribe;
 
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -20,12 +19,9 @@ import org.apache.commons.lang3.function.Failable;
 import echoflux.application.core.component.HelperDownloadAnchor;
 import echoflux.application.core.dialog.EnhancedDialog;
 import echoflux.application.core.operation.Operation;
-import echoflux.application.core.operation.OperationRunner;
 import echoflux.core.core.bean.loader.BeanLoader;
 import echoflux.core.core.utils.MoreEnums;
 import echoflux.core.document.exporter.DocumentExporter;
-import echoflux.domain.operation.data.OperationType;
-import echoflux.domain.transcription.manager.TranscriptionManager;
 import echoflux.domain.transcription.service.TranscriptionService;
 
 import java.nio.file.Files;
@@ -36,8 +32,7 @@ import java.util.Objects;
 public class DownloadTranscriptDialog extends EnhancedDialog {
 
     private final DocumentExporter documentExporter;
-    private final OperationRunner operationRunner;
-    private final TranscriptionManager transcriptionManager;
+    private final TranscriptionService transcriptionService;
     private final HelperDownloadAnchor.Factory helperDownloadAnchorFactory;
     private final Binder<DownloadBean> binder;
 
@@ -49,17 +44,15 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
 
         this.helperDownloadAnchorFactory = helperDownloadAnchorFactory;
         this.documentExporter = beanLoader.load(DocumentExporter.class);
-        this.operationRunner = beanLoader.load(OperationRunner.class);
-        this.transcriptionManager = beanLoader.load(TranscriptionManager.class);
+        this.transcriptionService = beanLoader.load(TranscriptionService.class);
         this.binder = new Binder<>(DownloadBean.class);
 
-        var transcription = beanLoader.load(TranscriptionService.class)
-                .projectById(transcriptionId);
+        var transcription = transcriptionService.getScalarProjectedById(transcriptionId);
 
         binder.setBean(
                 DownloadBean.builder()
                         .transcriptionId(transcriptionId)
-                        .name(transcription.name())
+                        .name(transcription.getName())
                         .format(TranscriptExportableDocumentType.DOCX)
                         .withTimestamps(true)
                         .build()
@@ -123,12 +116,11 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
         );
         var helperAnchor = helperDownloadAnchorFactory.create();
 
-        var operation = Operation.<Path>builder()
+        Operation.<Path>builder()
                 .name("Exporting document")
-                .description("Getting transcript and exporting document")
                 .beforeCall(this::close)
                 .callable(() -> {
-                    var transcript = transcriptionManager.renderTranscript(
+                    var transcript = transcriptionService.renderTranscript(
                             binder.getBean().getTranscriptionId(),
                             binder.getBean().isWithTimestamps()
                     );
@@ -144,10 +136,8 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
                     helperAnchor.click();
                 })
                 .onSuccessNotify(false)
-                .type(OperationType.BLOCKING)
-                .build();
-
-        operationRunner.run(operation, UI.getCurrent());
+                .build()
+                .run();
     }
 
     @Data

@@ -27,7 +27,7 @@ public final class SpeakerSegmentPartitioner {
         for (var segment : segments) {
             if (currentContents.size() + segment.getWords().size() <= wordLimit) {
                 currentContents.addAll(segment.getWords());
-                currentContents.add(SimpleContent.of(MoreStrings.EMPTY_LINE));
+                currentContents.add(new SimpleContent(MoreStrings.EMPTY_LINE));
             } else {
                 if (!currentContents.isEmpty()) {
                     partitions.add(SpeakerSegmentPartition.ofContents(currentContents));
@@ -40,7 +40,7 @@ public final class SpeakerSegmentPartitioner {
                     );
                 } else {
                     currentContents.addAll(segment.getWords());
-                    currentContents.add(SimpleContent.of(MoreStrings.EMPTY_LINE));
+                    currentContents.add(new SimpleContent(MoreStrings.EMPTY_LINE));
                 }
             }
         }

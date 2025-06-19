@@ -1,6 +1,5 @@
 package echoflux.application.home;
 
-import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -12,9 +11,10 @@ import echoflux.application.layout.MainLayout;
 @Route(value = "", layout = MainLayout.class)
 @PermitAll
 @Slf4j
-public class HomeView extends Composite<VerticalLayout> {
+public class HomeView extends VerticalLayout {
 
     public HomeView() {
+
     }
 
 }

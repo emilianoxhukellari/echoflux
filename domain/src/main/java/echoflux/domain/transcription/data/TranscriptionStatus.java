@@ -6,8 +6,6 @@ public enum TranscriptionStatus {
     DOWNLOADING_PUBLIC,
     FINDING_DURATION,
     TRANSCODING,
-    UPLOADING,
-    SPLITTING,
     TRANSCRIBING,
     ENHANCING,
     COMPLETED,

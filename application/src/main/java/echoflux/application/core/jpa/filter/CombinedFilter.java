@@ -1,25 +1,29 @@
 package echoflux.application.core.jpa.filter;
 
-import org.apache.commons.collections4.ListUtils;
+import echoflux.core.core.validate.guard.Guard;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
-public record CombinedFilter<ENTITY>(List<JpaFilter<ENTITY>> filters) {
+public record CombinedFilter<E>(List<JpaFilter<E>> filters) {
 
-    public static <ENTITY> CombinedFilter<ENTITY> empty() {
+    public CombinedFilter {
+        Guard.notNull(filters);
+    }
+
+    public static <E> CombinedFilter<E> empty() {
         return new CombinedFilter<>(List.of());
     }
 
-    public static <ENTITY> CombinedFilter<ENTITY> of(List<JpaFilter<ENTITY>> filters) {
+    public static <E> CombinedFilter<E> of(List<JpaFilter<E>> filters) {
         return new CombinedFilter<>(filters);
     }
 
-    public Specification<ENTITY> specification() {
-        return ListUtils.emptyIfNull(filters).stream()
+    public Specification<E> specification() {
+        return filters.stream()
                 .map(JpaFilter::getSpecification)
                 .reduce(Specification::and)
-                .orElse((_, _, criteriaBuilder) -> criteriaBuilder.conjunction());
+                .orElse((_, _, cb) -> cb.conjunction());
     }
 
 }

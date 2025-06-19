@@ -34,21 +34,21 @@ public final class SpeakerSegmentAssembler {
         var segmentList = Lists.newArrayList(currSegment);
 
         for (int i = 1; i < words.size(); i++) {
-            var w = words.get(i);
-            if (StringUtils.equals(currSegment.getSpeakerName(), w.getSpeakerName())) {
-                currSegment.setEndOffsetMillis(w.getEndOffsetMillis());
-                currSegment.getWords().add(w);
-                currContentBuilder.append(StringUtils.SPACE).append(w.getContent());
+            var word = words.get(i);
+            if (StringUtils.equals(currSegment.getSpeakerName(), word.getSpeakerName())) {
+                currSegment.setEndOffsetMillis(word.getEndOffsetMillis());
+                currSegment.getWords().add(word);
+                currContentBuilder.append(StringUtils.SPACE).append(word.getContent());
             } else {
                 currSegment.setContent(currContentBuilder.toString());
 
                 currSegment = newSegment.get();
-                currContentBuilder = new StringBuilder(w.getContent());
+                currContentBuilder = new StringBuilder(word.getContent());
 
-                currSegment.setSpeakerName(w.getSpeakerName());
-                currSegment.setStartOffsetMillis(w.getStartOffsetMillis());
-                currSegment.setEndOffsetMillis(w.getEndOffsetMillis());
-                currSegment.setWords(Lists.newArrayList(w));
+                currSegment.setSpeakerName(word.getSpeakerName());
+                currSegment.setStartOffsetMillis(word.getStartOffsetMillis());
+                currSegment.setEndOffsetMillis(word.getEndOffsetMillis());
+                currSegment.setWords(Lists.newArrayList(word));
 
                 segmentList.add(currSegment);
             }

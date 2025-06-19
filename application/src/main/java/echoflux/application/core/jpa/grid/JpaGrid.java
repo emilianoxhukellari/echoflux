@@ -1,236 +1,134 @@
 package echoflux.application.core.jpa.grid;
 
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
+import com.vaadin.flow.data.binder.BeanPropertySet;
+import com.vaadin.flow.data.binder.PropertyDefinition;
+import com.vaadin.flow.data.binder.PropertyFilterDefinition;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
-import jakarta.annotation.Nullable;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import echoflux.application.core.dialog.Dialogs;
-import echoflux.application.core.jpa.core.JpaPropertyCache;
-import echoflux.application.core.jpa.core.JpaPropertyDefinition;
-import echoflux.application.core.jpa.core.JpaPropertyDefinitionUtils;
-import echoflux.application.core.jpa.core.JpaSupportedType;
-import echoflux.application.core.jpa.dialog.save.JpaSaveCorePropertiesDialog;
-import echoflux.application.core.jpa.dto.JpaDtoService;
-import echoflux.application.core.jpa.dto.impl.SimpleJpaDtoService;
+import echoflux.application.core.jpa.core.JpaPropertyType;
+import echoflux.application.core.jpa.core.PropertyDefinitionUtils;
 import echoflux.application.core.jpa.filter.CombinedFilter;
 import echoflux.application.core.jpa.filter.FilterFactory;
 import echoflux.application.core.jpa.filter.JpaFilter;
-import echoflux.application.core.operation.Operation;
-import echoflux.application.core.operation.OperationCallable;
-import echoflux.application.core.operation.OperationRunner;
-import echoflux.core.core.bean.MoreBeans;
-import echoflux.core.core.bean.loader.BeanLoader;
 import echoflux.core.core.executor.MoreExecutors;
-import echoflux.core.core.utils.MoreArrays;
-import echoflux.core.core.utils.MoreLists;
-import echoflux.domain.operation.data.OperationType;
+import echoflux.core.core.validate.guard.Guard;
+import echoflux.domain.core.data.BaseEntity;
+import echoflux.domain.core.data.BaseEntity_;
+import echoflux.domain.core.data.BaseProjection;
+import echoflux.domain.core.data.HasId;
+import echoflux.domain.core.repository.ProjectionJpaRepository;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.util.TypeInformation;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
-public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
+public class JpaGrid<P extends BaseProjection<ID>, E extends BaseEntity<ID>, ID> extends Grid<P> {
 
-    private static final String COLUMN_WIDTH = "14.2rem";
+    private final static String DEFAULT_COLUMN_WIDTH = "14.2rem";
 
-    @Getter
-    private final BeanLoader beanLoader;
-    @Getter
-    private final JpaDtoService<DTO, ENTITY, ID> service;
-    @Getter
-    private final Class<DTO> beanType;
-    @Nullable
-    private final Specification<ENTITY> defaultSpecification;
-    private final JpaPropertyDefinition<DTO, ID> idPropertyDefinition;
-    @Nullable
-    private final String defaultSortProperty;
-    private final Sort.Direction defaultSortDirection;
-    private final List<JpaFilter<ENTITY>> filters = new ArrayList<>();
-    private final ConfigurableFilterDataProvider<DTO, Void, CombinedFilter<ENTITY>> filterDataProvider;
+    private final Class<P> projectionType;
+    private final ProjectionJpaRepository<E, ID> repository;
+    private final TypeInformation<P> projectionTypeInformation;
+    private final Set<String> attributePaths;
+    private final ConfigurableFilterDataProvider<P, Void, CombinedFilter<E>> filterDataProvider;
+    private final List<JpaFilter<E>> filters;
 
-    @Getter
-    private JpaGridCrudActionsData crudActionsData = JpaGridCrudActionsData.empty();
+    private Specification<E> defaultSpecification;
+    private String defaultSortAttribute;
+    private Sort.Direction defaultSortDirection;
     private boolean clearingFilters;
     private HeaderRow filterRow;
-    private GridContextMenu<DTO> contextMenu;
+    private GridContextMenu<P> contextMenu;
 
-    public JpaGrid(Class<DTO> beanType, BeanLoader beanLoader) {
-        this(
-                JpaGridConfiguration.<DTO, ENTITY, ID>builder()
-                        .service(new SimpleJpaDtoService<>(beanType, beanLoader))
-                        .beanType(beanType)
-                        .beanLoader(beanLoader)
-                        .build()
-        );
+    public JpaGrid(Class<P> projectionType, ProjectionJpaRepository<E, ID> repository) {
+        this(projectionType, repository, resolveAttributePaths(projectionType));
     }
 
-    @SuppressWarnings("unchecked")
-    public JpaGrid(JpaGridConfiguration<DTO, ENTITY, ID> configuration) {
-        super(30);
-        Objects.requireNonNull(configuration.getBeanType(), "Bean type cannot be null");
-        Objects.requireNonNull(configuration.getService(), "Service cannot be null");
-        Objects.requireNonNull(configuration.getBeanLoader(), "Bean loader cannot be null");
-
-        this.service = configuration.getService();
-        this.beanType = configuration.getBeanType();
-        this.beanLoader = configuration.getBeanLoader();
-        this.defaultSpecification = configuration.getDefaultSpecification();
-        this.idPropertyDefinition = (JpaPropertyDefinition<DTO, ID>) JpaPropertyCache.getIdProperty(beanType);
-        this.defaultSortProperty = configuration.getDefaultSortAttribute();
-        this.defaultSortDirection = Objects.requireNonNullElse(configuration.getDefaultSortDirection(), Sort.Direction.DESC);
+    public JpaGrid(Class<P> projectionType, ProjectionJpaRepository<E, ID> repository, Set<String> attributePaths) {
+        this.projectionType = Guard.notNull(projectionType, "projectionType");
+        this.repository = Guard.notNull(repository, "repository");
+        this.attributePaths = Guard.notNull(attributePaths, "attributePaths");
+        this.defaultSpecification = (_, _, cb) -> cb.conjunction();
+        this.defaultSortAttribute = HasId.ID;
+        this.defaultSortDirection = Sort.Direction.DESC;
+        this.projectionTypeInformation = TypeInformation.of(projectionType);
         this.filterDataProvider = newDataProvider();
+        this.filters = new ArrayList<>();
 
-        configureBeanType(beanType, false);
+        configureBeanType(projectionType, false);
         getDataCommunicator().enablePushUpdates(MoreExecutors.virtualThreadExecutor());
         setDataProvider(this.filterDataProvider);
         addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
     }
 
-    public void refreshItem(DTO item) {
-        getDataProvider().refreshItem(item);
+    public JpaGridControls<P, E, ID> withControls() {
+        return new JpaGridControls<>(this);
     }
 
-    public void refreshAll() {
-        getDataProvider().refreshAll();
+    public void setDefaultSpecification(Specification<E> defaultSpecification) {
+        this.defaultSpecification = Guard.notNull(defaultSpecification, "defaultSpecification");
     }
 
-    public void addAllColumns() {
-        addCoreAttributeColumns();
-        addAuditColumns();
-        addIdColumn();
+    public void setDefaultSortAttribute(String defaultSortAttribute) {
+        this.defaultSortAttribute = Guard.notBlank(defaultSortAttribute, "defaultSortAttribute");
     }
 
-    public void addAllFilters() {
-        addCoreAttributeFilters();
-        addAuditFilters();
-        addIdFilter();
-    }
-
-    public void addCoreAttributeColumns() {
-        addCoreAttributeColumnsExcluding();
-    }
-
-    public void addCoreAttributeColumnsExcluding(String... excludedProperties) {
-        addColumns(
-                JpaPropertyCache.getCorePropertiesExcluding(beanType, MoreArrays.toList(excludedProperties))
-                        .stream()
-                        .map(JpaPropertyDefinition::getName)
-                        .toArray(String[]::new)
-        );
-    }
-
-    public void addAuditColumns() {
-        JpaPropertyCache.getAuditProperties(beanType)
-                .stream()
-                .map(JpaPropertyDefinition::getName)
-                .forEach(this::addColumn);
-    }
-
-    public void addIdColumn() {
-        addColumn(idPropertyDefinition.getName());
+    public void setDefaultSortDirection(Sort.Direction defaultSortDirection) {
+        this.defaultSortDirection = Guard.notNull(defaultSortDirection, "defaultSortDirection");
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Column<DTO> addColumn(String propertyName) {
-        var propertyDefinition = getPropertyDefinitionRequired(propertyName);
+    public Column<P> addColumn(String attributePath) {
+        Guard.notBlank(attributePath, "attributePath");
 
-        var jpaType = JpaSupportedType.ofBeanType(propertyDefinition.getType());
+        var propertyTypeInformation = projectionTypeInformation.getRequiredProperty(attributePath);
+        var propertyDefinition = getPropertyDefinitionRequired(attributePath);
+        var jpaPropertyType = JpaPropertyType.ofBeanType(propertyTypeInformation.getType());
 
-        var column = super.addColumn(propertyName)
-                .setHeader(JpaPropertyDefinitionUtils.toDisplayName(propertyDefinition))
-                .setTextAlign(jpaType.getColumnTextAlign())
-                .setWidth(COLUMN_WIDTH);
+        @SuppressWarnings("unchecked")
+        var renderer = (Renderer<P>) jpaPropertyType
+                .getDefaultRendererFactory()
+                .apply(propertyDefinition, propertyTypeInformation);
 
-        jpaType.findCustomRendererFactory()
-                .ifPresent(f -> column.setRenderer((Renderer<DTO>) f.apply(propertyDefinition)));
+        return super.addColumn(attributePath)
+                .setHeader(PropertyDefinitionUtils.toDisplayName(propertyDefinition))
+                .setTextAlign(jpaPropertyType.getColumnTextAlign())
+                .setRenderer(renderer)
+                .setSortable(true)
+                .setResizable(true)
+                .setWidth(DEFAULT_COLUMN_WIDTH);
+    }
+
+    public Column<P> addColumnWithFilter(String attributePath) {
+        var column = addColumn(attributePath);
+        addFilter(attributePath);
 
         return column;
     }
 
-    @Override
-    public void addColumns(String... propertyNames) {
-        Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(this::addColumn);
-    }
-
-    public Column<DTO> setColumnWidth(String propertyName, String width) {
-        var column = getColumnByKey(propertyName);
-        column.setWidth(width);
+    public Column<P> addColumnWithFilter(String... attributePathParts) {
+        var attributePath = StringUtils.join(attributePathParts, ".");
+        var column = addColumn(attributePath);
+        addFilter(attributePath);
 
         return column;
-    }
-
-    public void setAllColumnsResizable() {
-        getColumns().forEach(column -> column.setResizable(true));
-    }
-
-    public void addCoreAttributeFilters() {
-        addCoreAttributeFiltersExcluding();
-    }
-
-    public void addCoreAttributeFiltersExcluding(String... excludedProperties) {
-        JpaPropertyCache.getCorePropertiesExcluding(beanType, MoreArrays.toList(excludedProperties))
-                .forEach(this::addFilter);
-    }
-
-    public void addAuditFilters() {
-        JpaPropertyCache.getAuditProperties(beanType)
-                .forEach(this::addFilter);
-    }
-
-    public void addIdFilter() {
-        addFilter(idPropertyDefinition.getName());
-    }
-
-    public void addFilters(String... propertyNames) {
-        Stream.of(ArrayUtils.nullToEmpty(propertyNames)).forEach(this::addFilter);
-    }
-
-    public JpaFilter<ENTITY> addFilter(String propertyName) {
-        Validate.notBlank(propertyName, "Property name cannot be blank");
-
-        var propertyDefinition = getPropertyDefinitionRequired(propertyName);
-        JpaFilter<ENTITY> filter = FilterFactory.newFilter(propertyDefinition);
-        addFilter(filter);
-
-        return filter;
-    }
-
-    public JpaFilter<ENTITY> addFilter(JpaPropertyDefinition<DTO, ?> propertyDefinition) {
-        Objects.requireNonNull(propertyDefinition, "Property definition cannot be null");
-
-        JpaFilter<ENTITY> filter = FilterFactory.newFilter(propertyDefinition);
-        addFilter(filter);
-
-        return filter;
-    }
-
-    public void addFilter(JpaFilter<ENTITY> filter) {
-        Objects.requireNonNull(filter, "Filter cannot be null");
-        Validate.isTrue(!MoreLists.contains(filters, filter), "Filter already added");
-
-        filters.add(filter);
-        addFilterListener(filter);
-        addFilterComponent(filter);
     }
 
     public void clearFilters() {
@@ -240,35 +138,115 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         setDataProviderFilter();
     }
 
-    private void addFilterListener(JpaFilter<ENTITY> filter) {
-        filter.addValueChangeListener(() -> {
-            if (!clearingFilters) {
-                setDataProviderFilter();
-            }
-        });
+    public void refreshItemById(ID id) {
+        var item = repository.getProjectedById(id, projectionType, attributePaths);
+        refreshItem(item);
     }
 
-    private void addFilterComponent(JpaFilter<ENTITY> filter) {
-        var column = getColumnByKey(filter.getProperty());
-
-        ensureFilterRow().getCell(column)
-                .setComponent(filter);
+    public void refreshItem(P item) {
+        getDataProvider().refreshItem(item);
     }
 
-    public void addContextMenuItem(String text, Consumer<DTO> onClick) {
-        Validate.notBlank(text, "Text cannot be blank");
-        Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
+    public void refreshAll() {
+        getDataProvider().refreshAll();
+    }
+
+    public Column<P> addIdColumnWithFilter() {
+        return addColumnWithFilter(HasId.ID);
+    }
+
+    public List<Column<P>> addAuditColumnsWithFilter() {
+        return List.of(
+                addColumnWithFilter(BaseEntity_.CREATED_AT),
+                addColumnWithFilter(BaseEntity_.CREATED_BY),
+                addColumnWithFilter(BaseEntity_.UPDATED_AT),
+                addColumnWithFilter(BaseEntity_.UPDATED_BY)
+        );
+    }
+
+    public void addContextMenuItemWithDoubleClickListener(String text, Consumer<P> onClick) {
+        addContextMenuItem(text, onClick);
+        addItemDoubleClickListener(e -> onClick.accept(e.getItem()));
+    }
+
+    public void addContextMenuItem(String text, Consumer<P> onClick) {
+        Guard.notBlank(text, "text");
+        Guard.notNull(onClick, "onClick");
 
         ensureContextMenu().addItem(text, e -> e.getItem().ifPresent(onClick));
     }
 
-    public void addConfirmedContextMenuItem(String text, Consumer<DTO> onClick) {
-        Objects.requireNonNull(onClick, "OnClick consumer cannot be null");
+    public void addConfirmContextMenuItem(String text, Consumer<P> onClick) {
+        Guard.notNull(onClick, "onClick");
 
         addContextMenuItem(text, e -> Dialogs.confirm(
                 String.format("Perform action [%s]?", text),
                 () -> onClick.accept(e)
         ));
+    }
+
+    public void addFilter(String attributePath) {
+        var propertyTypeInformation = projectionTypeInformation.getRequiredProperty(attributePath);
+        var propertyDefinition = getPropertyDefinitionRequired(attributePath);
+
+        JpaFilter<E> filter = FilterFactory.newFilter(
+                propertyDefinition.getName(),
+                propertyDefinition.getTopLevelName(),
+                propertyTypeInformation,
+                false
+        );
+
+        addFilter(filter);
+    }
+
+    public void addFilter(JpaFilter<E> filter) {
+        Guard.notNull(filter, "Filter cannot be null");
+
+        filters.add(filter);
+        addFilterListener(filter);
+        addFilterComponent(filter);
+    }
+
+    private void setDataProviderFilter() {
+        filterDataProvider.setFilter(CombinedFilter.of(filters));
+    }
+
+    private ConfigurableFilterDataProvider<P, Void, CombinedFilter<E>> newDataProvider() {
+        return new CallbackDataProvider<>(this::fetch, this::count, HasId::getId)
+                .withConfigurableFilter();
+    }
+
+    private Stream<P> fetch(Query<P, CombinedFilter<E>> query) {
+        var specification = toSpecification(query);
+        var pageRequest = PageRequest.of(query.getPage(), query.getPageSize(), toSort(query));
+
+        return repository
+                .findAllProjected(specification, pageRequest, projectionType, attributePaths)
+                .stream();
+    }
+
+    private int count(Query<P, CombinedFilter<E>> query) {
+        var specification = toSpecification(query);
+
+        return Math.toIntExact(repository.count(specification));
+    }
+
+    private Specification<E> toSpecification(Query<P, CombinedFilter<E>> query) {
+        return query
+                .getFilter()
+                .orElse(CombinedFilter.empty())
+                .specification()
+                .and(defaultSpecification);
+    }
+
+    private Sort toSort(Query<P, CombinedFilter<E>> query) {
+        var sort = VaadinSpringDataHelpers.toSpringDataSort(query);
+
+        if (sort.isSorted()) {
+            return sort;
+        }
+
+        return Sort.by(defaultSortDirection, defaultSortAttribute);
     }
 
     private HeaderRow ensureFilterRow() {
@@ -279,7 +257,7 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         return filterRow;
     }
 
-    private GridContextMenu<DTO> ensureContextMenu() {
+    private GridContextMenu<P> ensureContextMenu() {
         if (contextMenu == null) {
             contextMenu = addContextMenu();
         }
@@ -287,86 +265,38 @@ public class JpaGrid<DTO, ENTITY, ID> extends Grid<DTO> {
         return contextMenu;
     }
 
-    public void addCrudActions() {
-        addCrudActionsExcluding();
-    }
-
-    public void addCrudActionsExcluding(String... excludedProperties) {
-        var excludedPropertiesList = MoreArrays.toList(excludedProperties);
-        addContextMenuItem(
-                "Edit",
-                v -> new JpaSaveCorePropertiesDialog<>(v, beanType, service, excludedPropertiesList, beanLoader)
-                        .setSaveListener(this::refreshItem)
-                        .open()
-        );
-        addItemDoubleClickListener(v ->
-                new JpaSaveCorePropertiesDialog<>(v.getItem(), beanType, service, excludedPropertiesList, beanLoader)
-                        .setSaveListener(this::refreshItem)
-                        .open()
-        );
-        addConfirmedContextMenuItem("Delete", e -> {
-            var operation = Operation.builder()
-                    .name("Deleting entity")
-                    .description(String.format(
-                            "Entity with DTO type [%s] with ID [%s]",
-                            MoreBeans.getDisplayName(beanType),
-                            idPropertyDefinition.getGetter().apply(e)
-                    ))
-                    .callable(OperationCallable.ofRunnable(() -> service.delete(e)))
-                    .onSuccess(_ -> refreshAll())
-                    .type(OperationType.NON_BLOCKING)
-                    .build();
-
-            beanLoader.load(OperationRunner.class)
-                    .run(operation, UI.getCurrent());
+    private void addFilterListener(JpaFilter<E> filter) {
+        filter.addValueChangeListener(() -> {
+            if (!clearingFilters) {
+                setDataProviderFilter();
+            }
         });
-
-        crudActionsData = JpaGridCrudActionsData.builder()
-                .withCrudActions(true)
-                .excludedPropertiesList(excludedPropertiesList)
-                .build();
     }
 
-    private JpaPropertyDefinition<DTO, ?> getPropertyDefinitionRequired(String property) {
-        return JpaPropertyCache.findPropertyByName(beanType, property)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Property [%s] not found", property)));
+    private void addFilterComponent(JpaFilter<E> filter) {
+        var column = Guard.notNull(
+                getColumnByKey(filter.getProperty()),
+                "Column not found for property [%s]".formatted(filter.getProperty())
+        );
+
+        ensureFilterRow()
+                .getCell(column)
+                .setComponent(filter);
     }
 
-    private void setDataProviderFilter() {
-        filterDataProvider.setFilter(CombinedFilter.of(filters));
+    private PropertyDefinition<P, ?> getPropertyDefinitionRequired(String property) {
+        return getPropertySet()
+                .getProperty(property)
+                .orElseThrow(() -> new NoSuchElementException("Property not found: " + property));
     }
 
-    private ConfigurableFilterDataProvider<DTO, Void, CombinedFilter<ENTITY>> newDataProvider() {
-        return new CallbackDataProvider<>(this::fetch, this::count, item -> idPropertyDefinition.getGetter().apply(item))
-                .withConfigurableFilter();
-    }
+    private static Set<String> resolveAttributePaths(Class<?> projectionType) {
+        Guard.notNull(projectionType, "projectionType");
 
-    private Stream<DTO> fetch(Query<DTO, CombinedFilter<ENTITY>> query) {
-        var specification = toSpecification(query);
-        var pageRequest = PageRequest.of(query.getPage(), query.getPageSize(), toSort(query));
-
-        return service.findAll(specification, pageRequest).stream();
-    }
-
-    private int count(Query<DTO, CombinedFilter<ENTITY>> query) {
-        var specification = toSpecification(query);
-
-        return Math.toIntExact(service.count(specification));
-    }
-
-    private Specification<ENTITY> toSpecification(Query<DTO, CombinedFilter<ENTITY>> query) {
-        return query.getFilter()
-                .orElse(CombinedFilter.empty())
-                .specification()
-                .and(defaultSpecification);
-    }
-
-    private Sort toSort(Query<DTO, CombinedFilter<ENTITY>> query) {
-        var sort = VaadinSpringDataHelpers.toSpringDataSort(query);
-
-        return sort.isSorted()
-                ? sort
-                : Sort.by(defaultSortDirection, StringUtils.firstNonBlank(defaultSortProperty, idPropertyDefinition.getAttributeName()));
+        return BeanPropertySet.get(projectionType, true, PropertyFilterDefinition.getDefaultFilter())
+                .getProperties()
+                .map(PropertyDefinition::getName)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
 }

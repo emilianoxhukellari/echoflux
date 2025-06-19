@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 import echoflux.domain.settings.data.SettingsEntity;
-import echoflux.domain.settings.data.SettingsProjection;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +18,7 @@ public interface SettingsService {
 
     List<SettingsEntity> getAllByKeysExcluding(@NotNull Collection<@NotBlank String> keys);
 
-    List<SettingsProjection> createAll(@NotNull Collection<@Valid @NotNull CreateSettingsCommand> commandCollection);
+    List<SettingsEntity> createAll(@NotNull Collection<@Valid @NotNull CreateSettingsCommand> commandCollection);
 
     void deleteAll(@NotNull Collection<@NotNull @Valid SettingsEntity> settings);
 

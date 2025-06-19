@@ -1,16 +1,9 @@
 package echoflux.domain.completion.data;
 
-import java.time.Duration;
+import echoflux.domain.transcription.data.TranscriptionProjection;
 
-public record CompletionProjection(Long id,
-                                   String input,
-                                   String output,
-                                   Integer inputTokens,
-                                   Integer outputTokens,
-                                   String model,
-                                   Double temperature,
-                                   Double topP,
-                                   CompletionStatus status,
-                                   Duration duration,
-                                   String error) {
+public interface CompletionProjection extends ScalarCompletionProjection {
+
+    TranscriptionProjection getTranscription();
+
 }

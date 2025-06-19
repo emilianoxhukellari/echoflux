@@ -1,4 +1,4 @@
-interface HighlightedRange {
+export interface HighlightedRange {
 
     startIndexInclusive: number;
     endIndexExclusive: number;

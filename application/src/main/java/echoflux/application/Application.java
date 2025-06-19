@@ -36,8 +36,8 @@ import java.util.List;
 @EnableScheduling
 @EnableRetry
 @EnableCaching
-@RequiredArgsConstructor
 @EnableAspectJAutoProxy
+@RequiredArgsConstructor
 public class Application implements AppShellConfigurator {
 
     private final List<Initialize> initializeList;

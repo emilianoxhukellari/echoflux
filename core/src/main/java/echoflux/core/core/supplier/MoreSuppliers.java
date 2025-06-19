@@ -4,8 +4,11 @@ import java.util.function.Supplier;
 
 public final class MoreSuppliers {
 
-    public static <T> Supplier<T> of(Supplier<T> supplier) {
-        return supplier;
+    public static Supplier<Void> ofRunnable(Runnable runnable) {
+        return () -> {
+            runnable.run();
+            return null;
+        };
     }
 
 }

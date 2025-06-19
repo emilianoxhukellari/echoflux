@@ -1,84 +1,74 @@
 package echoflux.application.core.operation;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+import echoflux.core.core.validate.guard.Guard;
 import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.With;
 import org.apache.commons.lang3.StringUtils;
 import echoflux.core.core.no_op.NoOp;
-import echoflux.domain.operation.data.OperationType;
 
 import java.time.Duration;
 import java.util.function.Consumer;
 
 @Builder
-@Data
-@RequiredArgsConstructor
-@AllArgsConstructor
 @With
-public class Operation<T> {
+public record Operation<T>(String name,
+                           OperationCallable<T> callable,
+                           Runnable beforeCall,
+                           Consumer<T> onSuccess,
+                           OperationSuccessImportance successImportance,
+                           String customSuccessMessage,
+                           Boolean onSuccessNotify,
+                           Consumer<Throwable> onError,
+                           OperationErrorImportance errorImportance,
+                           String customErrorMessage,
+                           Boolean onErrorNotify,
+                           Boolean onErrorLog,
+                           Runnable onFinally,
+                           OperationType type,
+                           Boolean onProgressNotify,
+                           Duration timeout) {
 
-    @NotBlank
-    private String name;
+    public Operation {
+        Guard.notNull(callable, "callable");
 
-    private String description;
+        beforeCall = Guard.notNullElse(beforeCall, NoOp.runnable());
+        onSuccess = Guard.notNullElse(onSuccess, NoOp.consumer());
+        successImportance = Guard.notNullElse(successImportance, OperationSuccessImportance.NORMAL);
+        customSuccessMessage = Guard.notNullElse(customSuccessMessage, StringUtils.EMPTY);
+        onSuccessNotify = Guard.notNullElse(onSuccessNotify, true);
+        onError = Guard.notNullElse(onError, NoOp.consumer());
+        errorImportance = Guard.notNullElse(errorImportance, OperationErrorImportance.NORMAL);
+        customErrorMessage = Guard.notNullElse(customErrorMessage, StringUtils.EMPTY);
+        onErrorNotify = Guard.notNullElse(onErrorNotify, true);
+        onErrorLog = Guard.notNullElse(onErrorLog, true);
+        onFinally = Guard.notNullElse(onFinally, NoOp.runnable());
+        type = Guard.notNullElse(type, OperationType.BLOCKING);
+        onProgressNotify = Guard.notNullElse(onProgressNotify, true);
+        timeout = Guard.notNullElse(timeout, Duration.ofHours(1));
+    }
 
-    @NotNull
-    private OperationCallable<T> callable;
+    /**
+     * <p>
+     *     Runs this operation using the {@link OperationRunner}.
+     * </p>
+     * */
+    public void run() {
+        OperationRunner.run(this);
+    }
 
-    @NotNull
-    @Builder.Default
-    private Runnable beforeCall = NoOp.runnable();
-
-    @NotNull
-    @Builder.Default
-    private Consumer<T> onSuccess = NoOp.consumer();
-
-    @NotNull
-    @Builder.Default
-    private OperationSuccessImportance successImportance = OperationSuccessImportance.NORMAL;
-
-    @NotNull
-    @Builder.Default
-    private String customSuccessMessage = StringUtils.EMPTY;
-
-    @Builder.Default
-    private boolean onSuccessNotify = true;
-
-    @NotNull
-    @Builder.Default
-    private Consumer<Throwable> onError = NoOp.consumer();
-
-    @NotNull
-    @Builder.Default
-    private OperationErrorImportance errorImportance = OperationErrorImportance.NORMAL;
-
-    @NotNull
-    @Builder.Default
-    private String customErrorMessage = StringUtils.EMPTY;
-
-    @Builder.Default
-    private boolean onErrorNotify = true;
-
-    @Builder.Default
-    private boolean onErrorLog = true;
-
-    @NotNull
-    @Builder.Default
-    private Runnable onFinally = NoOp.runnable();
-
-    @NotNull
-    @Builder.Default
-    private OperationType type = OperationType.BLOCKING;
-
-    @Builder.Default
-    private boolean onProgressNotify = true;
-
-    @NotNull
-    @Builder.Default
-    private Duration timeout = Duration.ofHours(4);
+    /**
+     * <p>
+     *     Runs this operation in background mode. If this operation type is not configured to be background,
+     *     it will be converted to a background operation and then executed.
+     * </p>
+     * */
+    public void runBackground() {
+        if (OperationType.BACKGROUND == this.type) {
+            OperationRunner.run(this);
+        } else {
+            var backgroundOperation = this.withType(OperationType.BACKGROUND);
+            OperationRunner.run(backgroundOperation);
+        }
+    }
 
 }
