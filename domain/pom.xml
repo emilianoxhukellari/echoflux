@@ -3,38 +3,33 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <artifactId>domain</artifactId>
+
     <parent>
         <groupId>com.github.emilianoxhukellari</groupId>
         <artifactId>echoflux</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>domain</artifactId>
-
     <dependencies>
         <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>4.29.1</version>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq</artifactId>
+            <version>${jooq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq-jackson-extensions</artifactId>
+            <version>${jooq.version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.3</version>
+            <version>${postgresql.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>6.6.13.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>io.hypersistence</groupId>
-            <artifactId>hypersistence-utils-hibernate-63</artifactId>
-            <version>3.9.11</version>
+            <artifactId>spring-boot-starter-jooq</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.emilianoxhukellari</groupId>
@@ -49,10 +44,192 @@
             <plugin>
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
-                <version>4.29.1</version>
+                <version>${liquibase.version}</version>
                 <configuration>
                     <propertyFile>src/main/resources/liquibase.yml</propertyFile>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-jooq-codegen-maven-plugin</artifactId>
+                <version>0.0.4</version>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.testcontainers</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>1.21.3</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq</artifactId>
+                        <version>${jooq.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-meta</artifactId>
+                        <version>${jooq.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-codegen</artifactId>
+                        <version>${jooq.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.liquibase</groupId>
+                        <artifactId>liquibase-core</artifactId>
+                        <version>${liquibase.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>${lombok.version}</version>
+                    </dependency>
+                </dependencies>
+
+                <configuration>
+                    <database>
+                        <type>POSTGRES</type>
+                        <containerImage>echoflux-postgres:17</containerImage>
+                    </database>
+                    <liquibase>
+                        <changeLogPath>db.changelog-master.xml</changeLogPath>
+                        <changeLogDirectory>src/main/resources/db/changelog</changeLogDirectory>
+                    </liquibase>
+                    <jooq>
+                        <generator>
+                            <database>
+                                <includes>.*</includes>
+                                <excludes>databasechangelog|databasechangeloglock</excludes>
+                                <inputSchema>public</inputSchema>
+                                <forcedTypes>
+
+                                    <!-- Global -->
+                                    <forcedType>
+                                        <userType>java.time.Duration</userType>
+                                        <converter>echoflux.domain.core.jooq.converter.DayToSecondToDurationConverter
+                                        </converter>
+                                        <includeTypes>(?i)interval\s+(day|hour)\s+to\s+second.*</includeTypes>
+                                    </forcedType>
+                                    <forcedType>
+                                        <userType>java.time.ZoneId</userType>
+                                        <converter>echoflux.domain.core.jooq.converter.StringToZoneIdConverter
+                                        </converter>
+                                        <includeTypes>(?i)text</includeTypes>
+                                        <includeExpression>(?i:^(zone_id|.*_zone_id)$)</includeExpression>
+                                    </forcedType>
+                                    <forcedType>
+                                        <userType>java.net.URI</userType>
+                                        <converter>echoflux.domain.core.jooq.converter.StringToUriConverter
+                                        </converter>
+                                        <includeTypes>(?i)text</includeTypes>
+                                        <includeExpression>(?i:^(uri|.*_uri)$)</includeExpression>
+                                    </forcedType>
+
+                                    <!-- Application User -->
+                                    <forcedType>
+                                        <userType>echoflux.domain.core.security.PermissionType[]</userType>
+                                        <converter>new org.jooq.impl.EnumConverter(String.class,
+                                            PermissionType.class).forArrays()
+                                        </converter>
+                                        <includeExpression>(?i)v_application_user\.permissions</includeExpression>
+                                    </forcedType>
+                                    <forcedType>
+                                        <userType>echoflux.core.core.country.Country</userType>
+                                        <enumConverter>true</enumConverter>
+                                        <includeExpression>(?i)application_user\.country|(?i)v_application_user\.country
+                                        </includeExpression>
+                                    </forcedType>
+
+                                    <!-- Role -->
+                                    <forcedType>
+                                        <userType>echoflux.domain.core.security.PermissionType[]</userType>
+                                        <converter>new org.jooq.impl.EnumConverter(String.class,
+                                            PermissionType.class).forArrays()
+                                        </converter>
+                                        <includeExpression>(?i)v_role\.permissions</includeExpression>
+                                    </forcedType>
+
+                                    <!-- Permission -->
+                                    <forcedType>
+                                        <userType>echoflux.domain.core.security.PermissionType</userType>
+                                        <enumConverter>true</enumConverter>
+                                        <includeExpression>(?i)permission\.type</includeExpression>
+                                    </forcedType>
+
+                                    <!-- Completion -->
+                                    <forcedType>
+                                        <userType>echoflux.domain.completion.service.CompletionStatus</userType>
+                                        <enumConverter>true</enumConverter>
+                                        <includeExpression>(?i)completion\.status|(?i)v_completion\.status
+                                        </includeExpression>
+                                    </forcedType>
+
+                                    <!-- Transcription -->
+                                    <forcedType>
+                                        <userType>echoflux.domain.transcription.data.TranscriptionStatus</userType>
+                                        <enumConverter>true</enumConverter>
+                                        <includeExpression>(?i)transcription\.status|(?i)v_transcription\.status
+                                        </includeExpression>
+                                    </forcedType>
+                                    <forcedType>
+                                        <userType>echoflux.core.storage.StorageProvider</userType>
+                                        <enumConverter>true</enumConverter>
+                                        <includeExpression>
+                                            (?i)transcription\.storage_provider|(?i)v_transcription\.storage_provider
+                                        </includeExpression>
+                                    </forcedType>
+                                    <forcedType>
+                                        <userType>echoflux.core.transcribe.Language</userType>
+                                        <enumConverter>true</enumConverter>
+                                        <includeExpression>(?i)transcription\.language|(?i)v_transcription\.language
+                                        </includeExpression>
+                                    </forcedType>
+
+                                    <!-- Settings -->
+                                    <forcedType>
+                                        <userType>com.fasterxml.jackson.databind.JsonNode</userType>
+                                        <converter>echoflux.domain.core.jooq.converter.JSONBToJsonNodeConverter
+                                        </converter>
+                                        <includeExpression>(?i)settings\.value</includeExpression>
+                                    </forcedType>
+
+                                </forcedTypes>
+                            </database>
+                            <target>
+                                <packageName>echoflux.domain.jooq</packageName>
+                                <directory>target/generated-sources/jooq</directory>
+                            </target>
+                            <generate>
+                                <javaTimeTypes>true</javaTimeTypes>
+                                <pojos>true</pojos>
+                                <validationAnnotations>true</validationAnnotations>
+                                <fluentSetters>true</fluentSetters>
+                                <implicitJoinPathsToOne>true</implicitJoinPathsToOne>
+                                <implicitJoinPathsToMany>true</implicitJoinPathsToMany>
+                                <implicitJoinPathsManyToMany>true</implicitJoinPathsManyToMany>
+                                <implicitJoinPathUnusedConstructors>false</implicitJoinPathUnusedConstructors>
+                                <implicitJoinPathsUseTableNameForUnambiguousFKs>true
+                                </implicitJoinPathsUseTableNameForUnambiguousFKs>
+                                <implicitJoinPathsAsKotlinProperties>true</implicitJoinPathsAsKotlinProperties>
+                            </generate>
+                        </generator>
+                    </jooq>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-jooq-sources</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

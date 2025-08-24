@@ -9,7 +9,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.internal.RouteUtil;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import echoflux.application.security.AuthenticatedUser;
+import echoflux.application.core.security.AuthenticatedUser;
 
 @PageTitle("Login")
 @Route(value = "login")

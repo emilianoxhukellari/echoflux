@@ -20,14 +20,19 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.6</version>
+        <version>3.5.4</version>
     </parent>
 
     <properties>
         <java.version>24</java.version>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <jackson.version>2.18.1</jackson.version>
+        <jackson.version>2.19.2</jackson.version>
+        <jooq.version>3.20.4</jooq.version>
+        <postgresql.version>42.7.7</postgresql.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
+        <liquibase.version>4.29.1</liquibase.version>
+        <lombok.version>1.18.38</lombok.version>
     </properties>
     <repositories>
     </repositories>
@@ -71,9 +76,14 @@
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.38</version>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

@@ -7,32 +7,33 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
-import echoflux.domain.transcription.data.ScalarTranscriptionProjection;
-import jakarta.annotation.security.PermitAll;
+import echoflux.domain.core.security.PermissionType;
+import echoflux.domain.core.security.RequiredPermissions;
+import echoflux.domain.jooq.tables.pojos.Transcription;
 import echoflux.application.core.component.AudioTextConnector;
 import echoflux.application.layout.MainLayout;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.domain.transcription.service.TranscriptionService;
 
 @Route(value = "transcription", layout = MainLayout.class)
-@PermitAll
+@RequiredPermissions(PermissionType.TRANSCRIPTION_VIEW)
 public class TranscriptionView extends Composite<VerticalLayout> implements HasUrlParameter<Long>, HasDynamicTitle {
 
     private final TranscriptionService transcriptionService;
-    private final BeanLoader beanLoader;
+    private final BeanAccessor beanAccessor;
 
-    private ScalarTranscriptionProjection transcription;
+    private Transcription transcription;
 
-    public TranscriptionView(TranscriptionService transcriptionService, BeanLoader beanLoader) {
+    public TranscriptionView(TranscriptionService transcriptionService, BeanAccessor beanAccessor) {
         this.transcriptionService = transcriptionService;
-        this.beanLoader = beanLoader;
+        this.beanAccessor = beanAccessor;
     }
 
     @Override
     public void setParameter(BeforeEvent event, Long parameter) {
-        this.transcription = transcriptionService.getScalarProjectedById(parameter);
+        this.transcription = transcriptionService.getById(parameter);
 
-        var audioTextConnector = new AudioTextConnector(transcription, beanLoader);
+        var audioTextConnector = new AudioTextConnector(transcription, beanAccessor);
         audioTextConnector.setHeightFull();
         audioTextConnector.setMaxWidth("1500px");
 

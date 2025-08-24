@@ -10,17 +10,17 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.internal.AllowInert;
 import com.vaadin.flow.internal.JsonUtils;
 import echoflux.core.core.validate.guard.Guard;
-import echoflux.domain.transcription.data.ScalarTranscriptionProjection;
+import echoflux.domain.jooq.tables.pojos.Transcription;
 import echoflux.domain.transcription.service.TranscriptionService;
-import echoflux.domain.transcription_word.data.BaseSpeakerSegment;
-import echoflux.domain.transcription_word.data.SequencedWord;
+import echoflux.domain.transcription.data.BaseSpeakerSegment;
+import echoflux.domain.transcription.data.SequencedWord;
 import elemental.json.JsonArray;
 import org.apache.commons.lang3.Validate;
 import echoflux.application.core.operation.Operation;
 import echoflux.application.core.operation.OperationCallable;
 import echoflux.application.transcribe.DownloadTranscriptDialog;
 import echoflux.core.storage.Storage;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.word.processor.WordPatcher;
 
 import java.time.Duration;
@@ -33,20 +33,20 @@ import java.util.Objects;
 public class AudioTextConnector extends Component implements HasSize, HasComponents {
 
     private final HelperDownloadAnchor.Factory helperDownloadAnchorFactory;
-    private final ScalarTranscriptionProjection transcription;
-    private final BeanLoader beanLoader;
+    private final Transcription transcription;
+    private final BeanAccessor beanAccessor;
     private final TranscriptionService transcriptionService;
     private final Storage storage;
     private final List<SequencedWord> wordsState = new ArrayList<>();
 
-    public AudioTextConnector(ScalarTranscriptionProjection transcription, BeanLoader beanLoader) {
+    public AudioTextConnector(Transcription transcription, BeanAccessor beanAccessor) {
         Guard.notNull(transcription, "transcription");
-        Guard.notNull(beanLoader, "beanLoader");
+        Guard.notNull(beanAccessor, "beanAccessor");
 
         this.transcription = transcription;
-        this.beanLoader = beanLoader;
-        this.transcriptionService = beanLoader.load(TranscriptionService.class);
-        this.storage = beanLoader.loadStorage(transcription.getStorageProvider());
+        this.beanAccessor = beanAccessor;
+        this.transcriptionService = beanAccessor.get(TranscriptionService.class);
+        this.storage = beanAccessor.getStorage(transcription.getStorageProvider());
         this.helperDownloadAnchorFactory = HelperDownloadAnchor.newFactory(this);
 
         build();
@@ -113,7 +113,7 @@ public class AudioTextConnector extends Component implements HasSize, HasCompone
     @ClientCallable
     @AllowInert
     private void downloadTranscript() {
-        new DownloadTranscriptDialog(transcription.getId(), helperDownloadAnchorFactory, beanLoader)
+        new DownloadTranscriptDialog(transcription.getId(), helperDownloadAnchorFactory, beanAccessor)
                 .open();
     }
 

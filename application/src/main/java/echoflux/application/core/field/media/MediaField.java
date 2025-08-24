@@ -9,7 +9,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import echoflux.application.transcribe.media_provider.MediaValue;
 import echoflux.application.transcribe.media_provider.impl.PublicMediaProvider;
 import echoflux.application.transcribe.media_provider.impl.LocalMediaProvider;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.domain.transcription.data.MediaOrigin;
 
 import java.util.Optional;
@@ -20,11 +20,11 @@ public class MediaField extends CustomField<MediaValue> {
     private final PublicMediaProvider publicMedia;
     private final TabSheet tabSheet;
 
-    public MediaField(BeanLoader beanLoader) {
+    public MediaField(BeanAccessor beanAccessor) {
         localMedia = new LocalMediaProvider();
         localMedia.setHeight("180px");
 
-        publicMedia = new PublicMediaProvider(beanLoader);
+        publicMedia = new PublicMediaProvider(beanAccessor);
         publicMedia.setHeight("180px");
 
         localMedia.onReady(r -> {

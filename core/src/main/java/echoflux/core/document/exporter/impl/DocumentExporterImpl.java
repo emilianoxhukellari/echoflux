@@ -2,7 +2,7 @@ package echoflux.core.document.exporter.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.document.DocumentType;
 import echoflux.core.document.Paragraph;
 import echoflux.core.document.exporter.DocumentExporter;
@@ -15,11 +15,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DocumentExporterImpl implements DocumentExporter {
 
-    private final BeanLoader beanLoader;
+    private final BeanAccessor beanAccessor;
 
     @Override
     public Path export(List<Paragraph> paragraphs, DocumentType type) {
-        var exporter = beanLoader.loadWhen(
+        var exporter = beanAccessor.getWhen(
                 DocumentExporterSpi.class,
                 spi -> spi.supports(type)
         );

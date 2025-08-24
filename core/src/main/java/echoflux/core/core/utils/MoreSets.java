@@ -4,6 +4,8 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.collections4.SetUtils;
 
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class MoreSets {
 
@@ -13,6 +15,13 @@ public class MoreSets {
     public static <T> boolean contains(@Nullable Set<T> list, T element) {
         return SetUtils.emptyIfNull(list)
                 .contains(element);
+    }
+
+    public static <T, R> Set<R> collect(@Nullable Set<T> set, Function<T, R> mapper) {
+        return SetUtils.emptyIfNull(set)
+                .stream()
+                .map(mapper)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
 }

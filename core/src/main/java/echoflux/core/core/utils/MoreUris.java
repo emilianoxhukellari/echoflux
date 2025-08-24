@@ -9,7 +9,7 @@ import java.nio.file.Path;
 public final class MoreUris {
 
     @Nullable
-    public static URI newUri(@Nullable String uri) {
+    public static URI toUri(@Nullable String uri) {
         if (uri == null) {
             return null;
         }

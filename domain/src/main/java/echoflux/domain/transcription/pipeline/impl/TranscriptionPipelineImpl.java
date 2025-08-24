@@ -1,12 +1,13 @@
 package echoflux.domain.transcription.pipeline.impl;
 
 import echoflux.core.audio.common.AudioInfo;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.storage.SaveOptions;
 import echoflux.core.storage.StorageProvider;
-import echoflux.domain.completion.data.ScalarCompletionProjection;
-import echoflux.domain.transcription.data.ScalarTranscriptionProjection;
-import echoflux.domain.transcription_word.data.SequencedWord;
+import echoflux.domain.jooq.tables.pojos.Completion;
+import echoflux.domain.jooq.tables.pojos.Transcription;
+import echoflux.domain.transcription.service.CreateTranscriptionCommand;
+import echoflux.domain.transcription.data.SequencedWord;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,6 @@ import echoflux.domain.template.service.TemplateService;
 import echoflux.domain.transcription.data.TranscriptionStatus;
 import echoflux.domain.transcription.event.TranscriptionCreateUserEvent;
 import echoflux.domain.transcription.event.TranscriptionUpdateUserEvent;
-import echoflux.domain.transcription.mapper.TranscriptionMapper;
 import echoflux.domain.transcription.pipeline.TranscriptionPipeline;
 import echoflux.domain.transcription.pipeline.TranscriptionPipelineCommand;
 import echoflux.domain.transcription.pipeline.TranscriptionPipelineSettings;
@@ -53,19 +53,25 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
     private final MediaDownloader mediaDownloader;
     private final AudioTranscoder audioTranscoder;
     private final SpeechToText speechToText;
-    private final TranscriptionMapper transcriptionMapper;
     private final TranscriptionService transcriptionService;
     private final CompletionsPipeline completionsPipeline;
     private final Broadcaster broadcaster;
     private final FFprobeWrapper ffprobeWrapper;
     private final SettingsLoader settingsLoader;
     private final TemplateService templateService;
-    private final BeanLoader beanLoader;
+    private final BeanAccessor beanAccessor;
 
     @Override
     @LoggedMethodExecution(logReturn = false)
-    public ScalarTranscriptionProjection transcribe(TranscriptionPipelineCommand command) {
-        var transcription = transcriptionService.create(transcriptionMapper.toCommand(command));
+    public Transcription transcribe(TranscriptionPipelineCommand command) {
+        var transcription = transcriptionService.create(
+                CreateTranscriptionCommand.builder()
+                        .name(command.getName())
+                        .language(command.getLanguage())
+                        .applicationUserId(command.getApplicationUserId())
+                        .sourceUri(command.getSourceUri())
+                        .build()
+        );
         log.debug("Transcription created: [{}]", transcription.getId());
 
         broadcaster.publish(
@@ -98,7 +104,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         }
     }
 
-    private ScalarTranscriptionProjection transcribeCreated(ScalarTranscriptionProjection transcription, TranscriptionPipelineCommand command) {
+    private Transcription transcribeCreated(Transcription transcription, TranscriptionPipelineCommand command) {
         var settings = settingsLoader.load(TranscriptionPipelineSettings.class);
 
         var originalMedia = resolveOriginalMedia(transcription, command);
@@ -121,13 +127,13 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 UpdateStatusAndPublishCommand.builder()
                         .transcriptionId(transcription.getId())
                         .applicationUserId(command.getApplicationUserId())
-                        .status(TranscriptionStatus.COMPLETED)
+                        .status(TranscriptionStatus.SUCCESS)
                         .build()
         );
     }
 
-    private void storageSave(ScalarTranscriptionProjection transcription, AudioInfo audioInfo, StorageProvider storageProvider) {
-        var storage = beanLoader.loadStorage(storageProvider);
+    private void storageSave(Transcription transcription, AudioInfo audioInfo, StorageProvider storageProvider) {
+        var storage = beanAccessor.getStorage(storageProvider);
         var saveOptions = SaveOptions.builder()
                 .contentType(audioInfo.container().getContentType())
                 .temp(false)
@@ -143,7 +149,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         );
     }
 
-    private Path resolveOriginalMedia(ScalarTranscriptionProjection transcription, TranscriptionPipelineCommand command) {
+    private Path resolveOriginalMedia(Transcription transcription, TranscriptionPipelineCommand command) {
         var sourceUri = command.getSourceUri();
 
         return switch (command.getMediaOrigin()) {
@@ -168,7 +174,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         };
     }
 
-    private ScalarTranscriptionProjection probeDuration(ScalarTranscriptionProjection transcription,
+    private Transcription probeDuration(Transcription transcription,
                                                         Path originalMedia,
                                                         Long applicationUserId) {
         updateStatusAndPublish(
@@ -200,7 +206,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         return withLength;
     }
 
-    private AudioInfo transcode(ScalarTranscriptionProjection transcription,
+    private AudioInfo transcode(Transcription transcription,
                                 Path originalMedia,
                                 TranscriptionPipelineSettings settings,
                                 Long applicationUserId) {
@@ -226,7 +232,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 .build();
     }
 
-    private ScalarTranscriptionProjection transcribe(ScalarTranscriptionProjection transcription,
+    private Transcription transcribe(Transcription transcription,
                                                      AudioInfo audioInfo,
                                                      Long applicationUserId) {
         updateStatusAndPublish(
@@ -248,7 +254,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         return transcription;
     }
 
-    private void enhance(ScalarTranscriptionProjection transcription, TranscriptionPipelineSettings settings, Long applicationUserId) {
+    private void enhance(Transcription transcription, TranscriptionPipelineSettings settings, Long applicationUserId) {
         updateStatusAndPublish(
                 UpdateStatusAndPublishCommand.builder()
                         .transcriptionId(transcription.getId())
@@ -286,11 +292,11 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
                 settings.getPartition().getEnhanceConcurrency(), transcription.getId());
 
         var completionResults = completeCommands.stream()
-                .<Supplier<ScalarCompletionProjection>>map(command -> () -> completionsPipeline.complete(command))
+                .<Supplier<Completion>>map(command -> () -> completionsPipeline.complete(command))
                 .collect(ParallelCollectors.toList(settings.getPartition().getEnhanceConcurrency()));
 
         var combinedOutput = completionResults.stream()
-                .map(ScalarCompletionProjection::getOutput)
+                .map(Completion::getOutput)
                 .map(StringUtils::strip)
                 .collect(Collectors.joining(StringUtils.SPACE));
 
@@ -304,7 +310,7 @@ public class TranscriptionPipelineImpl implements TranscriptionPipeline {
         log.debug("Enhanced words saved for transcription [{}] in [{}]ms", transcription.getId(), duration.toMillis());
     }
 
-    private ScalarTranscriptionProjection updateStatusAndPublish(UpdateStatusAndPublishCommand command) {
+    private Transcription updateStatusAndPublish(UpdateStatusAndPublishCommand command) {
         var updatedTranscription = transcriptionService.patch(
                 PatchTranscriptionCommand.builder()
                         .id(command.transcriptionId())

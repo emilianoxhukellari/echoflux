@@ -80,7 +80,7 @@ public class MediaDownloaderImpl implements MediaDownloader, TempFileNameGenerat
 
         return Optional.of(MediaFindResult.builder()
                 .title(ArrayUtils.get(parts, 0, StringUtils.EMPTY))
-                .thumbnailUri(MoreUris.newUri(ArrayUtils.get(parts, 1, StringUtils.EMPTY)))
+                .thumbnailUri(MoreUris.toUri(ArrayUtils.get(parts, 1, StringUtils.EMPTY)))
                 .uri(uri)
                 .build());
     }

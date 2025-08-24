@@ -56,7 +56,7 @@ public class GoogleStorage implements Storage, DisposableBean {
 
         storage.createFrom(blobInfo, path);
 
-        return MoreUris.newUri(blobId.toGsUtilUri());
+        return MoreUris.toUri(blobId.toGsUtilUri());
     }
 
     @LoggedMethodExecution

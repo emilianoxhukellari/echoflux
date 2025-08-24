@@ -1,6 +1,6 @@
 package echoflux.domain.completion.service;
 
-import echoflux.domain.completion.data.ScalarCompletionProjection;
+import echoflux.domain.jooq.tables.pojos.Completion;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
@@ -8,8 +8,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public interface CompletionService {
 
-    ScalarCompletionProjection create(@Valid @NotNull CreateCompletionCommand command);
+    Completion create(@Valid @NotNull CreateCompletionCommand command);
 
-    ScalarCompletionProjection patch(@Valid @NotNull PatchCompletionCommand command);
+    Completion patch(@Valid @NotNull PatchCompletionCommand command);
 
 }

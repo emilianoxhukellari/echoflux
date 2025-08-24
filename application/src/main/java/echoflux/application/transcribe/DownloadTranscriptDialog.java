@@ -19,7 +19,7 @@ import org.apache.commons.lang3.function.Failable;
 import echoflux.application.core.component.HelperDownloadAnchor;
 import echoflux.application.core.dialog.EnhancedDialog;
 import echoflux.application.core.operation.Operation;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.core.utils.MoreEnums;
 import echoflux.core.document.exporter.DocumentExporter;
 import echoflux.domain.transcription.service.TranscriptionService;
@@ -38,16 +38,16 @@ public class DownloadTranscriptDialog extends EnhancedDialog {
 
     public DownloadTranscriptDialog(Long transcriptionId,
                                     HelperDownloadAnchor.Factory helperDownloadAnchorFactory,
-                                    BeanLoader beanLoader) {
+                                    BeanAccessor beanAccessor) {
         Objects.requireNonNull(transcriptionId, "transcriptionId");
         Objects.requireNonNull(helperDownloadAnchorFactory, "helperDownloadAnchorFactory");
 
         this.helperDownloadAnchorFactory = helperDownloadAnchorFactory;
-        this.documentExporter = beanLoader.load(DocumentExporter.class);
-        this.transcriptionService = beanLoader.load(TranscriptionService.class);
-        this.binder = new Binder<>(DownloadBean.class);
+        this.documentExporter = beanAccessor.get(DocumentExporter.class);
+        this.transcriptionService = beanAccessor.get(TranscriptionService.class);
+        this.binder = new Binder<>();
 
-        var transcription = transcriptionService.getScalarProjectedById(transcriptionId);
+        var transcription = transcriptionService.getById(transcriptionId);
 
         binder.setBean(
                 DownloadBean.builder()

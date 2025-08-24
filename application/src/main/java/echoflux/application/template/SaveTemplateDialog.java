@@ -5,40 +5,40 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
-import echoflux.application.core.jpa.dialog.SaveDialog;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.application.core.dialog.SaveDialog;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.core.validate.guard.Guard;
-import echoflux.domain.template.data.TemplateProjection;
+import echoflux.domain.jooq.tables.pojos.Template;
+import echoflux.domain.template.endpoint.TemplateEndpoint;
 import echoflux.domain.template.service.SaveTemplateCommand;
-import echoflux.domain.template.service.TemplateService;
 import jakarta.annotation.Nullable;
 import lombok.SneakyThrows;
 
 public class SaveTemplateDialog extends SaveDialog<Long> {
 
-    private final TemplateService templateService;
+    private final TemplateEndpoint templateEndpoint;
     private final Binder<SaveTemplateCommand> binder;
 
-    public static SaveTemplateDialog newCreate(BeanLoader beanLoader) {
-        return new SaveTemplateDialog(null, beanLoader);
+    public static SaveTemplateDialog newCreate(BeanAccessor beanAccessor) {
+        return new SaveTemplateDialog(null, beanAccessor);
     }
 
-    public static SaveTemplateDialog newUpdate(TemplateProjection templateProjection, BeanLoader beanLoader) {
-        return new SaveTemplateDialog(templateProjection, beanLoader);
+    public static SaveTemplateDialog newUpdate(Template template, BeanAccessor beanAccessor) {
+        return new SaveTemplateDialog(template, beanAccessor);
     }
 
-    public SaveTemplateDialog(@Nullable TemplateProjection templateProjection, BeanLoader beanLoader) {
-        Guard.notNull(beanLoader);
+    public SaveTemplateDialog(@Nullable Template template, BeanAccessor beanAccessor) {
+        Guard.notNull(beanAccessor);
 
-        this.templateService = beanLoader.load(TemplateService.class);
+        this.templateEndpoint = beanAccessor.get(TemplateEndpoint.class);
         this.binder = new Binder<>();
 
-        boolean updateMode = templateProjection != null;
+        boolean updateMode = template != null;
         var bean = new SaveTemplateCommand();
         if (updateMode) {
-            bean.setId(templateProjection.getId());
-            bean.setName(templateProjection.getName());
-            bean.setContent(templateProjection.getContent());
+            bean.setId(template.getId());
+            bean.setName(template.getName());
+            bean.setContent(template.getContent());
         }
 
         binder.setBean(bean);
@@ -62,7 +62,7 @@ public class SaveTemplateDialog extends SaveDialog<Long> {
         withOperationCustomizer(
                 o -> o.withName(
                         updateMode
-                                ? "Updating Template with ID [%s]".formatted(templateProjection.getId())
+                                ? "Updating Template with ID [%s]".formatted(template.getId())
                                 : "Creating Template"
                 )
         );
@@ -73,7 +73,7 @@ public class SaveTemplateDialog extends SaveDialog<Long> {
     protected Long save() {
         binder.writeBean(binder.getBean());
 
-        return templateService.save(binder.getBean()).getId();
+        return templateEndpoint.save(binder.getBean());
     }
 
     @Override

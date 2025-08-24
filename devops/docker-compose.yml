@@ -1,0 +1,21 @@
+services:
+  echoflux:
+    container_name: echoflux
+    image: echoflux-postgres:17
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_DB=echoflux
+      - POSTGRES_USER=echoflux
+      - POSTGRES_PASSWORD=echoflux
+      - SNOWFLAKE_NODE=1
+    ports:
+      - "5432:5432"
+    volumes:
+      - echoflux-data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  echoflux-data:
+    name: echoflux-data

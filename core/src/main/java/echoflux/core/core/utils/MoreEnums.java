@@ -13,6 +13,7 @@ public final class MoreEnums {
             return null;
         }
 
+        //todo: make it possible for class based annotation to take precedence over enum based annotation
         var displayNameAnnotation = MoreBeans.findAnnotation(
                 enumValue.getDeclaringClass(),
                 enumValue.name(),

@@ -3,7 +3,6 @@ package echoflux.domain.core.password;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.commons.lang3.StringUtils;
-import echoflux.domain.application_user.service.impl.HasPassword;
 
 public class PasswordMatchConstraintValidator implements ConstraintValidator<PasswordMatch, HasPassword> {
 

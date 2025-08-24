@@ -6,5 +6,6 @@ public final class MoreStrings {
     public static final String EMPTY_LINE = LINE_SEPARATOR.repeat(2);
     public static final String EMPTY = "";
     public static final String SPACE = " ";
+    public static final String UNDERSCORE = "_";
 
 }

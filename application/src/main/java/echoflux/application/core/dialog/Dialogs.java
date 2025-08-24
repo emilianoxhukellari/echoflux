@@ -29,6 +29,7 @@ public final class Dialogs {
         dialog.open();
     }
 
+    //todo: add better error dialog with details
     public static void error(Throwable e) {
         error(MoreErrors.resolveErrorMessage(e));
     }

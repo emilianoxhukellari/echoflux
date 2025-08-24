@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="create_v_transcription_word" runOnChange="true" author="emiliano">
+        <sql>
+            drop view if exists v_transcription_word;
+            create view v_transcription_word as
+            select tw.*,
+                   t.name      as transcription_name,
+                   au.id       as application_user_id,
+                   au.username as application_user_username,
+                   au.name     as application_user_name
+            from transcription_word tw
+                     join transcription t on tw.transcription_id = t.id
+                     join application_user au on t.application_user_id = au.id;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create_v_transcription" runOnChange="true" author="emiliano">
+        <sql>
+            drop view if exists v_transcription;
+            create view v_transcription as
+            select t.*,
+                   au.username as application_user_username,
+                   au.name     as application_user_name
+            from transcription t
+                     join application_user au on t.application_user_id = au.id;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create_v_completion" runOnChange="true" author="emiliano">
+        <sql>
+            drop view if exists v_completion;
+            create view v_completion as
+            select c.*,
+                   t.name      as transcription_name,
+                   au.id       as application_user_id,
+                   au.username as application_user_username,
+                   au.name     as application_user_name
+            from completion c
+                     join transcription t on c.transcription_id = t.id
+                     join application_user au on t.application_user_id = au.id;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create_v_application_user" runOnChange="true" author="emiliano">
+        <sql>
+            -- todo: make this more efficient?
+            drop view if exists v_application_user;
+            create view v_application_user as
+            select au.*,
+                   coalesce(
+                           array_agg(distinct r.name) FILTER(WHERE r.id IS NOT NULL),
+                           '{}'
+                   ) as roles,
+                   coalesce(
+                           array_agg(distinct p.type) FILTER(WHERE p.id IS NOT NULL),
+                           '{}'
+                   ) as permissions
+            from application_user au
+                     left join application_user_role aur on au.id = aur.application_user_id
+                     left join role r on r.id = aur.role_id
+                     left join role_permission rp on r.id = rp.role_id
+                     left join permission p on p.id = rp.permission_id
+            group by au.id;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create_v_role" runOnChange="true" author="emiliano">
+        <sql>
+            -- todo: make this more efficient?
+            drop view if exists v_role;
+            create view v_role as
+            select r.*,
+                   coalesce(
+                           array_agg(distinct p.type) FILTER(WHERE p.id IS NOT NULL),
+                           '{}'
+                   ) as permissions
+            from role r
+                     left join role_permission rp on r.id = rp.role_id
+                     left join permission p on p.id = rp.permission_id
+            group by r.id;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

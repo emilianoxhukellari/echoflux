@@ -1,13 +1,12 @@
 package echoflux.domain.settings.synchronizer.impl;
 
 import com.google.common.collect.Maps;
-import echoflux.domain.settings.data.SettingsProjection;
-import echoflux.domain.settings.mapper.SettingsMapper;
-import jakarta.persistence.EntityManager;
+import echoflux.domain.jooq.tables.records.SettingsRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.function.Failable;
+import org.jooq.DSLContext;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Component;
@@ -17,16 +16,17 @@ import echoflux.core.core.initialize.Initialize;
 import echoflux.core.core.initialize.InitializeOrder;
 import echoflux.core.core.utils.MoreFunctions;
 import echoflux.core.settings.Settings;
-import echoflux.domain.settings.data.SettingsEntity;
 import echoflux.domain.settings.schema_processor.SettingsSchemaProcessor;
-import echoflux.domain.settings.service.CreateSettingsCommand;
-import echoflux.domain.settings.service.SettingsService;
 import echoflux.domain.settings.synchronizer.SettingsSynchronizer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static echoflux.domain.jooq.Tables.SETTINGS;
 
 @Component
 @RequiredArgsConstructor
@@ -34,15 +34,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initialize {
 
+    private final DSLContext ctx;
     private final SettingsSchemaProcessor schemaProcessor;
-    private final SettingsService settingsService;
-    private final SettingsMapper settingsMapper;
-    private final EntityManager entityManager;
     private final Map<String, Class<?>> keyBeanTypeMap = newKeyBeanTypeMap();
 
     @Override
     @Transactional
-    public void synchronize() {
+    public void synchronizeAll() {
         int deleted = delete();
         int updated = update();
         int created = create();
@@ -53,18 +51,18 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     @Override
     @Transactional
     public void initialize() {
-        synchronize();
+        synchronizeAll();
     }
 
     @Override
     @Transactional
-    public SettingsProjection reset(String key) {
-        var settings = settingsService.getByKey(key);
-        settings.setName(MoreBeans.getDisplayName(keyBeanTypeMap.get(key)));
-        settings.setValue(schemaProcessor.create(keyBeanTypeMap.get(key)));
-        entityManager.merge(settings);
+    public Long reset(String key) {
+        var settingsRecord = ctx.fetchSingle(SETTINGS, SETTINGS.KEY.eq(key));
+        settingsRecord.setName(MoreBeans.getDisplayName(keyBeanTypeMap.get(key)));
+        settingsRecord.setValue(schemaProcessor.create(keyBeanTypeMap.get(key)));
+        settingsRecord.update();
 
-        return settingsMapper.toProjection(settings);
+        return settingsRecord.getId();
     }
 
     @Override
@@ -73,54 +71,52 @@ public class SettingsSynchronizerImpl implements SettingsSynchronizer, Initializ
     }
 
     private int create() {
-        var existingKeys = settingsService.getAllByKeys(keyBeanTypeMap.keySet())
-                .stream()
-                .map(SettingsEntity::getKey)
-                .collect(Collectors.toUnmodifiableSet());
+        var existingKeys = ctx.select(SETTINGS.KEY)
+                .from(SETTINGS)
+                .where(SETTINGS.KEY.in(keyBeanTypeMap.keySet()))
+                .fetchInto(String.class);
 
-        var toCreate = Maps.filterEntries(keyBeanTypeMap, e -> !existingKeys.contains(e.getKey()))
-                .entrySet()
-                .stream()
-                .map(e -> CreateSettingsCommand.builder()
-                        .name(MoreBeans.getDisplayName(e.getValue()))
-                        .key(e.getKey())
-                        .value(schemaProcessor.create(e.getValue()))
-                        .build())
-                .toList();
+        var recordsToInsert = new ArrayList<SettingsRecord>();
+        for (var entry : Maps.filterEntries(keyBeanTypeMap, e -> !existingKeys.contains(e.getKey())).entrySet()) {
+            var record = ctx.newRecord(SETTINGS);
+            record.setKey(entry.getKey());
+            record.setName(MoreBeans.getDisplayName(entry.getValue()));
+            record.setValue(schemaProcessor.create(entry.getValue()));
+            recordsToInsert.add(record);
+        }
 
-        var createdSettings = settingsService.createAll(toCreate);
+        var result = ctx.batchInsert(recordsToInsert).execute();
 
-        return createdSettings.size();
+        return Arrays.stream(result).sum();
     }
 
     private int update() {
-        var existingEntities = settingsService.getAllByKeys(keyBeanTypeMap.keySet());
+        var existingRecords = ctx.fetch(SETTINGS, SETTINGS.KEY.in(keyBeanTypeMap.keySet()));
 
-        int updated = 0;
-        for (var entity : existingEntities) {
-            var dbName = entity.getName();
-            var codeName = MoreBeans.getDisplayName(keyBeanTypeMap.get(entity.getKey()));
+        var settingsRecordsToUpdate = new ArrayList<SettingsRecord>();
+        for (var record : existingRecords) {
+            var dbName = record.getName();
+            var codeName = MoreBeans.getDisplayName(keyBeanTypeMap.get(record.getKey()));
 
-            var dbValue = entity.getValue();
-            var mergedValue = schemaProcessor.adaptToSchema(keyBeanTypeMap.get(entity.getKey()), dbValue);
+            var dbValue = record.getValue();
+            var mergedValue = schemaProcessor.adaptToSchema(keyBeanTypeMap.get(record.getKey()), dbValue);
 
             if (!StringUtils.equals(dbName, codeName) || !Objects.equals(dbValue, mergedValue)) {
-                entity.setName(codeName);
-                entity.setValue(mergedValue);
-                entityManager.merge(entity);
-
-                updated++;
+                record.setName(codeName);
+                record.setValue(mergedValue);
+                settingsRecordsToUpdate.add(record);
             }
         }
 
-        return updated;
+        var result = ctx.batchUpdate(settingsRecordsToUpdate).execute();
+
+        return Arrays.stream(result).sum();
     }
 
     private int delete() {
-        var entitiesToDelete = settingsService.getAllByKeysExcluding(keyBeanTypeMap.keySet());
-        settingsService.deleteAll(entitiesToDelete);
-
-        return entitiesToDelete.size();
+        return ctx.deleteFrom(SETTINGS)
+                .where(SETTINGS.KEY.notIn(keyBeanTypeMap.keySet()))
+                .execute();
     }
 
     private static Map<String, Class<?>> newKeyBeanTypeMap() {

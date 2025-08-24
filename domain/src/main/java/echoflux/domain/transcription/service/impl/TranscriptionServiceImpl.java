@@ -1,22 +1,20 @@
 package echoflux.domain.transcription.service.impl;
 
+import echoflux.core.core.log.LoggedMethodExecution;
 import echoflux.core.document.Paragraph;
 import echoflux.core.word.common.WordInfo;
 import echoflux.core.word.processor.SpeakerSegmentAssembler;
 import echoflux.core.word.processor.TranscriptRenderer;
-import echoflux.domain.transcription.data.ScalarTranscriptionProjection;
-import echoflux.domain.transcription_word.data.SequencedWord;
-import echoflux.domain.transcription_word.data.SpeakerSegment;
-import echoflux.domain.transcription_word.data.TranscriptionWordEntity;
-import echoflux.domain.transcription_word.data.TranscriptionWordRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
+import echoflux.domain.jooq.tables.pojos.Transcription;
+import echoflux.domain.transcription.data.SequencedWord;
+import echoflux.domain.transcription.data.SpeakerSegment;
+import echoflux.domain.transcription.data.TranscriptionStatus;
 import lombok.RequiredArgsConstructor;
+import org.jooq.DSLContext;
+import org.jooq.Records;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import echoflux.domain.application_user.data.ApplicationUserRepository;
-import echoflux.domain.transcription.data.TranscriptionEntity;
-import echoflux.domain.transcription.data.TranscriptionRepository;
 import echoflux.domain.transcription.mapper.TranscriptionMapper;
 import echoflux.domain.transcription.service.CreateTranscriptionCommand;
 import echoflux.domain.transcription.service.PatchTranscriptionCommand;
@@ -25,71 +23,70 @@ import echoflux.domain.transcription.service.TranscriptionService;
 
 import java.util.List;
 
+import static echoflux.domain.jooq.Tables.TRANSCRIPTION;
+import static echoflux.domain.jooq.Tables.TRANSCRIPTION_WORD;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TranscriptionServiceImpl implements TranscriptionService {
 
-    private final ApplicationUserRepository applicationUserRepository;
-    private final TranscriptionRepository transcriptionRepository;
-    private final TranscriptionWordRepository transcriptionWordRepository;
+    private final DSLContext ctx;
     private final TranscriptionMapper transcriptionMapper;
-    private final EntityManager entityManager;
 
     @Override
-    public TranscriptionEntity getById(Long id) {
-        return transcriptionRepository.getReferenceById(id);
-    }
-
-    @Override
-    public TranscriptionEntity getWithWordsById(Long id) {
-        return transcriptionRepository.findWithWordsById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Transcription with id [%d] not found".formatted(id)));
-    }
-
-    @Override
-    public ScalarTranscriptionProjection getScalarProjectedById(Long id) {
-        return transcriptionRepository.findById(id, ScalarTranscriptionProjection.class)
-                .orElseThrow(() -> new EntityNotFoundException("Transcription with id [%d] not found".formatted(id)));
+    public Transcription getById(Long id) {
+        return ctx.fetchSingle(TRANSCRIPTION, TRANSCRIPTION.ID.eq(id))
+                .into(Transcription.class);
     }
 
     @Override
     @Transactional
-    public ScalarTranscriptionProjection create(CreateTranscriptionCommand command) {
-        var applicationUser = applicationUserRepository.getReferenceById(command.getApplicationUserId());
-        var transcription = transcriptionMapper.toEntity(command);
-        transcription.setApplicationUser(applicationUser);
+    public Transcription create(CreateTranscriptionCommand command) {
+        var record = ctx.newRecord(TRANSCRIPTION);
+        record.setName(command.getName());
+        record.setLanguage(command.getLanguage());
+        record.setApplicationUserId(command.getApplicationUserId());
+        record.setSourceUri(command.getSourceUri());
+        record.setStatus(TranscriptionStatus.CREATED);
+        record.store();
 
-        var saved = transcriptionRepository.save(transcription);
-
-        return transcriptionMapper.toProjection(saved);
+        return record.into(Transcription.class);
     }
 
     @Override
     @Transactional
-    public ScalarTranscriptionProjection patch(PatchTranscriptionCommand command) {
-        var transcription = transcriptionRepository.getReferenceById(command.getId());
-        var patchedTranscription = transcriptionMapper.patch(transcription, command);
+    public Transcription patch(PatchTranscriptionCommand command) {
+        var record = ctx.fetchSingle(TRANSCRIPTION, TRANSCRIPTION.ID.eq(command.getId()));
+        var patchedRecord = transcriptionMapper.patch(record, command);
+        patchedRecord.store();
 
-        var saved = transcriptionRepository.save(patchedTranscription);
-
-        return transcriptionMapper.toProjection(saved);
+        return patchedRecord.into(Transcription.class);
     }
 
-    @Override
     @Transactional
-    public ScalarTranscriptionProjection rename(RenameTranscriptionCommand command) {
-        return patch(
-                PatchTranscriptionCommand.builder()
-                        .id(command.getId())
-                        .name(command.getName())
-                        .build()
-        );
+    @Override
+    public Long rename(RenameTranscriptionCommand command) {
+        var record = ctx.fetchSingle(TRANSCRIPTION, TRANSCRIPTION.ID.eq(command.getId()));
+        record.setName(command.getName());
+        record.store();
+
+        return record.getId();
     }
 
     @Override
     public List<SequencedWord> getTranscriptionWords(Long transcriptionId) {
-        return transcriptionWordRepository.findAllByTranscriptionIdOrderBySequence(transcriptionId, SequencedWord.class);
+        return ctx.select(
+                        TRANSCRIPTION_WORD.CONTENT,
+                        TRANSCRIPTION_WORD.SPEAKER_NAME,
+                        TRANSCRIPTION_WORD.START_OFFSET_MILLIS,
+                        TRANSCRIPTION_WORD.END_OFFSET_MILLIS,
+                        TRANSCRIPTION_WORD.SEQUENCE
+                )
+                .from(TRANSCRIPTION_WORD)
+                .where(TRANSCRIPTION_WORD.TRANSCRIPTION_ID.eq(transcriptionId))
+                .orderBy(TRANSCRIPTION_WORD.SEQUENCE)
+                .fetch(Records.mapping(SequencedWord::new));
     }
 
     @Override
@@ -106,47 +103,43 @@ public class TranscriptionServiceImpl implements TranscriptionService {
         return TranscriptRenderer.render(speakerSegments, withTimestamps);
     }
 
+    @LoggedMethodExecution(logArgs = false, logReturn = false)
     @Transactional
     @Override
     public <T extends WordInfo> void saveWords(Long transcriptionId, List<T> words) {
-        var transcriptionEntity = getWithWordsById(transcriptionId);
+        ctx.deleteFrom(TRANSCRIPTION_WORD)
+                .where(TRANSCRIPTION_WORD.TRANSCRIPTION_ID.eq(transcriptionId))
+                .and(TRANSCRIPTION_WORD.SEQUENCE.gt(words.size() - 1))
+                .execute();
 
-        int wordEntityIndex = 0;
-        int wordInfoIndex = 0;
-        var transcriptionWords = transcriptionEntity.getWords();
+        var upsert = ctx.insertInto(
+                TRANSCRIPTION_WORD,
+                TRANSCRIPTION_WORD.TRANSCRIPTION_ID,
+                TRANSCRIPTION_WORD.SEQUENCE,
+                TRANSCRIPTION_WORD.CONTENT,
+                TRANSCRIPTION_WORD.SPEAKER_NAME,
+                TRANSCRIPTION_WORD.START_OFFSET_MILLIS,
+                TRANSCRIPTION_WORD.END_OFFSET_MILLIS
+        );
 
-        while (wordEntityIndex < transcriptionWords.size() && wordInfoIndex < words.size()) {
-            var wordEntity = transcriptionWords.get(wordEntityIndex);
-            var wordInfo = words.get(wordInfoIndex);
-
-            wordEntity.setContent(wordInfo.getContent());
-            wordEntity.setSpeakerName(wordInfo.getSpeakerName());
-            wordEntity.setStartOffsetMillis(wordInfo.getStartOffsetMillis());
-            wordEntity.setEndOffsetMillis(wordInfo.getEndOffsetMillis());
-
-            wordEntityIndex++;
-            wordInfoIndex++;
+        for (int i = 0; i < words.size(); i++) {
+            upsert = upsert.values(
+                    transcriptionId,
+                    i,
+                    words.get(i).getContent(),
+                    words.get(i).getSpeakerName(),
+                    words.get(i).getStartOffsetMillis(),
+                    words.get(i).getEndOffsetMillis()
+            );
         }
 
-        if (wordEntityIndex < transcriptionWords.size()) {
-            transcriptionEntity.removeWords(wordEntityIndex, transcriptionWords.size());
-        } else if (wordInfoIndex < words.size()) {
-            var entitiesToAdd = words.subList(wordInfoIndex, words.size())
-                    .stream()
-                    .map(w ->
-                            TranscriptionWordEntity.builder()
-                                    .content(w.getContent())
-                                    .speakerName(w.getSpeakerName())
-                                    .startOffsetMillis(w.getStartOffsetMillis())
-                                    .endOffsetMillis(w.getEndOffsetMillis())
-                                    .build()
-                    )
-                    .toList();
-
-            transcriptionEntity.addWords(entitiesToAdd);
-        }
-
-        entityManager.merge(transcriptionEntity);
+        upsert.onConflict(TRANSCRIPTION_WORD.TRANSCRIPTION_ID, TRANSCRIPTION_WORD.SEQUENCE)
+                .doUpdate()
+                .set(TRANSCRIPTION_WORD.CONTENT, DSL.excluded(TRANSCRIPTION_WORD.CONTENT))
+                .set(TRANSCRIPTION_WORD.SPEAKER_NAME, DSL.excluded(TRANSCRIPTION_WORD.SPEAKER_NAME))
+                .set(TRANSCRIPTION_WORD.START_OFFSET_MILLIS, DSL.excluded(TRANSCRIPTION_WORD.START_OFFSET_MILLIS))
+                .set(TRANSCRIPTION_WORD.END_OFFSET_MILLIS, DSL.excluded(TRANSCRIPTION_WORD.END_OFFSET_MILLIS))
+                .execute();
     }
 
 }

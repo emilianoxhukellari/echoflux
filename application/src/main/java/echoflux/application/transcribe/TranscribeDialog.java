@@ -7,8 +7,9 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
-import echoflux.application.security.AuthenticatedUser;
-import echoflux.domain.transcription.data.ScalarTranscriptionProjection;
+import echoflux.application.core.security.AuthenticatedUser;
+import echoflux.core.core.validate.guard.Guard;
+import echoflux.domain.jooq.tables.pojos.Transcription;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,22 +21,20 @@ import echoflux.application.core.operation.Operation;
 import echoflux.application.core.operation.OperationErrorImportance;
 import echoflux.application.core.operation.OperationSuccessImportance;
 import echoflux.application.transcribe.media_provider.MediaValue;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.core.utils.MoreEnums;
 import echoflux.core.transcribe.Language;
 import echoflux.domain.transcription.pipeline.TranscriptionPipeline;
 import echoflux.domain.transcription.pipeline.TranscriptionPipelineCommand;
 
-import java.util.Objects;
-
 public class TranscribeDialog extends EnhancedDialog {
 
     private final TranscriptionPipeline transcriptionPipeline;
 
-    public TranscribeDialog(BeanLoader beanLoader) {
-        Objects.requireNonNull(beanLoader, "beanLoader");
+    public TranscribeDialog(BeanAccessor beanAccessor) {
+        Guard.notNull(beanAccessor, "beanAccessor");
 
-        this.transcriptionPipeline = beanLoader.load(TranscriptionPipeline.class);
+        this.transcriptionPipeline = beanAccessor.get(TranscriptionPipeline.class);
 
         var binder = new Binder<Command>();
         binder.setBean(
@@ -43,7 +42,7 @@ public class TranscribeDialog extends EnhancedDialog {
                         .build()
         );
 
-        var mediaProviderField = new MediaField(beanLoader);
+        var mediaProviderField = new MediaField(beanAccessor);
         binder.forField(mediaProviderField)
                 .asRequired("Media is required")
                 .bind(Command::getMediaValue, Command::setMediaValue);
@@ -97,7 +96,7 @@ public class TranscribeDialog extends EnhancedDialog {
                 .applicationUserId(AuthenticatedUser.getId())
                 .build();
 
-        Operation.<ScalarTranscriptionProjection>builder()
+        Operation.<Transcription>builder()
                 .name(String.format("Transcribing \"%s\"", command.getMediaValue().name()))
                 .beforeCall(this::close)
                 .callable(() -> transcriptionPipeline.transcribe(pipelineCommand))

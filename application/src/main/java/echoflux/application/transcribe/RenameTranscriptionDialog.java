@@ -4,27 +4,32 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
-import echoflux.domain.transcription.data.TranscriptionProjection;
+import echoflux.core.core.validate.guard.Guard;
+import echoflux.domain.transcription.endpoint.TranscriptionEndpoint;
 import org.apache.commons.lang3.StringUtils;
-import echoflux.application.core.jpa.dialog.SaveDialog;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.application.core.dialog.SaveDialog;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.application.core.operation.OperationType;
 import echoflux.domain.transcription.service.RenameTranscriptionCommand;
-import echoflux.domain.transcription.service.TranscriptionService;
-
-import java.util.Objects;
 
 public class RenameTranscriptionDialog extends SaveDialog<Long> {
 
-    private final TranscriptionService transcriptionService;
+    private final TranscriptionEndpoint transcriptionEndpoint;
     private final Binder<RenameTranscriptionCommand> binder;
 
-    public RenameTranscriptionDialog(TranscriptionProjection transcription, BeanLoader beanLoader) {
-        Objects.requireNonNull(transcription, "transcription");
-        Objects.requireNonNull(beanLoader, "beanLoader");
+    public RenameTranscriptionDialog(Long transcriptionId, BeanAccessor beanAccessor) {
+        Guard.notNull(transcriptionId, "transcriptionId");
+        Guard.notNull(beanAccessor, "beanAccessor");
 
-        this.transcriptionService = beanLoader.load(TranscriptionService.class);
+        this.transcriptionEndpoint = beanAccessor.get(TranscriptionEndpoint.class);
         this.binder = new Binder<>();
+
+        var transcription = transcriptionEndpoint.getTranscriptionById(transcriptionId);
+        var bean = RenameTranscriptionCommand.builder()
+                .id(transcription.getId())
+                .name(transcription.getName())
+                .build();
+        binder.setBean(bean);
 
         this.binder.setBean(
                 RenameTranscriptionCommand.builder()
@@ -65,7 +70,7 @@ public class RenameTranscriptionDialog extends SaveDialog<Long> {
 
     @Override
     protected Long save() {
-        return transcriptionService.rename(binder.getBean()).getId();
+        return transcriptionEndpoint.renameTranscription(binder.getBean());
     }
 
     @Override

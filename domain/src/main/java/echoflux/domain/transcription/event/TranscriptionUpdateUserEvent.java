@@ -5,8 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import echoflux.domain.application_user.event.ApplicationUserEvent;
-import echoflux.domain.application_user.event.TranscriptionEvent;
+import echoflux.domain.access_management.application_user.event.ApplicationUserEvent;
+import echoflux.domain.access_management.application_user.event.TranscriptionEvent;
 
 @Data
 @Builder

@@ -1,9 +1,9 @@
 package echoflux.application.core.operation;
 
+import echoflux.core.core.utils.MoreStrings;
 import echoflux.core.core.validate.guard.Guard;
 import lombok.Builder;
 import lombok.With;
-import org.apache.commons.lang3.StringUtils;
 import echoflux.core.core.no_op.NoOp;
 
 import java.time.Duration;
@@ -34,11 +34,11 @@ public record Operation<T>(String name,
         beforeCall = Guard.notNullElse(beforeCall, NoOp.runnable());
         onSuccess = Guard.notNullElse(onSuccess, NoOp.consumer());
         successImportance = Guard.notNullElse(successImportance, OperationSuccessImportance.NORMAL);
-        customSuccessMessage = Guard.notNullElse(customSuccessMessage, StringUtils.EMPTY);
+        customSuccessMessage = Guard.notNullElse(customSuccessMessage, MoreStrings.EMPTY);
         onSuccessNotify = Guard.notNullElse(onSuccessNotify, true);
         onError = Guard.notNullElse(onError, NoOp.consumer());
         errorImportance = Guard.notNullElse(errorImportance, OperationErrorImportance.NORMAL);
-        customErrorMessage = Guard.notNullElse(customErrorMessage, StringUtils.EMPTY);
+        customErrorMessage = Guard.notNullElse(customErrorMessage, MoreStrings.EMPTY);
         onErrorNotify = Guard.notNullElse(onErrorNotify, true);
         onErrorLog = Guard.notNullElse(onErrorLog, true);
         onFinally = Guard.notNullElse(onFinally, NoOp.runnable());

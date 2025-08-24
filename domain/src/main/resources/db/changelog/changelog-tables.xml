@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="create_application_user" author="emiliano">
+        <sql>
+            create table application_user
+            (
+                id         bigint primary key default snowflake.nextval(),
+                username   text    not null unique,
+                name       text    not null,
+                password   text    not null,
+                enabled    boolean not null   default true,
+                country    text    not null,
+                zone_id    text    not null,
+
+                version    integer,
+                created_at timestamp with time zone,
+                created_by text,
+                updated_at timestamp with time zone,
+                updated_by text
+            );
+
+            create table role
+            (
+                id          bigint primary key default snowflake.nextval(),
+                name        text not null unique,
+                description text,
+
+                version     integer,
+                created_at  timestamp with time zone,
+                created_by  text,
+                updated_at  timestamp with time zone,
+                updated_by  text
+            );
+            create index role_name_index on role (name);
+
+            create table application_user_role
+            (
+                application_user_id bigint not null references application_user (id) on delete cascade,
+                role_id             bigint not null references role (id) on delete cascade,
+
+                version             integer,
+                created_at          timestamp with time zone,
+                created_by          text,
+                updated_at          timestamp with time zone,
+                updated_by          text,
+
+                primary key (application_user_id, role_id)
+            );
+
+            create table permission
+            (
+                id          bigint primary key default snowflake.nextval(),
+                key         text not null unique,
+                type        text not null unique,
+                description text,
+
+                version     integer,
+                created_at  timestamp with time zone,
+                created_by  text,
+                updated_at  timestamp with time zone,
+                updated_by  text
+            );
+            create index permission_key_index on permission (key);
+            create index permission_type_index on permission (type);
+
+            create table role_permission
+            (
+                role_id       bigint not null references role (id) on delete cascade,
+                permission_id bigint not null references permission (id) on delete cascade,
+
+                version       integer,
+                created_at    timestamp with time zone,
+                created_by    text,
+                updated_at    timestamp with time zone,
+                updated_by    text,
+
+                primary key (role_id, permission_id)
+            );
+
+        </sql>
+    </changeSet>
+
+    <changeSet id="init_admin_user" author="emiliano">
+        <sql>
+            with new_user as (
+            insert
+            into application_user
+            (username, name, enabled, password, country, zone_id, version, created_at, created_by)
+            values
+                ('admin', 'Emiliano Xhukellari', true, '$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.', 'LATVIA', 'Europe/Riga', 0, now(), 'system')
+                returning id
+                ), new_role as (
+            insert
+            into role (name, version, created_at, created_by)
+            values ('Admin', 0, now(), 'system')
+                returning id
+                ), new_permission as (
+            insert
+            into permission (key, type, version, created_at, created_by)
+            values ('37b2d190-2d75-4722-be0f-4301de4b608a', 'ROOT', 0, now(), 'system')
+                returning id
+                ), role_perm as (
+            insert
+            into role_permission (role_id, permission_id, version, created_at, created_by)
+            select new_role.id, new_permission.id, 0, now(), 'system'
+            from new_role, new_permission
+                returning role_id
+                )
+            insert
+            into application_user_role (application_user_id, role_id, version, created_at, created_by)
+            select new_user.id, new_role.id, 0, now(), 'system'
+            from new_user,
+                 new_role;
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcription_table" author="emiliano">
+        <sql>
+            create table transcription
+            (
+                id                  bigint primary key default snowflake.nextval(),
+                status              text                                    not null,
+                source_uri          text                                    not null,
+                uri                 text,
+                storage_provider    text,
+                language            text                                    not null,
+                name                text                                    not null,
+                application_user_id bigint references application_user (id) not null,
+                length              interval hour to second,
+                error               text,
+
+                version             integer,
+                created_at          timestamp with time zone,
+                created_by          text,
+                updated_at          timestamp with time zone,
+                updated_by          text
+            );
+
+            create index transcription_application_user_id_index on transcription (application_user_id);
+
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_completion_table" author="emiliano">
+        <sql>
+            create table completion
+            (
+                id               bigint primary key default snowflake.nextval(),
+                transcription_id bigint references transcription (id) not null,
+                input            text                                 not null,
+                output           text,
+                input_tokens     integer,
+                output_tokens    integer,
+                model            text,
+                temperature      double precision,
+                top_p            double precision,
+                status           text                                 not null,
+                duration         interval hour to second,
+                error            text,
+
+                version          integer,
+                created_at       timestamp with time zone,
+                created_by       text,
+                updated_at       timestamp with time zone,
+                updated_by       text
+            );
+            create index completion_transcription_id_index on completion (transcription_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_settings_table" author="emiliano">
+        <sql>
+            create table settings
+            (
+                id         bigint primary key default snowflake.nextval(),
+                key        text  not null unique,
+                name       text  not null,
+                value      jsonb not null,
+
+                version    integer,
+                created_at timestamp with time zone,
+                created_by text,
+                updated_at timestamp with time zone,
+                updated_by text
+            );
+            create index settings_key_index on settings (key);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_template_table" author="emiliano">
+        <sql>
+            create table template
+            (
+                id         bigint primary key default snowflake.nextval(),
+                name       text not null unique,
+                content    text not null,
+
+                version    integer,
+                created_at timestamp with time zone,
+                created_by text,
+                updated_at timestamp with time zone,
+                updated_by text
+            );
+            create index template_name_index on template (name);
+        </sql>
+    </changeSet>
+
+    <changeSet id="add_transcription_word_table" author="emiliano">
+        <sql>
+            create table transcription_word
+            (
+                id                  bigint primary key default snowflake.nextval(),
+                transcription_id    bigint references transcription (id) not null,
+                speaker_name        text                                 not null,
+                start_offset_millis bigint                               not null,
+                end_offset_millis   bigint                               not null,
+                content             text                                 not null,
+                sequence            integer                              not null,
+
+                version             integer,
+                created_at          timestamp with time zone,
+                created_by          text,
+                updated_at          timestamp with time zone,
+                updated_by          text,
+
+                unique (transcription_id, sequence)
+            );
+            create index transcription_word_transcription_id_index on transcription_word (transcription_id);
+            create index transcription_word_sequence_index on transcription_word (sequence);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

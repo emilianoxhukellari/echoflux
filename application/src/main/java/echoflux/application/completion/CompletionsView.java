@@ -3,39 +3,38 @@ package echoflux.application.completion;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import echoflux.application.core.jpa.grid.JpaGrid;
-import echoflux.domain.application_user.data.ApplicationUserEntity_;
-import echoflux.domain.completion.data.CompletionEntity_;
-import echoflux.domain.completion.data.CompletionProjection;
-import echoflux.domain.completion.data.CompletionRepository;
-import echoflux.domain.transcription.data.TranscriptionEntity_;
-import jakarta.annotation.security.RolesAllowed;
+import echoflux.application.core.jooq.grid.JooqGrid;
+import echoflux.domain.core.security.PermissionType;
+import echoflux.domain.core.security.RequiredPermissions;
 import echoflux.application.layout.MainLayout;
+import org.jooq.DSLContext;
+
+import static echoflux.domain.jooq.Tables.V_COMPLETION;
 
 @PageTitle("Completions")
 @Route(value = "completions", layout = MainLayout.class)
-@RolesAllowed("ADMIN")
+@RequiredPermissions(PermissionType.COMPLETIONS_VIEW)
 public class CompletionsView extends VerticalLayout {
 
-    public CompletionsView(CompletionRepository completionRepository) {
-        var grid = new JpaGrid<>(CompletionProjection.class, completionRepository);
-        grid.addColumnWithFilter(CompletionEntity_.INPUT);
-        grid.addColumnWithFilter(CompletionEntity_.OUTPUT);
-        grid.addColumnWithFilter(CompletionEntity_.INPUT_TOKENS);
-        grid.addColumnWithFilter(CompletionEntity_.OUTPUT_TOKENS);
-        grid.addColumnWithFilter(CompletionEntity_.MODEL);
-        grid.addColumnWithFilter(CompletionEntity_.TEMPERATURE);
-        grid.addColumnWithFilter(CompletionEntity_.TOP_P);
-        grid.addColumnWithFilter(CompletionEntity_.STATUS);
-        grid.addColumnWithFilter(CompletionEntity_.DURATION);
-        grid.addColumnWithFilter(CompletionEntity_.ERROR);
-        grid.addColumnWithFilter(CompletionEntity_.TRANSCRIPTION, TranscriptionEntity_.ID);
-        grid.addColumnWithFilter(CompletionEntity_.TRANSCRIPTION, TranscriptionEntity_.NAME);
-        grid.addColumnWithFilter(CompletionEntity_.TRANSCRIPTION, TranscriptionEntity_.APPLICATION_USER, ApplicationUserEntity_.ID);
-        grid.addColumnWithFilter(CompletionEntity_.TRANSCRIPTION, TranscriptionEntity_.APPLICATION_USER, ApplicationUserEntity_.USERNAME);
-        grid.addColumnWithFilter(CompletionEntity_.TRANSCRIPTION, TranscriptionEntity_.APPLICATION_USER, ApplicationUserEntity_.NAME);
-        grid.addIdColumnWithFilter();
-        grid.addAuditColumnsWithFilter();
+    public CompletionsView(DSLContext ctx) {
+        var grid = new JooqGrid<>(ctx, V_COMPLETION, V_COMPLETION.ID);
+        grid.addColumn(V_COMPLETION.INPUT).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.OUTPUT).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.INPUT_TOKENS).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.OUTPUT_TOKENS).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.MODEL).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.TEMPERATURE).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.TOP_P).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.STATUS).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.DURATION).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.ERROR).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.TRANSCRIPTION_ID).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.TRANSCRIPTION_NAME).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.APPLICATION_USER_ID).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.APPLICATION_USER_USERNAME).setDefaultFilter();
+        grid.addColumn(V_COMPLETION.APPLICATION_USER_NAME).setDefaultFilter();
+        grid.addIdColumn().setDefaultFilter();
+        grid.addAuditColumns().forEach(JooqGrid.JooqGridColumn::setDefaultFilter);
 
         addAndExpand(grid.withControls());
     }

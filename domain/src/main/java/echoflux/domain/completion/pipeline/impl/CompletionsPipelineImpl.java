@@ -1,16 +1,14 @@
 package echoflux.domain.completion.pipeline.impl;
 
-import echoflux.domain.completion.data.ScalarCompletionProjection;
+import echoflux.domain.jooq.tables.pojos.Completion;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import echoflux.core.completions.Completions;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.core.log.LoggedMethodExecution;
 import echoflux.core.core.utils.MoreFunctions;
 import echoflux.core.settings.SettingsLoader;
-import echoflux.domain.completion.data.CompletionStatus;
-import echoflux.domain.completion.mapper.CompletionMapper;
+import echoflux.domain.completion.service.CompletionStatus;
 import echoflux.domain.completion.pipeline.CompleteCommand;
 import echoflux.domain.completion.pipeline.CompletionsPipeline;
 import echoflux.domain.completion.pipeline.CompletionsPipelineSettings;
@@ -22,17 +20,15 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class CompletionsPipelineImpl implements CompletionsPipeline {
 
     private final CompletionService completionService;
-    private final CompletionMapper completionMapper;
     private final SettingsLoader settingsLoader;
-    private final BeanLoader beanLoader;
+    private final BeanAccessor beanAccessor;
 
     @LoggedMethodExecution(logArgs = false, logReturn = false)
     @Override
-    public ScalarCompletionProjection complete(CompleteCommand command) {
+    public Completion complete(CompleteCommand command) {
         var completion = completionService.create(
                 CreateCompletionCommand.builder()
                         .input(command.getInput())
@@ -45,7 +41,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
                     command.getAiProvider(),
                     () -> settingsLoader.load(CompletionsPipelineSettings.class).getPreferredAiProvider()
             );
-            var completions = beanLoader.loadWhen(
+            var completions = beanAccessor.getWhen(
                     Completions.class,
                     c -> Objects.equals(c.getProvider(), provider)
             );
@@ -64,7 +60,7 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         }
     }
 
-    private ScalarCompletionProjection completeCreated(ScalarCompletionProjection completion, Completions completions) {
+    private Completion completeCreated(Completion completion, Completions completions) {
         Objects.requireNonNull(completion, "Completion cannot be null");
         Objects.requireNonNull(completions, "Completions cannot be null");
 
@@ -78,10 +74,17 @@ public class CompletionsPipelineImpl implements CompletionsPipeline {
         var timedResult = MoreFunctions.getTimed(() -> completions.complete(completion.getInput()));
         var completionResult = timedResult.getResult();
 
-        var patchCommand = completionMapper.toCommand(completionResult);
-        patchCommand.setId(completion.getId());
-        patchCommand.setStatus(completion.getStatus());
-        patchCommand.setDuration(completion.getDuration());
+        var patchCommand = PatchCompletionCommand.builder()
+                .id(completion.getId())
+                .status(CompletionStatus.SUCCESS)
+                .duration(timedResult.getDuration())
+                .output(completionResult.getOutput())
+                .inputTokens(completionResult.getInputTokens())
+                .outputTokens(completionResult.getOutputTokens())
+                .model(completionResult.getModel())
+                .temperature(completionResult.getTemperature())
+                .topP(completionResult.getTopP())
+                .build();
 
         return completionService.patch(patchCommand);
     }

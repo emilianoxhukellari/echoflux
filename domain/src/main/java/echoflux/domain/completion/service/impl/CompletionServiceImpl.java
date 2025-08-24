@@ -1,46 +1,46 @@
 package echoflux.domain.completion.service.impl;
 
-import echoflux.domain.completion.data.ScalarCompletionProjection;
+import echoflux.domain.completion.service.CompletionStatus;
+import echoflux.domain.jooq.tables.pojos.Completion;
 import lombok.RequiredArgsConstructor;
+import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import echoflux.domain.completion.data.CompletionRepository;
 import echoflux.domain.completion.mapper.CompletionMapper;
 import echoflux.domain.completion.service.CompletionService;
 import echoflux.domain.completion.service.CreateCompletionCommand;
 import echoflux.domain.completion.service.PatchCompletionCommand;
-import echoflux.domain.transcription.service.TranscriptionService;
+
+import static echoflux.domain.jooq.Tables.COMPLETION;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CompletionServiceImpl implements CompletionService {
 
-    private final CompletionRepository completionRepository;
+    private final DSLContext ctx;
     private final CompletionMapper completionMapper;
-    private final TranscriptionService transcriptionService;
 
     @Override
     @Transactional
-    public ScalarCompletionProjection create(CreateCompletionCommand command) {
-        var transcription = transcriptionService.getById(command.getTranscriptionId());
-        var completion = completionMapper.toEntity(command);
-        completion.setTranscription(transcription);
+    public Completion create(CreateCompletionCommand command) {
+        var record = ctx.newRecord(COMPLETION);
+        record.setInput(command.getInput());
+        record.setTranscriptionId(command.getTranscriptionId());
+        record.setStatus(CompletionStatus.SUCCESS);
+        record.store();
 
-        var saved = completionRepository.save(completion);
-
-        return completionMapper.toProjection(saved);
+        return record.into(Completion.class);
     }
 
     @Override
     @Transactional
-    public ScalarCompletionProjection patch(PatchCompletionCommand command) {
-        var completion = completionRepository.getReferenceById(command.getId());
-        var patchedCompletion = completionMapper.patch(completion, command);
+    public Completion patch(PatchCompletionCommand command) {
+        var record = ctx.fetchSingle(COMPLETION, COMPLETION.ID.eq(command.getId()));
+        var patchedRecord = completionMapper.patch(record, command);
+        patchedRecord.store();
 
-        var saved = completionRepository.save(patchedCompletion);
-
-        return completionMapper.toProjection(saved);
+        return patchedRecord.into(Completion.class);
     }
 
 }

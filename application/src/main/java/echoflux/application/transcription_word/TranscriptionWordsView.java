@@ -3,33 +3,33 @@ package echoflux.application.transcription_word;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import echoflux.application.core.jpa.grid.JpaGrid;
-import echoflux.domain.application_user.data.ApplicationUserEntity_;
-import echoflux.domain.transcription.data.TranscriptionEntity_;
-import echoflux.domain.transcription_word.data.TranscriptionWordEntity_;
-import echoflux.domain.transcription_word.data.TranscriptionWordProjection;
-import echoflux.domain.transcription_word.data.TranscriptionWordRepository;
-import jakarta.annotation.security.RolesAllowed;
+import echoflux.application.core.jooq.grid.JooqGrid;
+import echoflux.domain.core.security.PermissionType;
+import echoflux.domain.core.security.RequiredPermissions;
 import echoflux.application.layout.MainLayout;
+import org.jooq.DSLContext;
+
+import static echoflux.domain.jooq.Tables.V_TRANSCRIPTION_WORD;
 
 @PageTitle("Transcription Words")
 @Route(value = "transcription-words", layout = MainLayout.class)
-@RolesAllowed("ADMIN")
+@RequiredPermissions(PermissionType.TRANSCRIPTION_WORDS_VIEW)
 public class TranscriptionWordsView extends VerticalLayout {
 
-    public TranscriptionWordsView(TranscriptionWordRepository transcriptionWordRepository) {
-        var grid = new JpaGrid<>(TranscriptionWordProjection.class, transcriptionWordRepository);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.CONTENT);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.SPEAKER_NAME);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.START_OFFSET_MILLIS);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.END_OFFSET_MILLIS);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.SEQUENCE);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.TRANSCRIPTION, TranscriptionEntity_.ID);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.TRANSCRIPTION, TranscriptionEntity_.NAME);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.TRANSCRIPTION, TranscriptionEntity_.APPLICATION_USER, ApplicationUserEntity_.ID);
-        grid.addColumnWithFilter(TranscriptionWordEntity_.TRANSCRIPTION, TranscriptionEntity_.APPLICATION_USER, ApplicationUserEntity_.USERNAME);
-        grid.addIdColumnWithFilter();
-        grid.addAuditColumnsWithFilter();
+    public TranscriptionWordsView(DSLContext ctx) {
+        var grid = new JooqGrid<>(ctx, V_TRANSCRIPTION_WORD, V_TRANSCRIPTION_WORD.ID);
+        grid.addColumn(V_TRANSCRIPTION_WORD.CONTENT).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.SPEAKER_NAME).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.START_OFFSET_MILLIS).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.END_OFFSET_MILLIS).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.SEQUENCE).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.TRANSCRIPTION_ID).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.TRANSCRIPTION_NAME).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.APPLICATION_USER_ID).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.APPLICATION_USER_USERNAME).setDefaultFilter();
+        grid.addColumn(V_TRANSCRIPTION_WORD.APPLICATION_USER_NAME).setDefaultFilter();
+        grid.addIdColumn().setDefaultFilter();
+        grid.addAuditColumns().forEach(JooqGrid.JooqGridColumn::setDefaultFilter);
 
         addAndExpand(grid.withControls());
     }

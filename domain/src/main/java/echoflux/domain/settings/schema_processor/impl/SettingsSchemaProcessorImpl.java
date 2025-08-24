@@ -12,13 +12,11 @@ import echoflux.domain.settings.schema_processor.SettingsSchemaProcessor;
 @RequiredArgsConstructor
 public class SettingsSchemaProcessorImpl implements SettingsSchemaProcessor {
 
-    private final JsonMapper jsonMapper;
-
     @Override
     public <T> JsonNode create(Class<T> beanType) {
         var object = MoreBeans.invokeBuilderOrNoArgsConstructor(beanType);
 
-        return jsonMapper.toNode(object);
+        return JsonMapper.toNode(object);
     }
 
     @Override
@@ -54,9 +52,8 @@ public class SettingsSchemaProcessorImpl implements SettingsSchemaProcessor {
     }
 
     private static void addMissingFields(JsonNode source, ObjectNode target) {
-        var fields = source.fields();
-        while (fields.hasNext()) {
-            var entry = fields.next();
+        var fields = source.properties();
+        for (var entry : fields) {
             var fieldName = entry.getKey();
             var sourceValue = entry.getValue();
 

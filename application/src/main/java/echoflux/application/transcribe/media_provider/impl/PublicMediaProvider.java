@@ -10,13 +10,14 @@ import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import echoflux.core.core.validate.guard.Guard;
 import lombok.Data;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import echoflux.application.core.dialog.Dialogs;
 import echoflux.application.core.operation.Operation;
 import echoflux.application.transcribe.media_provider.MediaProvider;
 import echoflux.application.transcribe.media_provider.MediaValue;
-import echoflux.core.core.bean.loader.BeanLoader;
+import echoflux.core.core.bean.accessor.BeanAccessor;
 import echoflux.core.core.utils.MoreUris;
 import echoflux.core.media.downloader.MediaDownloader;
 import echoflux.core.media.downloader.MediaFindResult;
@@ -24,7 +25,6 @@ import echoflux.core.core.utils.MoreFunctions;
 import echoflux.domain.transcription.data.MediaOrigin;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -36,10 +36,10 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     private Consumer<MediaValue> onReady;
     private Runnable onClientCleared;
 
-    public PublicMediaProvider(BeanLoader beanLoader) {
-        Objects.requireNonNull(beanLoader, "beanLoader");
+    public PublicMediaProvider(BeanAccessor beanAccessor) {
+        Guard.notNull(beanAccessor, "beanAccessor");
 
-        this.mediaDownloader = beanLoader.load(MediaDownloader.class);
+        this.mediaDownloader = beanAccessor.get(MediaDownloader.class);
 
         var binder = new Binder<SearchUri>();
         binder.setBean(new SearchUri());
@@ -83,7 +83,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
     private void findAndSetMedia() {
         Operation.<Optional<MediaFindResult>>builder()
                 .name("Finding public media")
-                .callable(() -> mediaDownloader.find(MoreUris.newUri(searchUri.getValue())))
+                .callable(() -> mediaDownloader.find(MoreUris.toUri(searchUri.getValue())))
                 .onSuccess(r -> {
                     if (r.isEmpty()) {
                         Dialogs.info("Media not found", "Please make sure the URL is correct.");
@@ -98,7 +98,7 @@ public class PublicMediaProvider extends HorizontalLayout implements MediaProvid
                 .onError(_ -> Dialogs.info("Media not found", "Please make sure the URL is correct."))
                 .onErrorNotify(false)
                 .onSuccessNotify(false)
-                .timeout(Duration.ofMinutes(1))
+                .timeout(Duration.ofSeconds(30))
                 .build()
                 .run();
     }

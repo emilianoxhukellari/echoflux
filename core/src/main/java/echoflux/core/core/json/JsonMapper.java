@@ -1,30 +1,39 @@
 package echoflux.core.core.json;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.SneakyThrows;
-import org.mapstruct.*;
 
 import java.util.Optional;
 
-@Mapper(collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
-        componentModel = MappingConstants.ComponentModel.SPRING)
-public interface JsonMapper {
+public final class JsonMapper {
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    private final static ObjectMapper objectMapper;
 
-    default <T> JsonNode toNode(T object) {
+    static {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    }
+
+    public static <T> JsonNode toNode(T object) {
         return objectMapper.valueToTree(object);
     }
 
     @SneakyThrows
-    default JsonNode toNode(String json) {
+    public static JsonNode toNode(String json) {
         return objectMapper.readTree(json);
     }
 
-    default Optional<JsonNode> tryToNode(String json) {
+    public static Optional<JsonNode> tryToNode(String json) {
         try {
             return Optional.of(toNode(json));
         } catch (Throwable e) {
@@ -33,18 +42,18 @@ public interface JsonMapper {
     }
 
     @SneakyThrows
-    default <T> T toValue(JsonNode node, Class<T> clazz) {
-        return objectMapper.treeToValue(node, clazz);
+    public static <T> T toValue(JsonNode node, Class<T> beanType) {
+        return objectMapper.treeToValue(node, beanType);
     }
 
-    default <T> T toValue(String json, Class<T> clazz) {
+    public static <T> T toValue(String json, Class<T> beanType) {
         var node = toNode(json);
 
-        return toValue(node, clazz);
+        return toValue(node, beanType);
     }
 
     @SneakyThrows
-    default <T> String toString(T object) {
+    public static <T> String toString(T object) {
         return objectMapper.writeValueAsString(object);
     }
 

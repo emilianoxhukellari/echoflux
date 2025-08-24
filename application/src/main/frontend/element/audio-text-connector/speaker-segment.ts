@@ -80,7 +80,12 @@ export class SpeakerSegment extends LitElement {
     private renderEditMode(): TemplateResult {
         return html`
             <vaadin-vertical-layout theme="padding">
-                <div class="speaker">${this.segment.speakerName}</div>
+                <vaadin-horizontal-layout theme="spacing-s">
+                    <div class="speaker">${this.segment.speakerName}</div>
+                    <vaadin-button theme="icon small tertiary">
+                        <vaadin-icon icon="vaadin:edit" aria-label="Edit"></vaadin-icon>
+                    </vaadin-button>
+                </vaadin-horizontal-layout>
                 <div class="editable-area"
                      contenteditable="true"
                      role="textbox"

@@ -19,10 +19,12 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.LumoIcon;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import echoflux.application.access_management.permission.PermissionsView;
+import echoflux.application.core.security.EnhancedAccessAnnotationChecker;
+import echoflux.application.access_management.role.RolesView;
 import org.apache.commons.lang3.StringUtils;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 import echoflux.application.completion.CompletionsView;
@@ -32,7 +34,7 @@ import echoflux.application.template.TemplatesView;
 import echoflux.application.transcribe.TranscribeView;
 import echoflux.application.transcription.TranscriptionsView;
 import echoflux.application.transcription_word.TranscriptionWordsView;
-import echoflux.application.user.UsersView;
+import echoflux.application.access_management.application_user.ApplicationUsersView;
 
 @Layout
 public class MainLayout extends AppLayout {
@@ -40,11 +42,9 @@ public class MainLayout extends AppLayout {
     private H1 viewTitle;
 
     private final AuthenticationContext authenticationContext;
-    private final AccessAnnotationChecker accessChecker;
 
-    public MainLayout(AuthenticationContext authenticationContext, AccessAnnotationChecker accessChecker) {
+    public MainLayout(AuthenticationContext authenticationContext) {
         this.authenticationContext = authenticationContext;
-        this.accessChecker = accessChecker;
 
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
@@ -73,13 +73,16 @@ public class MainLayout extends AppLayout {
     private SideNav newSideNav() {
         var nav = new SideNav();
 
+        //todo: add nested items
         addIfHasAccess(nav, HomeView.class, "Home", LineAwesomeIcon.HOME_SOLID.create());
         addIfHasAccess(nav, TranscribeView.class, "Transcribe", LineAwesomeIcon.PODCAST_SOLID.create());
         addIfHasAccess(nav, TranscriptionsView.class, "Transcriptions", LineAwesomeIcon.FILE_AUDIO_SOLID.create());
         addIfHasAccess(nav, CompletionsView.class, "Completions", LineAwesomeIcon.CHECK_CIRCLE_SOLID.create());
         addIfHasAccess(nav, TranscriptionWordsView.class, "Transcription Words", LineAwesomeIcon.FONT_SOLID.create());
         addIfHasAccess(nav, TemplatesView.class, "Templates", LineAwesomeIcon.FILE_CODE_SOLID.create());
-        addIfHasAccess(nav, UsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
+        addIfHasAccess(nav, ApplicationUsersView.class, "Users", LineAwesomeIcon.USERS_SOLID.create());
+        addIfHasAccess(nav, RolesView.class, "Roles", LineAwesomeIcon.USER_SHIELD_SOLID.create());
+        addIfHasAccess(nav, PermissionsView.class, "Permissions", LineAwesomeIcon.KEY_SOLID.create());
         addIfHasAccess(nav, SettingsView.class, "Settings", LineAwesomeIcon.COG_SOLID.create());
 
         return nav;
@@ -129,7 +132,7 @@ public class MainLayout extends AppLayout {
                                                             Class<? extends Component> viewClass,
                                                             String caption,
                                                             AbstractIcon<T> icon) {
-        if (accessChecker.hasAccess(viewClass)) {
+        if (EnhancedAccessAnnotationChecker.hasAccess(viewClass)) {
             nav.addItem(new SideNavItem(caption, viewClass, icon));
         }
     }

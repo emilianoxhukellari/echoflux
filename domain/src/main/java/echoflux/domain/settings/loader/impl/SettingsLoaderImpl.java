@@ -2,21 +2,22 @@ package echoflux.domain.settings.loader.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Validate;
+import org.jooq.DSLContext;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 import echoflux.core.core.json.JsonMapper;
 import echoflux.core.settings.Settings;
 import echoflux.core.settings.SettingsLoader;
-import echoflux.domain.settings.service.SettingsService;
 
 import java.util.Objects;
+
+import static echoflux.domain.jooq.Tables.SETTINGS;
 
 @Component
 @RequiredArgsConstructor
 public class SettingsLoaderImpl implements SettingsLoader {
 
-    private final SettingsService settingsService;
-    private final JsonMapper jsonMapper;
+    private final DSLContext ctx;
 
     @Override
     public <T> T load(Class<T> type) {
@@ -25,9 +26,12 @@ public class SettingsLoaderImpl implements SettingsLoader {
                 "Settings annotation not found"
         );
         var key = Validate.notBlank(annotation.key(), "Settings annotation key is blank");
-        var entity = settingsService.getByKey(key);
+        var node = ctx.select(SETTINGS.VALUE)
+                .from(SETTINGS)
+                .where(SETTINGS.KEY.eq(key))
+                .fetchSingle(SETTINGS.VALUE);
 
-        return jsonMapper.toValue(entity.getValue(), type);
+        return JsonMapper.toValue(node, type);
     }
 
 }

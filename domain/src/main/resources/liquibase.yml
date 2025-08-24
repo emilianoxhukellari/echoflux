@@ -1,5 +1,5 @@
-url: jdbc:postgresql://localhost:5432/vaadinstart
-username: vaadinstart
-password: vaadinstart
+url: jdbc:postgresql://localhost:5432/echoflux?reWriteBatchedInserts=true
+username: echoflux
+password: echoflux
 driver: org.postgresql.Driver
 changeLogFile: /db/changelog/db.changelog-master.xml

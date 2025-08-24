@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import echoflux.core.core.validate.constraint.double_range.DoubleRange;
 import echoflux.core.core.validate.constraint.duration.PositiveOrZeroDuration;
-import echoflux.domain.completion.data.CompletionStatus;
 
 import java.time.Duration;
 

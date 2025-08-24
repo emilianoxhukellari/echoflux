@@ -3,51 +3,64 @@ package echoflux.application.template;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import echoflux.application.core.jpa.grid.JpaGrid;
+import echoflux.application.core.jooq.grid.JooqGrid;
 import echoflux.application.core.operation.OperationRunner;
-import echoflux.core.core.bean.loader.BeanLoader;
-import echoflux.domain.template.data.TemplateEntity_;
-import echoflux.domain.template.data.TemplateProjection;
-import echoflux.domain.template.data.TemplateRepository;
-import echoflux.domain.template.service.TemplateService;
-import jakarta.annotation.security.RolesAllowed;
+import echoflux.application.core.security.AuthenticatedUser;
+import echoflux.core.core.bean.accessor.BeanAccessor;
+import echoflux.domain.core.security.PermissionType;
+import echoflux.domain.core.security.RequiredPermissions;
+import echoflux.domain.jooq.tables.pojos.Template;
+import echoflux.domain.template.endpoint.TemplateEndpoint;
 import echoflux.application.layout.MainLayout;
+import org.jooq.DSLContext;
+
+import static echoflux.domain.jooq.Tables.TEMPLATE;
 
 @PageTitle("Templates")
 @Route(value = "templates", layout = MainLayout.class)
-@RolesAllowed("ADMIN")
+@RequiredPermissions(PermissionType.TEMPLATES_VIEW)
 public class TemplatesView extends VerticalLayout {
 
-    public TemplatesView(TemplateRepository templateRepository,
-                         TemplateService templateService,
-                         BeanLoader beanLoader) {
-        var grid = new JpaGrid<>(TemplateProjection.class, templateRepository);
-        grid.addColumnWithFilter(TemplateEntity_.NAME);
-        grid.addColumnWithFilter(TemplateEntity_.CONTENT)
+    public TemplatesView(DSLContext ctx, TemplateEndpoint templateEndpoint, BeanAccessor beanAccessor) {
+        var grid = new JooqGrid<>(ctx, TEMPLATE, TEMPLATE.ID);
+        grid.addColumn(TEMPLATE.NAME)
+                .setDefaultFilter();
+        grid.addColumn(TEMPLATE.CONTENT)
+                .setDefaultFilter()
                 .setWidth("400px");
-        grid.addIdColumnWithFilter();
-        grid.addAuditColumnsWithFilter();
-        grid.addContextMenuItemWithDoubleClickListener(
-                "Edit",
-                item -> SaveTemplateDialog.newUpdate(item, beanLoader)
-                        .withSaveListener(grid::refreshItemById)
-                        .open()
-        );
-        grid.addConfirmContextMenuItem(
-                "Delete",
-                item -> OperationRunner.run(
-                        "Deleting template with ID [%s]".formatted(item.getId()),
-                        () -> templateService.deleteById(item.getId()),
-                        grid::refreshAll
-                )
-        );
+        grid.addIdColumn()
+                .setDefaultFilter();
+        grid.addAuditColumns()
+                .forEach(JooqGrid.JooqGridColumn::setDefaultFilter);
+
+        if (AuthenticatedUser.checkPermission(PermissionType.TEMPLATE_UPDATE)) {
+            grid.addContextMenuItemWithDoubleClickListener(
+                    "Edit",
+                    item -> SaveTemplateDialog.newUpdate(item.into(Template.class), beanAccessor)
+                            .withSaveListener(grid::refreshItemById)
+                            .open()
+            );
+        }
+        if (AuthenticatedUser.checkPermission(PermissionType.TEMPLATE_DELETE)) {
+            grid.addConfirmContextMenuItem(
+                    "Delete",
+                    item -> OperationRunner.run(
+                            "Deleting template with ID [%s]".formatted(item.getId()),
+                            () -> templateEndpoint.deleteById(item.getId()),
+                            grid::refreshAll
+                    )
+            );
+        }
 
         var controls = grid.withControls();
-        controls.addCreateButton(
-                () -> SaveTemplateDialog.newCreate(beanLoader)
-                .withSaveListener(_ -> grid.refreshAll())
-                .open()
-        );
+        if (AuthenticatedUser.checkPermission(PermissionType.TEMPLATE_CREATE)) {
+            controls.addCreateButton(
+                    () -> SaveTemplateDialog.newCreate(beanAccessor)
+                            .withSaveListener(_ -> grid.refreshAll())
+                            .open()
+            );
+        }
+
         addAndExpand(controls);
     }
 

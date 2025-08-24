@@ -4,84 +4,80 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import echoflux.application.core.jpa.grid.JpaGrid;
-import echoflux.domain.settings.data.SettingsEntity_;
-import echoflux.domain.settings.data.SettingsProjection;
-import echoflux.domain.settings.data.SettingsRepository;
-import jakarta.annotation.security.RolesAllowed;
-import org.springframework.data.domain.Sort;
+import echoflux.application.core.jooq.grid.JooqGrid;
+import echoflux.application.core.jooq.grid.JooqGridControls;
+import echoflux.application.core.security.AuthenticatedUser;
+import echoflux.domain.core.security.PermissionType;
+import echoflux.domain.core.security.RequiredPermissions;
+import echoflux.domain.jooq.tables.records.SettingsRecord;
+import echoflux.domain.settings.endpoint.SettingsEndpoint;
+import org.jooq.DSLContext;
 import org.vaadin.lineawesome.LineAwesomeIcon;
-import echoflux.application.core.jpa.grid.JpaGridControls;
 import echoflux.application.core.operation.Operation;
 import echoflux.application.core.operation.OperationCallable;
 import echoflux.application.layout.MainLayout;
-import echoflux.domain.settings.data.SettingsEntity;
-import echoflux.domain.settings.synchronizer.SettingsSynchronizer;
 
-import java.util.Set;
+import static echoflux.domain.jooq.Tables.SETTINGS;
 
 @PageTitle("Settings")
 @Route(value = "settings", layout = MainLayout.class)
-@RolesAllowed("ADMIN")
+@RequiredPermissions(PermissionType.SETTINGS_VIEW)
 public class SettingsView extends VerticalLayout {
 
-    private final SettingsSynchronizer synchronizer;
+    private final SettingsEndpoint settingsEndpoint;
+    private final DSLContext ctx;
 
-    public SettingsView(SettingsSynchronizer synchronizer, SettingsRepository settingsRepository) {
-        this.synchronizer = synchronizer;
+    public SettingsView(DSLContext ctx, SettingsEndpoint settingsEndpoint) {
+        this.ctx = ctx;
+        this.settingsEndpoint = settingsEndpoint;
 
-        var grid = newGrid(settingsRepository);
+        var grid = newGrid();
         var controls = newGridControls(grid);
 
         addAndExpand(controls);
     }
 
-    private JpaGrid<SettingsProjection, SettingsEntity, Long> newGrid(SettingsRepository settingsRepository) {
-        var attributePaths = Set.of(
-                SettingsEntity_.KEY,
-                SettingsEntity_.NAME,
-                SettingsEntity_.ID,
-                SettingsEntity_.CREATED_AT,
-                SettingsEntity_.CREATED_BY,
-                SettingsEntity_.UPDATED_AT,
-                SettingsEntity_.UPDATED_BY
-        );
-        var grid = new JpaGrid<>(SettingsProjection.class, settingsRepository, attributePaths);
-        grid.addColumnWithFilter(SettingsEntity_.KEY);
-        grid.addColumnWithFilter(SettingsEntity_.NAME);
-        grid.addIdColumnWithFilter();
-        grid.addAuditColumnsWithFilter();
+    private JooqGrid<SettingsRecord, Long> newGrid() {
+        var grid = new JooqGrid<>(ctx, SETTINGS, SETTINGS.ID);
+        grid.addColumn(SETTINGS.KEY).setDefaultFilter();
+        grid.addColumn(SETTINGS.NAME).setDefaultFilter();
+        grid.addIdColumn().setDefaultFilter();
+        grid.addAuditColumns().forEach(JooqGrid.JooqGridColumn::setDefaultFilter);
+        grid.setDefaultOrderBy(SETTINGS.NAME);
 
-        grid.setDefaultSortAttribute(SettingsEntity_.NAME);
-        grid.setDefaultSortDirection(Sort.Direction.ASC);
-        grid.addConfirmContextMenuItem(
-                "Reset",
-                item -> Operation.<SettingsProjection>builder()
-                .name("Resetting settings")
-                .callable(() -> synchronizer.reset(item.getKey()))
-                .onSuccess(grid::refreshItem)
-                .build()
-                .runBackground()
-        );
+        if (AuthenticatedUser.checkPermission(PermissionType.SETTINGS_RESET)) {
+            grid.addConfirmContextMenuItem(
+                    "Reset",
+                    item -> Operation.<Long>builder()
+                            .name("Resetting settings")
+                            .callable(() -> settingsEndpoint.reset(item.getKey()))
+                            .onSuccess(grid::refreshItemById)
+                            .build()
+                            .runBackground()
+            );
+        }
 
         return grid;
     }
 
-    private JpaGridControls<SettingsProjection, SettingsEntity, Long> newGridControls(JpaGrid<SettingsProjection, SettingsEntity, Long> grid) {
-        var synchronizeButton = new Button(
-                LineAwesomeIcon.SYNC_ALT_SOLID.create(),
-                _ -> Operation.builder()
-                        .name("Synchronizing settings")
-                        .callable(OperationCallable.ofRunnable(synchronizer::synchronize))
-                        .onFinally(grid::refreshAll)
-                        .build()
-                        .runBackground()
-        );
-        synchronizeButton.setTooltipText("Synchronize settings");
+    private JooqGridControls<SettingsRecord, Long> newGridControls(JooqGrid<SettingsRecord, Long> grid) {
+        var controls = grid.withControls();
 
-        return grid
-                .withControls()
-                .addTopRight(synchronizeButton);
+        if (AuthenticatedUser.checkPermission(PermissionType.SETTINGS_SYNCHRONIZE)) {
+            var synchronizeButton = new Button(
+                    LineAwesomeIcon.SYNC_ALT_SOLID.create(),
+                    _ -> Operation.builder()
+                            .name("Synchronizing settings")
+                            .callable(OperationCallable.ofRunnable(settingsEndpoint::synchronizeAll))
+                            .onFinally(grid::refreshAll)
+                            .build()
+                            .runBackground()
+            );
+            synchronizeButton.setTooltipText("Synchronize settings");
+            controls.addTopRight(synchronizeButton);
+        }
+
+        return controls;
     }
 
 }

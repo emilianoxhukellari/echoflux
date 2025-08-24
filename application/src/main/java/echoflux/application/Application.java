@@ -8,16 +8,15 @@ import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import echoflux.core.core.initialize.Initialize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import java.util.Comparator;
 import java.util.List;
@@ -31,13 +30,13 @@ import java.util.List;
         "echoflux.domain",
         "echoflux.template"
 })
-@EnableJpaRepositories("echoflux.domain")
-@EntityScan("echoflux.domain")
 @EnableScheduling
 @EnableRetry
 @EnableCaching
+@EnableMethodSecurity
 @EnableAspectJAutoProxy
 @RequiredArgsConstructor
+//todo: liquibase is not running on startup
 public class Application implements AppShellConfigurator {
 
     private final List<Initialize> initializeList;
