@@ -59,7 +59,7 @@ gcloud:
   location: 'europe-west4'
 
 openai:
-  api-key: sk-svcacct-NLUJZ5UL2DOsL5oJZOHYkRYt_FyBqJTXEtDYxckE6WmhVeDtkUYAsABytI8itQK2q7nT3BlbkFJVJry_P6jm2NjzdCqkjea84LhYF25gX4NAYpHDTvXTjN-7YQ3LOBTcDZBODUyTP1jZ_QA #${sm@openai-api-key}
+  api-key: ${sm@openai-api-key}
 
 yt-dlp:
   execution-path: ${YT_DLP_EXECUTION_PATH}
@@ -69,5 +69,5 @@ ffmpeg:
   ffprobe-execution-path: ${FFPROBE_EXECUTION_PATH}
 
 pyannote:
-  api-key: sk_00867a383ee545198a5a2466e0139089 #${sm@pyannote-api-key}
+  api-key: ${sm@pyannote-api-key}
   base-url: 'https://api.pyannote.ai/v1'
